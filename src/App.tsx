@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -49,6 +49,116 @@ function App() {
 
   const isWizardActive = currentStep > 0
 
+  const updateURL = useCallback((tournamentId: string | null, step: number) => {
+    const params = new URLSearchParams()
+    
+    if (tournamentId) {
+      params.set('tournament', tournamentId)
+    }
+    
+    if (step > 0) {
+      params.set('step', step.toString())
+    }
+    
+    const newURL = params.toString() ? `?${params.toString()}` : '/'
+    window.history.pushState({ tournamentId, step }, '', newURL)
+  }, [])
+
+  const handlePopState = useCallback((event: PopStateEvent) => {
+    const params = new URLSearchParams(window.location.search)
+    const tournamentId = params.get('tournament')
+    const step = parseInt(params.get('step') || '0')
+
+    if (tournamentId && (tournaments || []).length > 0) {
+      const tournament = (tournaments || []).find(t => t.id === tournamentId)
+      if (tournament) {
+        setSettings(tournament.settings)
+        setTeams(tournament.teams)
+        setSchedulingConfig(tournament.schedulingConfig)
+        
+        if (tournament.schedule) {
+          const rehydratedSchedule: GeneratedSchedule = {
+            ...tournament.schedule,
+            matches: tournament.schedule.matches.map(match => ({
+              ...match,
+              startTime: new Date(match.startTime),
+              endTime: new Date(match.endTime)
+            })),
+            conflicts: tournament.schedule.conflicts.map(conflict => ({
+              ...conflict,
+              matches: conflict.matches.map(match => ({
+                ...match,
+                startTime: new Date(match.startTime),
+                endTime: new Date(match.endTime)
+              }))
+            }))
+          }
+          setSchedule(rehydratedSchedule)
+        } else {
+          setSchedule(null)
+        }
+        
+        setCurrentTournamentId(tournament.id)
+        setCurrentStep(step || (tournament.schedule ? 4 : 1))
+      } else {
+        setCurrentStep(0)
+        setCurrentTournamentId(null)
+      }
+    } else {
+      setCurrentStep(step)
+      if (step === 0) {
+        setCurrentTournamentId(null)
+      }
+    }
+  }, [tournaments])
+
+  useEffect(() => {
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [handlePopState])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const tournamentId = params.get('tournament')
+    const step = parseInt(params.get('step') || '0')
+
+    if (tournamentId && (tournaments || []).length > 0) {
+      const tournament = (tournaments || []).find(t => t.id === tournamentId)
+      if (tournament) {
+        setSettings(tournament.settings)
+        setTeams(tournament.teams)
+        setSchedulingConfig(tournament.schedulingConfig)
+        
+        if (tournament.schedule) {
+          const rehydratedSchedule: GeneratedSchedule = {
+            ...tournament.schedule,
+            matches: tournament.schedule.matches.map(match => ({
+              ...match,
+              startTime: new Date(match.startTime),
+              endTime: new Date(match.endTime)
+            })),
+            conflicts: tournament.schedule.conflicts.map(conflict => ({
+              ...conflict,
+              matches: conflict.matches.map(match => ({
+                ...match,
+                startTime: new Date(match.startTime),
+                endTime: new Date(match.endTime)
+              }))
+            }))
+          }
+          setSchedule(rehydratedSchedule)
+        } else {
+          setSchedule(null)
+        }
+        
+        setCurrentTournamentId(tournament.id)
+        setCurrentStep(step || (tournament.schedule ? 4 : 1))
+      }
+    } else if (step > 0) {
+      setCurrentStep(step)
+    }
+  }, [])
+
   const handleStartNew = () => {
     setCurrentStep(1)
     setSettings(INITIAL_SETTINGS)
@@ -56,16 +166,19 @@ function App() {
     setSchedulingConfig(INITIAL_CONFIG)
     setSchedule(null)
     setCurrentTournamentId(null)
+    updateURL(null, 1)
   }
 
   const handleStep1Complete = (data: TournamentSettings) => {
     setSettings(data)
     setCurrentStep(2)
+    updateURL(currentTournamentId, 2)
   }
 
   const handleStep2Complete = (data: Team[]) => {
     setTeams(data)
     setCurrentStep(3)
+    updateURL(currentTournamentId, 3)
   }
 
   const handleStep3Complete = (config: SchedulingConfig) => {
@@ -73,6 +186,7 @@ function App() {
     const generatedSchedule = generateSchedule(settings, teams, config)
     setSchedule(generatedSchedule)
     setCurrentStep(4)
+    updateURL(currentTournamentId, 4)
   }
 
   const handleSaveTournament = () => {
@@ -104,9 +218,10 @@ function App() {
     setCurrentTournamentId(tournament.id)
     toast.success('Turnering gemt!')
     setCurrentStep(0)
+    updateURL(null, 0)
   }
 
-  const handleLoadTournament = (tournament: Tournament) => {
+  const handleLoadTournament = (tournament: Tournament, shouldUpdateURL = true) => {
     setSettings(tournament.settings)
     setTeams(tournament.teams)
     setSchedulingConfig(tournament.schedulingConfig)
@@ -134,7 +249,12 @@ function App() {
     }
     
     setCurrentTournamentId(tournament.id)
-    setCurrentStep(tournament.schedule ? 4 : 1)
+    const step = tournament.schedule ? 4 : 1
+    setCurrentStep(step)
+    
+    if (shouldUpdateURL) {
+      updateURL(tournament.id, step)
+    }
   }
 
   const handleDeleteTournament = (id: string) => {
@@ -289,7 +409,10 @@ function App() {
           <Step2Teams
             initialTeams={teams}
             onNext={handleStep2Complete}
-            onBack={() => setCurrentStep(1)}
+            onBack={() => {
+              setCurrentStep(1)
+              updateURL(currentTournamentId, 1)
+            }}
           />
         )}
 
@@ -298,7 +421,10 @@ function App() {
             initialConfig={schedulingConfig}
             teamCount={teams.length}
             onNext={handleStep3Complete}
-            onBack={() => setCurrentStep(2)}
+            onBack={() => {
+              setCurrentStep(2)
+              updateURL(currentTournamentId, 2)
+            }}
           />
         )}
 
@@ -307,7 +433,10 @@ function App() {
             schedule={schedule}
             tournamentName={settings.name}
             teams={teams}
-            onBack={() => setCurrentStep(3)}
+            onBack={() => {
+              setCurrentStep(3)
+              updateURL(currentTournamentId, 3)
+            }}
             onSave={handleSaveTournament}
           />
         )}

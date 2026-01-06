@@ -13,11 +13,11 @@ This is a multi-step wizard with state management, data validation, algorithm ex
 ## Essential Features
 
 ### Tournament Setup Wizard
-- **Functionality**: Multi-step form collecting tournament parameters (name, date/time, pitches, match timing, breaks)
+- **Functionality**: Multi-step form collecting tournament parameters (name, date/time, pitches, match timing, breaks) with URL-based navigation
 - **Purpose**: Structure data input to avoid overwhelming users and ensure all required settings are captured
 - **Trigger**: User clicks "New Tournament" or starts the app
 - **Progression**: Welcome screen → Step 1 (Tournament Settings) → Step 2 (Add Teams) → Step 3 (Scheduling Mode) → Step 4 (Generate & View)
-- **Success criteria**: All required fields validated before advancing, clear progress indication, ability to go back and edit
+- **Success criteria**: All required fields validated before advancing, clear progress indication, ability to go back and edit, browser back/forward buttons navigate between steps correctly, URL reflects current step and tournament ID
 
 ### Team Management
 - **Functionality**: Add teams individually or bulk paste from text, edit/reorder/delete teams, automatic duplicate detection
@@ -41,11 +41,11 @@ This is a multi-step wizard with state management, data validation, algorithm ex
 - **Success criteria**: Print view fits A4 with proper page breaks, CSV includes all match data, filters update table instantly, text copy is properly formatted
 
 ### Tournament Persistence
-- **Functionality**: Save tournament to local storage, load existing tournaments, rename, delete, regenerate schedule after edits
-- **Purpose**: Allow organizers to prepare tournaments in advance and make adjustments
-- **Trigger**: Auto-save after generation, explicit save button, load from tournament list
+- **Functionality**: Save tournament to local storage, load existing tournaments, rename, delete, regenerate schedule after edits, URL-based navigation with browser back/forward support
+- **Purpose**: Allow organizers to prepare tournaments in advance and make adjustments, with seamless navigation
+- **Trigger**: Auto-save after generation, explicit save button, load from tournament list, URL parameters on page load
 - **Progression**: Create tournament → Auto-saved → Return later → Load from list → Edit settings → Regenerate → Updated schedule
-- **Success criteria**: All tournament data persists across sessions, regeneration preserves settings but recalculates schedule, delete requires confirmation
+- **Success criteria**: All tournament data persists across sessions, regeneration preserves settings but recalculates schedule, delete requires confirmation, browser back/forward buttons work correctly through wizard steps and tournament views
 
 ## Edge Case Handling
 
