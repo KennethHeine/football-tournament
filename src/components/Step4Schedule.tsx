@@ -113,22 +113,24 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
     
     try {
       const captureElement = document.createElement('div')
-      captureElement.style.position = 'absolute'
-      captureElement.style.left = '-9999px'
-      captureElement.style.top = '0'
-      captureElement.style.width = '1200px'
-      captureElement.style.backgroundColor = '#ffffff'
-      captureElement.style.padding = '40px'
-      captureElement.style.fontFamily = 'Inter, system-ui, sans-serif'
+      captureElement.style.cssText = `
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        width: 1200px;
+        background-color: #ffffff;
+        padding: 40px;
+        font-family: Inter, system-ui, sans-serif;
+      `
       
       const headingFont = 'Outfit, system-ui, sans-serif'
       
       const tableRows = matchesByTime.map(([timeKey, matches]) => 
         matches.map((match, idx) => {
           const conflict = isConflict(match)
-          const rowStyle = conflict 
-            ? 'background-color: #fee2e2;' 
-            : idx % 2 === 0 ? 'background-color: #fafafa;' : 'background-color: #ffffff;'
+          const rowBg = conflict 
+            ? '#fee2e2' 
+            : idx % 2 === 0 ? '#fafafa' : '#ffffff'
           
           const timeCell = idx === 0 ? `
             <td rowspan="${matches.length}" style="padding: 12px 16px; font-weight: 600; vertical-align: top; border-right: 1px solid #e5e5e5; color: #1a1a1a;">
@@ -137,10 +139,10 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
           ` : ''
           
           return `
-            <tr style="${rowStyle}">
+            <tr style="background-color: ${rowBg};">
               ${timeCell}
               <td style="padding: 12px 16px; color: #1a1a1a;">
-                <span style="display: inline-block; padding: 4px 10px; background-color: #f5f5f5; border: 1px solid #e5e5e5; border-radius: 6px; font-size: 13px; font-weight: 500;">
+                <span style="display: inline-block; padding: 4px 10px; background-color: #f5f5f5; border: 1px solid #e5e5e5; border-radius: 6px; font-size: 13px; font-weight: 500; color: #1a1a1a;">
                   Bane ${match.pitch}
                 </span>
               </td>
@@ -183,13 +185,15 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
       
       document.body.appendChild(captureElement)
       
-      await new Promise(resolve => setTimeout(resolve, 200))
+      await new Promise(resolve => setTimeout(resolve, 100))
       
       const canvas = await html2canvas(captureElement, {
         scale: 2,
         backgroundColor: '#ffffff',
         logging: false,
         useCORS: true,
+        allowTaint: false,
+        foreignObjectRendering: false,
       })
       
       document.body.removeChild(captureElement)
