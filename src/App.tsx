@@ -11,9 +11,10 @@ import { Step4Schedule } from '@/components/Step4Schedule'
 import type { Tournament, TournamentSettings, Team, SchedulingConfig, GeneratedSchedule } from '@/lib/types'
 import { generateSchedule } from '@/lib/scheduler'
 import { v4 as uuidv4 } from 'uuid'
-import { Plus, Trash, CalendarBlank, ShareNetwork } from '@phosphor-icons/react'
+import { Plus, Trash, CalendarBlank, ShareNetwork, User } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
+import { Badge } from '@/components/ui/badge'
 
 const INITIAL_SETTINGS: TournamentSettings = {
   name: '',
@@ -48,6 +49,7 @@ function App() {
   const [tournamentToDelete, setTournamentToDelete] = useState<string | null>(null)
   const [sharedTournamentId, setSharedTournamentId] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [currentUserLogin, setCurrentUserLogin] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -55,6 +57,7 @@ function App() {
         const user = await window.spark.user()
         if (user) {
           setCurrentUserId(user.id.toString())
+          setCurrentUserLogin(user.login)
         }
       } catch (error) {
         console.error('Failed to fetch user:', error)
@@ -219,6 +222,7 @@ function App() {
         : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       ownerId: currentUserId || undefined,
+      ownerLogin: currentUserLogin || undefined,
     }
 
     setTournaments((current) => {
@@ -358,10 +362,18 @@ function App() {
                       >
                         <div className="flex items-start gap-3">
                           <CalendarBlank size={24} className="text-primary mt-1" />
-                          <div>
-                            <h3 className="font-semibold text-lg" style={{ fontFamily: 'var(--font-heading)' }}>
-                              {tournament.settings.name || 'Unavngivet Turnering'}
-                            </h3>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="font-semibold text-lg" style={{ fontFamily: 'var(--font-heading)' }}>
+                                {tournament.settings.name || 'Unavngivet Turnering'}
+                              </h3>
+                              {tournament.ownerLogin && (
+                                <Badge variant="secondary" className="gap-1 text-xs">
+                                  <User size={14} weight="fill" />
+                                  {tournament.ownerLogin}
+                                </Badge>
+                              )}
+                            </div>
                             <div className="text-sm text-muted-foreground mt-1 space-y-1">
                               <p>
                                 {tournament.teams.length} hold • {tournament.schedule?.matches.length || 0} kampe • {tournament.settings.numPitches} ban{tournament.settings.numPitches !== 1 ? 'er' : 'e'}

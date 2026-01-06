@@ -54,4 +54,5 @@ export interface Tournament {
   createdAt: string
   updatedAt: string
   ownerId?: string
+  ownerLogin?: string
 }
