@@ -108,42 +108,91 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
   }
 
   const handleExportImage = async () => {
-    if (!scheduleRef.current) return
-    
     setExportingImage(true)
-    toast.loading('Genererer billede...', { id: 'export-image' })
+    const toastId = toast.loading('Genererer billede...')
     
     try {
-      const printOnlyElements = scheduleRef.current.querySelectorAll('.print-only')
-      printOnlyElements.forEach(el => {
-        (el as HTMLElement).style.display = 'block'
-      })
-
-      const noPrintElements = scheduleRef.current.querySelectorAll('.no-print')
-      noPrintElements.forEach(el => {
-        (el as HTMLElement).style.display = 'none'
-      })
+      const captureElement = document.createElement('div')
+      captureElement.style.position = 'absolute'
+      captureElement.style.left = '-9999px'
+      captureElement.style.top = '0'
+      captureElement.style.width = '1200px'
+      captureElement.style.backgroundColor = '#ffffff'
+      captureElement.style.padding = '40px'
+      captureElement.style.fontFamily = 'Inter, system-ui, sans-serif'
       
-      await new Promise(resolve => setTimeout(resolve, 100))
+      const headingFont = 'Outfit, system-ui, sans-serif'
       
-      const canvas = await html2canvas(scheduleRef.current, {
+      captureElement.innerHTML = `
+        <div style="margin-bottom: 32px; border-bottom: 2px solid #e5e5e5; padding-bottom: 24px;">
+          <h1 style="font-family: ${headingFont}; font-size: 36px; font-weight: 700; text-align: center; margin: 0 0 12px 0; color: #1a1a1a;">
+            ${tournamentName || 'Turneringsskema'}
+          </h1>
+          <p style="text-align: center; color: #737373; font-size: 16px; margin: 0;">
+            ${schedule.matches.length} kampe • ${pitches.length} ban${pitches.length !== 1 ? 'er' : 'e'}
+          </p>
+        </div>
+        <div style="border: 1px solid #e5e5e5; border-radius: 8px; overflow: hidden;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background-color: #f5f5f5;">
+                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #525252; border-bottom: 1px solid #e5e5e5;">Tidspunkt</th>
+                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #525252; border-bottom: 1px solid #e5e5e5;">Bane</th>
+                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #525252; border-bottom: 1px solid #e5e5e5;">Hjemme</th>
+                <th style="padding: 12px 16px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #525252; border-bottom: 1px solid #e5e5e5;">mod</th>
+                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #525252; border-bottom: 1px solid #e5e5e5;">Ude</th>
+                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #525252; border-bottom: 1px solid #e5e5e5;">Sluttid</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${matchesByTime.map(([timeKey, matches]) => 
+                matches.map((match, idx) => {
+                  const conflict = isConflict(match)
+                  const rowStyle = conflict 
+                    ? 'background-color: #fee2e2;' 
+                    : idx % 2 === 0 ? 'background-color: #fafafa;' : 'background-color: #ffffff;'
+                  
+                  return `
+                    <tr style="${rowStyle}">
+                      ${idx === 0 ? `
+                        <td rowspan="${matches.length}" style="padding: 12px 16px; font-weight: 600; vertical-align: top; border-right: 1px solid #e5e5e5; color: #1a1a1a;">
+                          ${formatTime(match.startTime)}
+                        </td>
+                      ` : ''}
+                      <td style="padding: 12px 16px; color: #1a1a1a;">
+                        <span style="display: inline-block; padding: 4px 10px; background-color: #f5f5f5; border: 1px solid #e5e5e5; border-radius: 6px; font-size: 13px; font-weight: 500;">
+                          Bane ${match.pitch}
+                        </span>
+                      </td>
+                      <td style="padding: 12px 16px; font-weight: 500; color: #1a1a1a;">${match.homeTeam.name}</td>
+                      <td style="padding: 12px 16px; text-align: center; color: #737373;">mod</td>
+                      <td style="padding: 12px 16px; font-weight: 500; color: #1a1a1a;">${match.awayTeam.name}</td>
+                      <td style="padding: 12px 16px; color: #737373;">${formatTime(match.endTime)}</td>
+                    </tr>
+                  `
+                }).join('')
+              ).join('')}
+            </tbody>
+          </table>
+        </div>
+      `
+      
+      document.body.appendChild(captureElement)
+      
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
+      const canvas = await html2canvas(captureElement, {
         scale: 2,
         backgroundColor: '#ffffff',
         logging: false,
         useCORS: true,
       })
       
-      printOnlyElements.forEach(el => {
-        (el as HTMLElement).style.display = ''
-      })
-
-      noPrintElements.forEach(el => {
-        (el as HTMLElement).style.display = ''
-      })
+      document.body.removeChild(captureElement)
       
       canvas.toBlob((blob) => {
         if (!blob) {
-          toast.error('Kunne ikke generere billede', { id: 'export-image' })
+          toast.error('Kunne ikke generere billede', { id: toastId })
           setExportingImage(false)
           return
         }
@@ -155,23 +204,13 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
         a.click()
         URL.revokeObjectURL(url)
         
-        toast.success('Billede downloadet', { id: 'export-image' })
+        toast.success('Billede downloadet', { id: toastId })
         setExportingImage(false)
       }, 'image/png')
     } catch (error) {
       console.error('Failed to export image:', error)
-      toast.error('Kunne ikke eksportere billede', { id: 'export-image' })
+      toast.error(`Kunne ikke eksportere billede: ${error instanceof Error ? error.message : 'Ukendt fejl'}`, { id: toastId })
       setExportingImage(false)
-      
-      const printOnlyElements = scheduleRef.current?.querySelectorAll('.print-only')
-      printOnlyElements?.forEach(el => {
-        (el as HTMLElement).style.display = ''
-      })
-
-      const noPrintElements = scheduleRef.current?.querySelectorAll('.no-print')
-      noPrintElements?.forEach(el => {
-        (el as HTMLElement).style.display = ''
-      })
     }
   }
 
