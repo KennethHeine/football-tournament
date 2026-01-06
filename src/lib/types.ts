@@ -53,4 +53,5 @@ export interface Tournament {
   schedule?: GeneratedSchedule
   createdAt: string
   updatedAt: string
+  ownerId?: string
 }

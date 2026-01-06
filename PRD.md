@@ -41,11 +41,11 @@ This is a multi-step wizard with state management, data validation, algorithm ex
 - **Success criteria**: Print view fits A4 with proper page breaks, CSV includes all match data, filters update table instantly, text copy is properly formatted
 
 ### Tournament Persistence
-- **Functionality**: Save tournament to local storage, load existing tournaments, rename, delete, regenerate schedule after edits, URL-based navigation with browser back/forward support
-- **Purpose**: Allow organizers to prepare tournaments in advance and make adjustments, with seamless navigation
+- **Functionality**: Save tournament to local storage, load existing tournaments, rename, delete (owner-only), regenerate schedule after edits, URL-based navigation with browser back/forward support
+- **Purpose**: Allow organizers to prepare tournaments in advance and make adjustments, with seamless navigation and access control for tournament creators
 - **Trigger**: Auto-save after generation, explicit save button, load from tournament list, URL parameters on page load
-- **Progression**: Create tournament → Auto-saved → Return later → Load from list → Edit settings → Regenerate → Updated schedule
-- **Success criteria**: All tournament data persists across sessions, regeneration preserves settings but recalculates schedule, delete requires confirmation, browser back/forward buttons work correctly through wizard steps and tournament views
+- **Progression**: Create tournament → Auto-saved with owner ID → Return later → Load from list → Edit settings (owner) or View only (others) → Regenerate (owner) → Updated schedule
+- **Success criteria**: All tournament data persists across sessions, regeneration preserves settings but recalculates schedule, delete button only visible to tournament owner, browser back/forward buttons work correctly through wizard steps and tournament views
 
 ## Edge Case Handling
 
@@ -55,6 +55,8 @@ This is a multi-step wizard with state management, data validation, algorithm ex
 - **Insufficient Unique Pairings** - When max matches per team exceeds available opponents, show warning modal and allow user to accept duplicate matchups
 - **Scheduling Conflicts** - Highlight matches in red where same team appears in parallel time slots, show conflict summary
 - **Empty States** - Guide users with helpful messages (no tournaments saved, no teams added, no matches generated yet)
+- **Tournament Ownership** - Only tournament creator can delete their tournaments; delete button hidden for non-owners viewing shared tournaments
+- **Unauthenticated Access** - Public tournaments can be viewed by anyone via shared URL, but only authenticated users can create new tournaments
 
 ## Design Direction
 

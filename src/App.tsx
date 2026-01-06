@@ -47,6 +47,21 @@ function App() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [tournamentToDelete, setTournamentToDelete] = useState<string | null>(null)
   const [sharedTournamentId, setSharedTournamentId] = useState<string | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await window.spark.user()
+        if (user) {
+          setCurrentUserId(user.id.toString())
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error)
+      }
+    }
+    fetchUser()
+  }, [])
 
   const isWizardActive = currentStep > 0
 
@@ -203,6 +218,7 @@ function App() {
         ? (tournaments || []).find(t => t.id === currentTournamentId)?.createdAt || new Date().toISOString()
         : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      ownerId: currentUserId || undefined,
     }
 
     setTournaments((current) => {
@@ -256,6 +272,11 @@ function App() {
     if (shouldUpdateURL) {
       updateURL(tournament.id, step)
     }
+  }
+
+  const canDeleteTournament = (tournament: Tournament): boolean => {
+    if (!currentUserId) return false
+    return tournament.ownerId === currentUserId
   }
 
   const handleDeleteTournament = (id: string) => {
@@ -368,14 +389,16 @@ function App() {
                           <ShareNetwork size={20} />
                           {sharedTournamentId === tournament.id ? 'Kopieret!' : 'Del'}
                         </Button>
-                        <Button
-                          onClick={() => handleDeleteTournament(tournament.id)}
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Trash size={20} />
-                        </Button>
+                        {canDeleteTournament(tournament) && (
+                          <Button
+                            onClick={() => handleDeleteTournament(tournament.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Trash size={20} />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
