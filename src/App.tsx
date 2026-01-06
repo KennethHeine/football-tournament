@@ -110,7 +110,29 @@ function App() {
     setSettings(tournament.settings)
     setTeams(tournament.teams)
     setSchedulingConfig(tournament.schedulingConfig)
-    setSchedule(tournament.schedule || null)
+    
+    if (tournament.schedule) {
+      const rehydratedSchedule: GeneratedSchedule = {
+        ...tournament.schedule,
+        matches: tournament.schedule.matches.map(match => ({
+          ...match,
+          startTime: new Date(match.startTime),
+          endTime: new Date(match.endTime)
+        })),
+        conflicts: tournament.schedule.conflicts.map(conflict => ({
+          ...conflict,
+          matches: conflict.matches.map(match => ({
+            ...match,
+            startTime: new Date(match.startTime),
+            endTime: new Date(match.endTime)
+          }))
+        }))
+      }
+      setSchedule(rehydratedSchedule)
+    } else {
+      setSchedule(null)
+    }
+    
     setCurrentTournamentId(tournament.id)
     setCurrentStep(tournament.schedule ? 4 : 1)
   }
