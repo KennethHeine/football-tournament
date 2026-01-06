@@ -25,12 +25,12 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
     const trimmedName = newTeamName.trim()
     
     if (!trimmedName) {
-      setError('Team name cannot be empty')
+      setError('Holdnavn kan ikke være tomt')
       return
     }
 
     if (teams.some(t => t.name.toLowerCase() === trimmedName.toLowerCase())) {
-      setError(`Team "${trimmedName}" already exists. Try "${trimmedName} 2"`)
+      setError(`Hold "${trimmedName}" eksisterer allerede. Prøv "${trimmedName} 2"`)
       return
     }
 
@@ -43,7 +43,7 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
     const lines = bulkText.split('\n').map(l => l.trim()).filter(l => l.length > 0)
     
     if (lines.length === 0) {
-      setError('No team names found')
+      setError('Ingen holdnavne fundet')
       return
     }
 
@@ -65,7 +65,7 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
     }
 
     if (duplicatesInBulk.size > 0) {
-      setError(`Skipped duplicate teams: ${Array.from(duplicatesInBulk).join(', ')}`)
+      setError(`Sprunget over duplikerede hold: ${Array.from(duplicatesInBulk).join(', ')}`)
     } else {
       setError('')
     }
@@ -81,7 +81,7 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
 
   const handleNext = () => {
     if (teams.length < 2) {
-      setError('At least 2 teams are required')
+      setError('Mindst 2 hold er påkrævet')
       return
     }
     onNext(teams)
@@ -90,21 +90,21 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>Add Teams</CardTitle>
-        <CardDescription>Add participating teams individually or in bulk</CardDescription>
+        <CardTitle className="text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>Tilføj Hold</CardTitle>
+        <CardDescription>Tilføj deltagende hold individuelt eller samlet</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="teamName">Add Team Individually</Label>
+                <Label htmlFor="teamName">Tilføj Hold Individuelt</Label>
                 <div className="flex gap-2 mt-2">
                   <Input
                     id="teamName"
                     value={newTeamName}
                     onChange={(e) => setNewTeamName(e.target.value)}
-                    placeholder="Team name"
+                    placeholder="Holdnavn"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault()
@@ -113,22 +113,22 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
                     }}
                   />
                   <Button onClick={addTeam} type="button" className="gap-2">
-                    <Plus size={20} /> Add
+                    <Plus size={20} /> Tilføj
                   </Button>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="bulkTeams">Bulk Add Teams</Label>
+                <Label htmlFor="bulkTeams">Tilføj Hold Samlet</Label>
                 <Textarea
                   id="bulkTeams"
                   value={bulkText}
                   onChange={(e) => setBulkText(e.target.value)}
-                  placeholder="Paste team names (one per line)"
+                  placeholder="Indsæt holdnavne (ét pr. linje)"
                   className="mt-2 min-h-32"
                 />
                 <Button onClick={bulkAddTeams} type="button" variant="secondary" className="mt-2 w-full">
-                  Add All Teams
+                  Tilføj Alle Hold
                 </Button>
               </div>
             </div>
@@ -137,15 +137,15 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
               <div className="flex items-center justify-between">
                 <Label className="flex items-center gap-2">
                   <Users size={20} />
-                  Teams ({teams.length})
+                  Hold ({teams.length})
                 </Label>
               </div>
 
               {teams.length === 0 ? (
                 <div className="border-2 border-dashed border-border rounded-lg p-8 text-center text-muted-foreground">
                   <Users size={48} className="mx-auto mb-2 opacity-50" />
-                  <p>No teams added yet</p>
-                  <p className="text-sm mt-1">Add teams using the form on the left</p>
+                  <p>Ingen hold tilføjet endnu</p>
+                  <p className="text-sm mt-1">Tilføj hold ved hjælp af formularen til venstre</p>
                 </div>
               ) : (
                 <div className="border rounded-lg max-h-96 overflow-y-auto">
@@ -182,16 +182,16 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
           {teams.length > 0 && teams.length < 2 && (
             <Alert>
               <WarningCircle size={20} />
-              <AlertDescription>Add at least 2 teams to continue</AlertDescription>
+              <AlertDescription>Tilføj mindst 2 hold for at fortsætte</AlertDescription>
             </Alert>
           )}
 
           <div className="flex justify-between pt-4">
             <Button onClick={onBack} variant="outline" size="lg" className="gap-2">
-              <ArrowLeft size={20} /> Back
+              <ArrowLeft size={20} /> Tilbage
             </Button>
             <Button onClick={handleNext} size="lg" className="gap-2" disabled={teams.length < 2}>
-              Next <ArrowRight size={20} />
+              Næste <ArrowRight size={20} />
             </Button>
           </div>
         </div>

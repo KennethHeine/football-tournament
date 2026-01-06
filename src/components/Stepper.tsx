@@ -54,7 +54,7 @@ export function Stepper({ steps, currentStep }: StepperProps) {
       </div>
       
       <div className="sm:hidden text-center mt-4 text-sm font-medium text-foreground">
-        Step {currentStep} of {steps.length}: {steps[currentStep - 1]?.title}
+        Trin {currentStep} af {steps.length}: {steps[currentStep - 1]?.title}
       </div>
     </div>
   )

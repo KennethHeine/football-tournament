@@ -11,21 +11,21 @@ import { ArrowRight } from '@phosphor-icons/react'
 
 const tournamentSettingsSchema = z.object({
   name: z.string(),
-  startDate: z.string().min(1, 'Start date is required'),
-  startTime: z.string().min(1, 'Start time is required'),
-  numPitches: z.coerce.number().int().min(1, 'At least 1 pitch required'),
+  startDate: z.string().min(1, 'Startdato er påkrævet'),
+  startTime: z.string().min(1, 'Starttidspunkt er påkrævet'),
+  numPitches: z.coerce.number().int().min(1, 'Mindst 1 bane påkrævet'),
   matchMode: z.enum(['full-time', 'two-halves']),
-  matchDurationMinutes: z.coerce.number().int().min(5, 'Minimum 5 minutes').optional(),
-  halfDurationMinutes: z.coerce.number().int().min(3, 'Minimum 3 minutes').optional(),
-  halftimeBreakMinutes: z.coerce.number().int().min(0, 'Cannot be negative').optional(),
-  breakBetweenMatches: z.coerce.number().int().min(0, 'Cannot be negative'),
+  matchDurationMinutes: z.coerce.number().int().min(5, 'Minimum 5 minutter').optional(),
+  halfDurationMinutes: z.coerce.number().int().min(3, 'Minimum 3 minutter').optional(),
+  halftimeBreakMinutes: z.coerce.number().int().min(0, 'Kan ikke være negativ').optional(),
+  breakBetweenMatches: z.coerce.number().int().min(0, 'Kan ikke være negativ'),
 }).refine((data) => {
   if (data.matchMode === 'full-time') {
     return data.matchDurationMinutes !== undefined && data.matchDurationMinutes >= 5
   }
   return true
 }, {
-  message: 'Match duration required for full-time mode',
+  message: 'Kampvarighed påkrævet for fuldtidstilstand',
   path: ['matchDurationMinutes']
 }).refine((data) => {
   if (data.matchMode === 'two-halves') {
@@ -33,7 +33,7 @@ const tournamentSettingsSchema = z.object({
   }
   return true
 }, {
-  message: 'Half duration required for two-halves mode',
+  message: 'Halvlegvarighed påkrævet for to halvlege tilstand',
   path: ['halfDurationMinutes']
 })
 
@@ -59,17 +59,17 @@ export function Step1TournamentSettings({ initialData, onNext }: Step1Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>Tournament Settings</CardTitle>
-        <CardDescription>Configure your tournament's basic information and timing</CardDescription>
+        <CardTitle className="text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>Turneringsindstillinger</CardTitle>
+        <CardDescription>Konfigurer din turnerings grundlæggende information og timing</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Tournament Name (Optional)</Label>
+              <Label htmlFor="name">Turneringsnavn (Valgfri)</Label>
               <Input
                 id="name"
-                placeholder="e.g., Summer Cup 2024"
+                placeholder="f.eks. Sommer Cup 2024"
                 {...register('name')}
               />
               {errors.name && (
@@ -79,7 +79,7 @@ export function Step1TournamentSettings({ initialData, onNext }: Step1Props) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date *</Label>
+                <Label htmlFor="startDate">Startdato *</Label>
                 <Input
                   id="startDate"
                   type="date"
@@ -92,7 +92,7 @@ export function Step1TournamentSettings({ initialData, onNext }: Step1Props) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="startTime">Start Time *</Label>
+                <Label htmlFor="startTime">Starttidspunkt *</Label>
                 <Input
                   id="startTime"
                   type="time"
@@ -105,12 +105,12 @@ export function Step1TournamentSettings({ initialData, onNext }: Step1Props) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="numPitches">Number of Pitches/Fields *</Label>
+              <Label htmlFor="numPitches">Antal Baner *</Label>
               <Input
                 id="numPitches"
                 type="number"
                 min="1"
-                placeholder="e.g., 2"
+                placeholder="f.eks. 2"
                 {...register('numPitches')}
               />
               {errors.numPitches && (
@@ -119,17 +119,17 @@ export function Step1TournamentSettings({ initialData, onNext }: Step1Props) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="matchMode">Match Mode *</Label>
+              <Label htmlFor="matchMode">Kamptilstand *</Label>
               <Select
                 value={matchMode}
                 onValueChange={(value) => setValue('matchMode', value as MatchMode)}
               >
                 <SelectTrigger id="matchMode">
-                  <SelectValue placeholder="Select match mode" />
+                  <SelectValue placeholder="Vælg kamptilstand" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="full-time">Full time only (continuous match)</SelectItem>
-                  <SelectItem value="two-halves">Two halves (with halftime break)</SelectItem>
+                  <SelectItem value="full-time">Fuldtid (kontinuerlig kamp)</SelectItem>
+                  <SelectItem value="two-halves">To halvlege (med pause)</SelectItem>
                 </SelectContent>
               </Select>
               {errors.matchMode && (
@@ -139,12 +139,12 @@ export function Step1TournamentSettings({ initialData, onNext }: Step1Props) {
 
             {matchMode === 'full-time' && (
               <div className="space-y-2 animate-fadeIn">
-                <Label htmlFor="matchDurationMinutes">Match Duration (minutes) *</Label>
+                <Label htmlFor="matchDurationMinutes">Kampvarighed (minutter) *</Label>
                 <Input
                   id="matchDurationMinutes"
                   type="number"
                   min="5"
-                  placeholder="e.g., 30"
+                  placeholder="f.eks. 30"
                   {...register('matchDurationMinutes')}
                 />
                 {errors.matchDurationMinutes && (
@@ -157,12 +157,12 @@ export function Step1TournamentSettings({ initialData, onNext }: Step1Props) {
               <div className="space-y-4 animate-fadeIn">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="halfDurationMinutes">Half Duration (minutes) *</Label>
+                    <Label htmlFor="halfDurationMinutes">Halvlegvarighed (minutter) *</Label>
                     <Input
                       id="halfDurationMinutes"
                       type="number"
                       min="3"
-                      placeholder="e.g., 15"
+                      placeholder="f.eks. 15"
                       {...register('halfDurationMinutes')}
                     />
                     {errors.halfDurationMinutes && (
@@ -171,12 +171,12 @@ export function Step1TournamentSettings({ initialData, onNext }: Step1Props) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="halftimeBreakMinutes">Halftime Break (minutes) *</Label>
+                    <Label htmlFor="halftimeBreakMinutes">Pauselængde (minutter) *</Label>
                     <Input
                       id="halftimeBreakMinutes"
                       type="number"
                       min="0"
-                      placeholder="e.g., 5"
+                      placeholder="f.eks. 5"
                       {...register('halftimeBreakMinutes')}
                     />
                     {errors.halftimeBreakMinutes && (
@@ -188,15 +188,15 @@ export function Step1TournamentSettings({ initialData, onNext }: Step1Props) {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="breakBetweenMatches">Break Between Matches (minutes) *</Label>
+              <Label htmlFor="breakBetweenMatches">Pause Mellem Kampe (minutter) *</Label>
               <Input
                 id="breakBetweenMatches"
                 type="number"
                 min="0"
-                placeholder="e.g., 5"
+                placeholder="f.eks. 5"
                 {...register('breakBetweenMatches')}
               />
-              <p className="text-xs text-muted-foreground">Time allocated for teams to switch on the same pitch</p>
+              <p className="text-xs text-muted-foreground">Tid afsat til hold skift på samme bane</p>
               {errors.breakBetweenMatches && (
                 <p className="text-sm text-destructive">{errors.breakBetweenMatches.message}</p>
               )}
@@ -205,7 +205,7 @@ export function Step1TournamentSettings({ initialData, onNext }: Step1Props) {
 
           <div className="flex justify-end">
             <Button type="submit" size="lg" className="gap-2">
-              Next <ArrowRight size={20} />
+              Næste <ArrowRight size={20} />
             </Button>
           </div>
         </form>

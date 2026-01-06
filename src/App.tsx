@@ -30,10 +30,10 @@ const INITIAL_CONFIG: SchedulingConfig = {
 }
 
 const steps = [
-  { number: 1, title: 'Tournament Setup' },
-  { number: 2, title: 'Add Teams' },
-  { number: 3, title: 'Scheduling Mode' },
-  { number: 4, title: 'Generate & View' },
+  { number: 1, title: 'Turnerings Opsætning' },
+  { number: 2, title: 'Tilføj Hold' },
+  { number: 3, title: 'Planlægnings Tilstand' },
+  { number: 4, title: 'Generer & Se' },
 ]
 
 function App() {
@@ -102,7 +102,7 @@ function App() {
     })
 
     setCurrentTournamentId(tournament.id)
-    toast.success('Tournament saved successfully!')
+    toast.success('Turnering gemt!')
     setCurrentStep(0)
   }
 
@@ -145,7 +145,7 @@ function App() {
   const confirmDelete = () => {
     if (tournamentToDelete) {
       setTournaments((current) => (current || []).filter(t => t.id !== tournamentToDelete))
-      toast.success('Tournament deleted')
+      toast.success('Turnering slettet')
       setDeleteDialogOpen(false)
       setTournamentToDelete(null)
     }
@@ -171,17 +171,17 @@ function App() {
               className="text-5xl font-bold mb-4 tracking-tight"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
-              Football Tournament Program Builder
+              Fodboldturnering Program Builder
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Create professional match schedules across multiple pitches with automatic time allocation and conflict detection
+              Opret professionelle kampskemaer på tværs af flere baner med automatisk tidsfordeling og konfliktdetektering
             </p>
           </div>
 
           <div className="flex justify-center mb-8">
             <Button onClick={handleStartNew} size="lg" className="gap-2 text-lg px-8 py-6">
               <Plus size={24} weight="bold" />
-              Create New Tournament
+              Opret Ny Turnering
             </Button>
           </div>
 
@@ -189,10 +189,10 @@ function App() {
             <Card>
               <CardHeader>
                 <CardTitle style={{ fontFamily: 'var(--font-heading)' }}>
-                  Saved Tournaments
+                  Gemte Turneringer
                 </CardTitle>
                 <CardDescription>
-                  Load a previous tournament to view or modify
+                  Indlæs en tidligere turnering for at se eller redigere
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -210,17 +210,17 @@ function App() {
                           <CalendarBlank size={24} className="text-primary mt-1" />
                           <div>
                             <h3 className="font-semibold text-lg" style={{ fontFamily: 'var(--font-heading)' }}>
-                              {tournament.settings.name || 'Unnamed Tournament'}
+                              {tournament.settings.name || 'Unavngivet Turnering'}
                             </h3>
                             <div className="text-sm text-muted-foreground mt-1 space-y-1">
                               <p>
-                                {tournament.teams.length} teams • {tournament.schedule?.matches.length || 0} matches • {tournament.settings.numPitches} pitch{tournament.settings.numPitches !== 1 ? 'es' : ''}
+                                {tournament.teams.length} hold • {tournament.schedule?.matches.length || 0} kampe • {tournament.settings.numPitches} ban{tournament.settings.numPitches !== 1 ? 'er' : 'e'}
                               </p>
                               <p>
-                                {formatDate(tournament.settings.startDate)} at {tournament.settings.startTime}
+                                {formatDate(tournament.settings.startDate)} kl. {tournament.settings.startTime}
                               </p>
                               <p className="text-xs">
-                                Last updated: {formatDate(tournament.updatedAt)}
+                                Sidst opdateret: {formatDate(tournament.updatedAt)}
                               </p>
                             </div>
                           </div>
@@ -245,17 +245,17 @@ function App() {
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Delete Tournament</DialogTitle>
+              <DialogTitle>Slet Turnering</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete this tournament? This action cannot be undone.
+                Er du sikker på, at du vil slette denne turnering? Denne handling kan ikke fortrydes.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-                Cancel
+                Annuller
               </Button>
               <Button variant="destructive" onClick={confirmDelete}>
-                Delete
+                Slet
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -273,7 +273,7 @@ function App() {
             className="text-3xl font-bold mb-2 text-center"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
-            Football Tournament Program Builder
+            Fodboldturnering Program Builder
           </h1>
           <Stepper steps={steps} currentStep={currentStep} />
         </div>

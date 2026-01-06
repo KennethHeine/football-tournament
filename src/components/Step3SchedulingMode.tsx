@@ -23,12 +23,12 @@ export function Step3SchedulingMode({ initialConfig, teamCount, onNext, onBack }
   const handleNext = () => {
     if (mode === 'limited-matches') {
       if (!maxMatchesPerTeam || maxMatchesPerTeam < 1) {
-        setError('Max matches per team must be at least 1')
+        setError('Maks kampe pr. hold skal være mindst 1')
         return
       }
       
       if (maxTotalMatches !== undefined && maxTotalMatches < 1) {
-        setError('Max total matches must be at least 1')
+        setError('Maks totale kampe skal være mindst 1')
         return
       }
     }
@@ -52,8 +52,8 @@ export function Step3SchedulingMode({ initialConfig, teamCount, onNext, onBack }
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>Scheduling Mode</CardTitle>
-        <CardDescription>Choose how matches should be scheduled for {teamCount} teams</CardDescription>
+        <CardTitle className="text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>Planlægningstilstand</CardTitle>
+        <CardDescription>Vælg hvordan kampe skal planlægges for {teamCount} hold</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
@@ -71,18 +71,18 @@ export function Step3SchedulingMode({ initialConfig, teamCount, onNext, onBack }
                   <RadioGroupItem value="round-robin" id="round-robin" className="mt-1" />
                   <div className="flex-1">
                     <Label htmlFor="round-robin" className="text-base font-semibold cursor-pointer">
-                      Everyone plays everyone (Round-robin)
+                      Alle spiller mod alle (Puljespil)
                     </Label>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Classic tournament format where each team plays every other team once
+                      Klassisk turneringsformat hvor hvert hold spiller mod hvert andet hold én gang
                     </p>
                     <div className="mt-3 p-3 bg-muted rounded-md">
                       <p className="text-sm font-medium">
-                        Total matches: <span className="text-primary font-bold">{roundRobinMatches}</span>
+                        Totale kampe: <span className="text-primary font-bold">{roundRobinMatches}</span>
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Each team plays {maxPossibleOpponents} match{maxPossibleOpponents !== 1 ? 'es' : ''}
-                        {teamCount % 2 !== 0 && ' (BYE team will be added)'}
+                        Hvert hold spiller {maxPossibleOpponents} kamp{maxPossibleOpponents !== 1 ? 'e' : ''}
+                        {teamCount % 2 !== 0 && ' (BYE hold vil blive tilføjet)'}
                       </p>
                     </div>
                   </div>
@@ -101,17 +101,17 @@ export function Step3SchedulingMode({ initialConfig, teamCount, onNext, onBack }
                   <RadioGroupItem value="limited-matches" id="limited-matches" className="mt-1" />
                   <div className="flex-1">
                     <Label htmlFor="limited-matches" className="text-base font-semibold cursor-pointer">
-                      Limit number of matches
+                      Begræns antal kampe
                     </Label>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Set a maximum number of matches per team or for the entire tournament
+                      Sæt et maksimalt antal kampe pr. hold eller for hele turneringen
                     </p>
                     
                     {mode === 'limited-matches' && (
                       <div className="mt-4 space-y-4 animate-fadeIn">
                         <div className="space-y-2">
                           <Label htmlFor="maxMatchesPerTeam">
-                            Max matches per team *
+                            Maks kampe pr. hold *
                           </Label>
                           <Input
                             id="maxMatchesPerTeam"
@@ -122,34 +122,34 @@ export function Step3SchedulingMode({ initialConfig, teamCount, onNext, onBack }
                             onChange={(e) => setMaxMatchesPerTeam(Number(e.target.value))}
                           />
                           <p className="text-xs text-muted-foreground">
-                            Maximum: {maxPossibleOpponents} (unique opponents available)
+                            Maksimum: {maxPossibleOpponents} (unikke modstandere tilgængelige)
                           </p>
                         </div>
 
                         <div className="space-y-2">
                           <Label htmlFor="maxTotalMatches">
-                            Max total matches (optional)
+                            Maks totale kampe (valgfri)
                           </Label>
                           <Input
                             id="maxTotalMatches"
                             type="number"
                             min="1"
-                            placeholder="Leave empty for no limit"
+                            placeholder="Lad stå tom for ingen grænse"
                             value={maxTotalMatches || ''}
                             onChange={(e) => setMaxTotalMatches(e.target.value ? Number(e.target.value) : undefined)}
                           />
                           <p className="text-xs text-muted-foreground">
-                            Further limit the total number of matches in the tournament
+                            Begræns yderligere det totale antal kampe i turneringen
                           </p>
                         </div>
 
                         {maxMatchesPerTeam > maxPossibleOpponents && (
                           <div className="p-3 bg-accent/20 border border-accent rounded-md">
                             <p className="text-sm font-medium text-accent-foreground">
-                              ⚠️ Max matches per team ({maxMatchesPerTeam}) exceeds unique opponents ({maxPossibleOpponents})
+                              ⚠️ Maks kampe pr. hold ({maxMatchesPerTeam}) overstiger unikke modstandere ({maxPossibleOpponents})
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                              Some teams will play each other multiple times
+                              Nogle hold vil spille mod hinanden flere gange
                             </p>
                           </div>
                         )}
@@ -169,10 +169,10 @@ export function Step3SchedulingMode({ initialConfig, teamCount, onNext, onBack }
 
           <div className="flex justify-between pt-4">
             <Button onClick={onBack} variant="outline" size="lg" className="gap-2">
-              <ArrowLeft size={20} /> Back
+              <ArrowLeft size={20} /> Tilbage
             </Button>
             <Button onClick={handleNext} size="lg" className="gap-2">
-              Generate Schedule <ArrowRight size={20} />
+              Generer Skema <ArrowRight size={20} />
             </Button>
           </div>
         </div>

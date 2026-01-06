@@ -81,10 +81,10 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${tournamentName || 'tournament'}-schedule.csv`
+    a.download = `${tournamentName || 'turnering'}-skema.csv`
     a.click()
     URL.revokeObjectURL(url)
-    toast.success('CSV downloaded successfully')
+    toast.success('CSV downloadet')
   }
 
   const handleCopyText = async () => {
@@ -92,7 +92,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
     await navigator.clipboard.writeText(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-    toast.success('Schedule copied to clipboard')
+    toast.success('Skema kopieret til udklipsholder')
   }
 
   const formatTime = (date: Date) => {
@@ -114,22 +114,22 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>
-              {tournamentName || 'Tournament Schedule'}
+              {tournamentName || 'Turneringsskema'}
             </CardTitle>
             <CardDescription>
-              {schedule.matches.length} matches scheduled across {pitches.length} pitch{pitches.length !== 1 ? 'es' : ''}
+              {schedule.matches.length} kampe planlagt på tværs af {pitches.length} ban{pitches.length !== 1 ? 'er' : 'e'}
             </CardDescription>
           </div>
           <div className="flex gap-2">
             <Button onClick={handlePrint} variant="outline" size="sm" className="gap-2">
-              <Printer size={18} /> Print
+              <Printer size={18} /> Udskriv
             </Button>
             <Button onClick={handleDownloadCSV} variant="outline" size="sm" className="gap-2">
               <Download size={18} /> CSV
             </Button>
             <Button onClick={handleCopyText} variant="outline" size="sm" className="gap-2">
               {copied ? <Check size={18} /> : <Copy size={18} />}
-              {copied ? 'Copied!' : 'Copy'}
+              {copied ? 'Kopieret!' : 'Kopiér'}
             </Button>
           </div>
         </div>
@@ -149,8 +149,8 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
 
           <Tabs defaultValue="program" className="w-full">
             <TabsList className="grid w-full grid-cols-2 no-print">
-              <TabsTrigger value="program">Program View</TabsTrigger>
-              <TabsTrigger value="team">Team View</TabsTrigger>
+              <TabsTrigger value="program">Programvisning</TabsTrigger>
+              <TabsTrigger value="team">Holdvisning</TabsTrigger>
             </TabsList>
 
             <TabsContent value="program" className="space-y-4">
@@ -158,7 +158,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
                 <div className="relative">
                   <MagnifyingGlass size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search teams..."
+                    placeholder="Søg hold..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -167,13 +167,13 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
 
                 <Select value={selectedPitch} onValueChange={setSelectedPitch}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All pitches" />
+                    <SelectValue placeholder="Alle baner" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All pitches</SelectItem>
+                    <SelectItem value="all">Alle baner</SelectItem>
                     {pitches.map(pitch => (
                       <SelectItem key={pitch} value={pitch.toString()}>
-                        Pitch {pitch}
+                        Bane {pitch}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -181,10 +181,10 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
 
                 <Select value={selectedTeam} onValueChange={setSelectedTeam}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All teams" />
+                    <SelectValue placeholder="Alle hold" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All teams</SelectItem>
+                    <SelectItem value="all">Alle hold</SelectItem>
                     {teams.filter(t => t.id !== 'BYE').map(team => (
                       <SelectItem key={team.id} value={team.id}>
                         {team.name}
@@ -199,12 +199,12 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
                   <table className="w-full">
                     <thead className="bg-muted">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Time</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Pitch</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Home</th>
-                        <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">vs</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Away</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">End Time</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Tidspunkt</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Bane</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Hjemme</th>
+                        <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">mod</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Ude</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Sluttid</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -224,10 +224,10 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
                               </td>
                             ) : null}
                             <td className="px-4 py-3">
-                              <Badge variant="outline">Pitch {match.pitch}</Badge>
+                              <Badge variant="outline">Bane {match.pitch}</Badge>
                             </td>
                             <td className="px-4 py-3 font-medium">{match.homeTeam.name}</td>
-                            <td className="px-4 py-3 text-center text-muted-foreground">vs</td>
+                            <td className="px-4 py-3 text-center text-muted-foreground">mod</td>
                             <td className="px-4 py-3 font-medium">{match.awayTeam.name}</td>
                             <td className="px-4 py-3 text-muted-foreground">
                               {formatTime(match.endTime)}
@@ -241,7 +241,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
 
                 {filteredMatches.length === 0 && (
                   <div className="p-8 text-center text-muted-foreground">
-                    No matches found matching your filters
+                    Ingen kampe fundet der matcher dine filtre
                   </div>
                 )}
               </div>
@@ -251,7 +251,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
               <div className="no-print">
                 <Select value={selectedTeam} onValueChange={setSelectedTeam}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a team" />
+                    <SelectValue placeholder="Vælg et hold" />
                   </SelectTrigger>
                   <SelectContent>
                     {teams.filter(t => t.id !== 'BYE').map(team => (
@@ -265,7 +265,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
 
               {selectedTeam === 'all' ? (
                 <div className="p-8 text-center text-muted-foreground">
-                  Select a team to view their schedule
+                  Vælg et hold for at se deres skema
                 </div>
               ) : (
                 <div className="rounded-lg border overflow-hidden">
@@ -274,7 +274,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
                       {teams.find(t => t.id === selectedTeam)?.name}
                     </h3>
                     <p className="text-sm opacity-90 mt-1">
-                      {teamMatches.length} match{teamMatches.length !== 1 ? 'es' : ''} scheduled
+                      {teamMatches.length} kamp{teamMatches.length !== 1 ? 'e' : ''} planlagt
                     </p>
                   </div>
                   <div className="divide-y divide-border">
@@ -287,12 +287,12 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                               <div className="text-center">
-                                <div className="text-xs text-muted-foreground">Match {idx + 1}</div>
-                                <Badge variant="outline" className="mt-1">Pitch {match.pitch}</Badge>
+                                <div className="text-xs text-muted-foreground">Kamp {idx + 1}</div>
+                                <Badge variant="outline" className="mt-1">Bane {match.pitch}</Badge>
                               </div>
                               <div>
                                 <div className="font-semibold">
-                                  vs {opponent.name}
+                                  mod {opponent.name}
                                 </div>
                                 <div className="text-sm text-muted-foreground">
                                   {formatDate(match.startTime)}
@@ -302,7 +302,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
                             <div className="text-right">
                               <div className="font-semibold">{formatTime(match.startTime)}</div>
                               <div className="text-xs text-muted-foreground">
-                                Ends {formatTime(match.endTime)}
+                                Slutter {formatTime(match.endTime)}
                               </div>
                             </div>
                           </div>
@@ -317,10 +317,10 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
 
           <div className="flex justify-between pt-4 no-print">
             <Button onClick={onBack} variant="outline" size="lg" className="gap-2">
-              <ArrowLeft size={20} /> Back
+              <ArrowLeft size={20} /> Tilbage
             </Button>
             <Button onClick={onSave} size="lg" className="gap-2">
-              <Check size={20} /> Save Tournament
+              <Check size={20} /> Gem Turnering
             </Button>
           </div>
         </div>
