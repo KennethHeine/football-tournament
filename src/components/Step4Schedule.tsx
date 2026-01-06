@@ -123,6 +123,36 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
       
       const headingFont = 'Outfit, system-ui, sans-serif'
       
+      const tableRows = matchesByTime.map(([timeKey, matches]) => 
+        matches.map((match, idx) => {
+          const conflict = isConflict(match)
+          const rowStyle = conflict 
+            ? 'background-color: #fee2e2;' 
+            : idx % 2 === 0 ? 'background-color: #fafafa;' : 'background-color: #ffffff;'
+          
+          const timeCell = idx === 0 ? `
+            <td rowspan="${matches.length}" style="padding: 12px 16px; font-weight: 600; vertical-align: top; border-right: 1px solid #e5e5e5; color: #1a1a1a;">
+              ${formatTime(match.startTime)}
+            </td>
+          ` : ''
+          
+          return `
+            <tr style="${rowStyle}">
+              ${timeCell}
+              <td style="padding: 12px 16px; color: #1a1a1a;">
+                <span style="display: inline-block; padding: 4px 10px; background-color: #f5f5f5; border: 1px solid #e5e5e5; border-radius: 6px; font-size: 13px; font-weight: 500;">
+                  Bane ${match.pitch}
+                </span>
+              </td>
+              <td style="padding: 12px 16px; font-weight: 500; color: #1a1a1a;">${match.homeTeam.name}</td>
+              <td style="padding: 12px 16px; text-align: center; color: #737373;">mod</td>
+              <td style="padding: 12px 16px; font-weight: 500; color: #1a1a1a;">${match.awayTeam.name}</td>
+              <td style="padding: 12px 16px; color: #737373;">${formatTime(match.endTime)}</td>
+            </tr>
+          `
+        }).join('')
+      ).join('')
+      
       captureElement.innerHTML = `
         <div style="margin-bottom: 32px; border-bottom: 2px solid #e5e5e5; padding-bottom: 24px;">
           <h1 style="font-family: ${headingFont}; font-size: 36px; font-weight: 700; text-align: center; margin: 0 0 12px 0; color: #1a1a1a;">
@@ -145,33 +175,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
               </tr>
             </thead>
             <tbody>
-              ${matchesByTime.map(([timeKey, matches]) => 
-                matches.map((match, idx) => {
-                  const conflict = isConflict(match)
-                  const rowStyle = conflict 
-                    ? 'background-color: #fee2e2;' 
-                    : idx % 2 === 0 ? 'background-color: #fafafa;' : 'background-color: #ffffff;'
-                  
-                  return `
-                    <tr style="${rowStyle}">
-                      ${idx === 0 ? `
-                        <td rowspan="${matches.length}" style="padding: 12px 16px; font-weight: 600; vertical-align: top; border-right: 1px solid #e5e5e5; color: #1a1a1a;">
-                          ${formatTime(match.startTime)}
-                        </td>
-                      ` : ''}
-                      <td style="padding: 12px 16px; color: #1a1a1a;">
-                        <span style="display: inline-block; padding: 4px 10px; background-color: #f5f5f5; border: 1px solid #e5e5e5; border-radius: 6px; font-size: 13px; font-weight: 500;">
-                          Bane ${match.pitch}
-                        </span>
-                      </td>
-                      <td style="padding: 12px 16px; font-weight: 500; color: #1a1a1a;">${match.homeTeam.name}</td>
-                      <td style="padding: 12px 16px; text-align: center; color: #737373;">mod</td>
-                      <td style="padding: 12px 16px; font-weight: 500; color: #1a1a1a;">${match.awayTeam.name}</td>
-                      <td style="padding: 12px 16px; color: #737373;">${formatTime(match.endTime)}</td>
-                    </tr>
-                  `
-                }).join('')
-              ).join('')}
+              ${tableRows}
             </tbody>
           </table>
         </div>
