@@ -34,18 +34,25 @@ This is a multi-step wizard with state management, data validation, algorithm ex
 - **Success criteria**: No team plays two matches simultaneously, rest time distributed fairly when possible, BYE team auto-added for odd counts, conflicts clearly highlighted
 
 ### Program Output & Export
-- **Functionality**: Sortable table of matches with time/pitch/teams, filters by team/pitch, search, print layout, CSV export, clipboard copy
-- **Purpose**: Transform generated schedule into usable formats for tournament day
+- **Functionality**: Sortable table of matches with time/pitch/teams, filters by team/pitch, search, print layout, CSV export, clipboard copy, image export with OKLCH-to-RGB color conversion
+- **Purpose**: Transform generated schedule into usable formats for tournament day, including shareable images
 - **Trigger**: Schedule successfully generated
-- **Progression**: View table → Apply filters/search (optional) → Export to CSV / Copy text / Print → Physical program ready
-- **Success criteria**: Print view fits A4 with proper page breaks, CSV includes all match data, filters update table instantly, text copy is properly formatted
+- **Progression**: View table → Apply filters/search (optional) → Export to CSV / Copy text / Print / Export as PNG image → Physical/digital program ready
+- **Success criteria**: Print view fits A4 with proper page breaks, CSV includes all match data, filters update table instantly, text copy is properly formatted, PNG export handles all colors correctly without OKLCH parsing errors
 
 ### Tournament Persistence
-- **Functionality**: Save tournament to local storage, load existing tournaments, rename, delete (owner-only), regenerate schedule after edits, URL-based navigation with browser back/forward support
+- **Functionality**: Save tournament to local storage, load existing tournaments, rename, delete (owner-only or admin), regenerate schedule after edits, URL-based navigation with browser back/forward support, share tournament via URL
 - **Purpose**: Allow organizers to prepare tournaments in advance and make adjustments, with seamless navigation and access control for tournament creators
-- **Trigger**: Auto-save after generation, explicit save button, load from tournament list, URL parameters on page load
-- **Progression**: Create tournament → Auto-saved with owner ID → Return later → Load from list → Edit settings (owner) or View only (others) → Regenerate (owner) → Updated schedule
-- **Success criteria**: All tournament data persists across sessions, regeneration preserves settings but recalculates schedule, delete button only visible to tournament owner, browser back/forward buttons work correctly through wizard steps and tournament views
+- **Trigger**: Auto-save after generation, explicit save button, load from tournament list, URL parameters on page load, share button for URL copying
+- **Progression**: Create tournament → Auto-saved with owner ID → Return later → Load from list → Edit settings (owner) or View only (others) → Regenerate (owner) → Updated schedule → Share URL → Others can view via link
+- **Success criteria**: All tournament data persists across sessions, regeneration preserves settings but recalculates schedule, delete button only visible to tournament owner or admin users, browser back/forward buttons work correctly through wizard steps and tournament views, shared URLs load tournament directly in view mode
+
+### Image Export & Test Suite
+- **Functionality**: Export tournament schedule as PNG image with proper color conversion from OKLCH to RGB/HEX, automated test suite to verify export functionality
+- **Purpose**: Enable sharing of tournament schedules as images on social media, messaging apps, or for archival purposes
+- **Trigger**: User clicks "Eksporter som Billede" button on schedule view, or runs diagnostic tests from main page
+- **Progression**: Schedule view → Click export → Color conversion (OKLCH → RGB → HEX) → HTML2Canvas rendering → PNG download → Image saved
+- **Success criteria**: PNG export works without OKLCH color parsing errors, all table formatting preserved in image, test suite validates color conversion and HTML2Canvas functionality, image quality suitable for sharing at 2x scale
 
 ## Edge Case Handling
 
@@ -55,8 +62,10 @@ This is a multi-step wizard with state management, data validation, algorithm ex
 - **Insufficient Unique Pairings** - When max matches per team exceeds available opponents, show warning modal and allow user to accept duplicate matchups
 - **Scheduling Conflicts** - Highlight matches in red where same team appears in parallel time slots, show conflict summary
 - **Empty States** - Guide users with helpful messages (no tournaments saved, no teams added, no matches generated yet)
-- **Tournament Ownership** - Only tournament creator can delete their tournaments; delete button hidden for non-owners viewing shared tournaments
+- **Tournament Ownership** - Only tournament creator can delete their tournaments; delete button hidden for non-owners viewing shared tournaments; admin users can delete any tournament
 - **Unauthenticated Access** - Public tournaments can be viewed by anyone via shared URL, but only authenticated users can create new tournaments
+- **OKLCH Color Export** - HTML2Canvas doesn't support OKLCH colors; all colors automatically converted to HEX format for image export to prevent parsing errors
+- **Image Export Testing** - Built-in test suite on main page validates color conversion, HTML2Canvas rendering, and full table export functionality
 
 ## Design Direction
 

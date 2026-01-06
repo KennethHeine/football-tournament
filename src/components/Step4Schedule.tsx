@@ -11,6 +11,7 @@ import { ArrowLeft, Printer, Download, Copy, MagnifyingGlass, WarningCircle, Che
 import { exportToCSV, exportToText } from '@/lib/scheduler'
 import { toast } from 'sonner'
 import html2canvas from 'html2canvas'
+import { SAFE_COLORS } from '@/lib/color-utils'
 
 interface Step4Props {
   schedule: GeneratedSchedule
@@ -118,7 +119,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
         left: -9999px;
         top: 0;
         width: 1200px;
-        background-color: #ffffff;
+        background-color: ${SAFE_COLORS.card};
         padding: 40px;
         font-family: Inter, system-ui, sans-serif;
       `
@@ -129,11 +130,11 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
         matches.map((match, idx) => {
           const conflict = isConflict(match)
           const rowBg = conflict 
-            ? '#fee2e2' 
-            : idx % 2 === 0 ? '#fafafa' : '#ffffff'
+            ? SAFE_COLORS.tableConflict
+            : idx % 2 === 0 ? SAFE_COLORS.tableBg : SAFE_COLORS.tableAlt
           
           const timeCell = idx === 0 ? `
-            <td rowspan="${matches.length}" style="padding: 12px 16px; font-weight: 600; vertical-align: top; border-right: 1px solid #e5e5e5; color: #1a1a1a;">
+            <td rowspan="${matches.length}" style="padding: 12px 16px; font-weight: 600; vertical-align: top; border-right: 1px solid ${SAFE_COLORS.border}; color: ${SAFE_COLORS.text};">
               ${formatTime(match.startTime)}
             </td>
           ` : ''
@@ -141,39 +142,39 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
           return `
             <tr style="background-color: ${rowBg};">
               ${timeCell}
-              <td style="padding: 12px 16px; color: #1a1a1a;">
-                <span style="display: inline-block; padding: 4px 10px; background-color: #f5f5f5; border: 1px solid #e5e5e5; border-radius: 6px; font-size: 13px; font-weight: 500; color: #1a1a1a;">
+              <td style="padding: 12px 16px; color: ${SAFE_COLORS.text};">
+                <span style="display: inline-block; padding: 4px 10px; background-color: ${SAFE_COLORS.muted}; border: 1px solid ${SAFE_COLORS.border}; border-radius: 6px; font-size: 13px; font-weight: 500; color: ${SAFE_COLORS.text};">
                   Bane ${match.pitch}
                 </span>
               </td>
-              <td style="padding: 12px 16px; font-weight: 500; color: #1a1a1a;">${match.homeTeam.name}</td>
-              <td style="padding: 12px 16px; text-align: center; color: #737373;">mod</td>
-              <td style="padding: 12px 16px; font-weight: 500; color: #1a1a1a;">${match.awayTeam.name}</td>
-              <td style="padding: 12px 16px; color: #737373;">${formatTime(match.endTime)}</td>
+              <td style="padding: 12px 16px; font-weight: 500; color: ${SAFE_COLORS.text};">${match.homeTeam.name}</td>
+              <td style="padding: 12px 16px; text-align: center; color: ${SAFE_COLORS.mutedForeground};">mod</td>
+              <td style="padding: 12px 16px; font-weight: 500; color: ${SAFE_COLORS.text};">${match.awayTeam.name}</td>
+              <td style="padding: 12px 16px; color: ${SAFE_COLORS.mutedForeground};">${formatTime(match.endTime)}</td>
             </tr>
           `
         }).join('')
       ).join('')
       
       captureElement.innerHTML = `
-        <div style="margin-bottom: 32px; border-bottom: 2px solid #e5e5e5; padding-bottom: 24px;">
-          <h1 style="font-family: ${headingFont}; font-size: 36px; font-weight: 700; text-align: center; margin: 0 0 12px 0; color: #1a1a1a;">
+        <div style="margin-bottom: 32px; border-bottom: 2px solid ${SAFE_COLORS.border}; padding-bottom: 24px;">
+          <h1 style="font-family: ${headingFont}; font-size: 36px; font-weight: 700; text-align: center; margin: 0 0 12px 0; color: ${SAFE_COLORS.text};">
             ${tournamentName || 'Turneringsskema'}
           </h1>
-          <p style="text-align: center; color: #737373; font-size: 16px; margin: 0;">
+          <p style="text-align: center; color: ${SAFE_COLORS.mutedForeground}; font-size: 16px; margin: 0;">
             ${schedule.matches.length} kampe • ${pitches.length} ban${pitches.length !== 1 ? 'er' : 'e'}
           </p>
         </div>
-        <div style="border: 1px solid #e5e5e5; border-radius: 8px; overflow: hidden;">
+        <div style="border: 1px solid ${SAFE_COLORS.border}; border-radius: 8px; overflow: hidden;">
           <table style="width: 100%; border-collapse: collapse;">
             <thead>
-              <tr style="background-color: #f5f5f5;">
-                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #525252; border-bottom: 1px solid #e5e5e5;">Tidspunkt</th>
-                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #525252; border-bottom: 1px solid #e5e5e5;">Bane</th>
-                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #525252; border-bottom: 1px solid #e5e5e5;">Hjemme</th>
-                <th style="padding: 12px 16px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #525252; border-bottom: 1px solid #e5e5e5;">mod</th>
-                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #525252; border-bottom: 1px solid #e5e5e5;">Ude</th>
-                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #525252; border-bottom: 1px solid #e5e5e5;">Sluttid</th>
+              <tr style="background-color: ${SAFE_COLORS.headerBg};">
+                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">Tidspunkt</th>
+                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">Bane</th>
+                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">Hjemme</th>
+                <th style="padding: 12px 16px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">mod</th>
+                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">Ude</th>
+                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">Sluttid</th>
               </tr>
             </thead>
             <tbody>
@@ -189,7 +190,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
       
       const canvas = await html2canvas(captureElement, {
         scale: 2,
-        backgroundColor: '#ffffff',
+        backgroundColor: SAFE_COLORS.card,
         logging: false,
         useCORS: true,
         allowTaint: false,
