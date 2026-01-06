@@ -111,7 +111,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
   return (
     <Card>
       <CardHeader className="no-print">
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col gap-4">
           <div>
             <CardTitle className="text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>
               {tournamentName || 'Turneringsskema'}
@@ -120,7 +120,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
               {schedule.matches.length} kampe planlagt på tværs af {pitches.length} ban{pitches.length !== 1 ? 'er' : 'e'}
             </CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button onClick={handlePrint} variant="outline" size="sm" className="gap-2">
               <Printer size={18} /> Udskriv
             </Button>

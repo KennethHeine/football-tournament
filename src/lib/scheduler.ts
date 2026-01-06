@@ -174,38 +174,45 @@ function assignTimeSlots(matches: Match[], settings: TournamentSettings): Match[
   
   const pitchSchedules: Match[][] = Array.from({ length: settings.numPitches }, () => [])
   const teamLastEndTime = new Map<string, Date>()
+  const pitchNextAvailable: Date[] = Array.from({ length: settings.numPitches }, () => new Date(startDateTime))
   
   for (const match of matches) {
     let assigned = false
-    let currentSlot = 0
+    let bestPitch = -1
+    let bestStartTime: Date | null = null
+    let earliestPossibleStart = new Date(startDateTime)
     
-    while (!assigned) {
-      const slotStartTime = new Date(startDateTime.getTime() + currentSlot * slotDuration * 60000)
+    const homeLastEnd = teamLastEndTime.get(match.homeTeam.id)
+    const awayLastEnd = teamLastEndTime.get(match.awayTeam.id)
+    
+    if (homeLastEnd && homeLastEnd > earliestPossibleStart) {
+      earliestPossibleStart = new Date(homeLastEnd)
+    }
+    if (awayLastEnd && awayLastEnd > earliestPossibleStart) {
+      earliestPossibleStart = new Date(awayLastEnd)
+    }
+    
+    for (let pitch = 0; pitch < settings.numPitches; pitch++) {
+      const pitchAvailableAt = pitchNextAvailable[pitch]
+      const possibleStartTime = new Date(Math.max(earliestPossibleStart.getTime(), pitchAvailableAt.getTime()))
       
-      for (let pitch = 0; pitch < settings.numPitches; pitch++) {
-        const homeLastEnd = teamLastEndTime.get(match.homeTeam.id)
-        const awayLastEnd = teamLastEndTime.get(match.awayTeam.id)
-        
-        const homeAvailable = !homeLastEnd || homeLastEnd <= slotStartTime
-        const awayAvailable = !awayLastEnd || awayLastEnd <= slotStartTime
-        
-        if (homeAvailable && awayAvailable) {
-          match.pitch = pitch + 1
-          match.startTime = new Date(slotStartTime)
-          match.endTime = new Date(slotStartTime.getTime() + matchDuration * 60000)
-          
-          pitchSchedules[pitch].push(match)
-          teamLastEndTime.set(match.homeTeam.id, match.endTime)
-          teamLastEndTime.set(match.awayTeam.id, match.endTime)
-          
-          assigned = true
-          break
-        }
+      if (bestStartTime === null || possibleStartTime < bestStartTime) {
+        bestStartTime = possibleStartTime
+        bestPitch = pitch
       }
+    }
+    
+    if (bestPitch >= 0 && bestStartTime) {
+      match.pitch = bestPitch + 1
+      match.startTime = new Date(bestStartTime)
+      match.endTime = new Date(bestStartTime.getTime() + matchDuration * 60000)
       
-      if (!assigned) {
-        currentSlot++
-      }
+      pitchSchedules[bestPitch].push(match)
+      pitchNextAvailable[bestPitch] = new Date(match.endTime.getTime() + settings.breakBetweenMatches * 60000)
+      teamLastEndTime.set(match.homeTeam.id, match.endTime)
+      teamLastEndTime.set(match.awayTeam.id, match.endTime)
+      
+      assigned = true
     }
   }
   
