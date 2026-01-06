@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { GeneratedSchedule, Match, Team } from '@/lib/types'
-import { ArrowLeft, Printer, Download, Copy, MagnifyingGlass, WarningCircle, Check } from '@phosphor-icons/react'
+import { ArrowLeft, Printer, Download, Copy, MagnifyingGlass, WarningCircle, Check, ShareNetwork } from '@phosphor-icons/react'
 import { exportToCSV, exportToText } from '@/lib/scheduler'
 import { toast } from 'sonner'
 
@@ -24,6 +24,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
   const [selectedPitch, setSelectedPitch] = useState<string>('all')
   const [selectedTeam, setSelectedTeam] = useState<string>('all')
   const [copied, setCopied] = useState(false)
+  const [urlCopied, setUrlCopied] = useState(false)
 
   const pitches = useMemo(() => {
     const pitchSet = new Set(schedule.matches.map(m => m.pitch))
@@ -95,6 +96,14 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
     toast.success('Skema kopieret til udklipsholder')
   }
 
+  const handleShareTournament = async () => {
+    const url = window.location.href
+    await navigator.clipboard.writeText(url)
+    setUrlCopied(true)
+    setTimeout(() => setUrlCopied(false), 2000)
+    toast.success('Turnerings-URL kopieret til udklipsholder')
+  }
+
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
   }
@@ -121,6 +130,10 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button onClick={handleShareTournament} variant="default" size="sm" className="gap-2">
+              {urlCopied ? <Check size={18} /> : <ShareNetwork size={18} />}
+              {urlCopied ? 'URL Kopieret!' : 'Del Turnering'}
+            </Button>
             <Button onClick={handlePrint} variant="outline" size="sm" className="gap-2">
               <Printer size={18} /> Udskriv
             </Button>
