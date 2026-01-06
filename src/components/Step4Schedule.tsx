@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,9 +7,10 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { GeneratedSchedule, Match, Team } from '@/lib/types'
-import { ArrowLeft, Printer, Download, Copy, MagnifyingGlass, WarningCircle, Check, ShareNetwork } from '@phosphor-icons/react'
+import { ArrowLeft, Printer, Download, Copy, MagnifyingGlass, WarningCircle, Check, ShareNetwork, Image } from '@phosphor-icons/react'
 import { exportToCSV, exportToText } from '@/lib/scheduler'
 import { toast } from 'sonner'
+import html2canvas from 'html2canvas'
 
 interface Step4Props {
   schedule: GeneratedSchedule
@@ -25,6 +26,8 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
   const [selectedTeam, setSelectedTeam] = useState<string>('all')
   const [copied, setCopied] = useState(false)
   const [urlCopied, setUrlCopied] = useState(false)
+  const [exportingImage, setExportingImage] = useState(false)
+  const scheduleRef = useRef<HTMLDivElement>(null)
 
   const pitches = useMemo(() => {
     const pitchSet = new Set(schedule.matches.map(m => m.pitch))
@@ -104,6 +107,74 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
     toast.success('Turnerings-URL kopieret til udklipsholder')
   }
 
+  const handleExportImage = async () => {
+    if (!scheduleRef.current) return
+    
+    setExportingImage(true)
+    toast.loading('Genererer billede...', { id: 'export-image' })
+    
+    try {
+      const printOnlyElements = scheduleRef.current.querySelectorAll('.print-only')
+      printOnlyElements.forEach(el => {
+        (el as HTMLElement).style.display = 'block'
+      })
+
+      const noPrintElements = scheduleRef.current.querySelectorAll('.no-print')
+      noPrintElements.forEach(el => {
+        (el as HTMLElement).style.display = 'none'
+      })
+      
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      const canvas = await html2canvas(scheduleRef.current, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        logging: false,
+        useCORS: true,
+      })
+      
+      printOnlyElements.forEach(el => {
+        (el as HTMLElement).style.display = ''
+      })
+
+      noPrintElements.forEach(el => {
+        (el as HTMLElement).style.display = ''
+      })
+      
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          toast.error('Kunne ikke generere billede', { id: 'export-image' })
+          setExportingImage(false)
+          return
+        }
+        
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${tournamentName || 'turnering'}-skema.png`
+        a.click()
+        URL.revokeObjectURL(url)
+        
+        toast.success('Billede downloadet', { id: 'export-image' })
+        setExportingImage(false)
+      }, 'image/png')
+    } catch (error) {
+      console.error('Failed to export image:', error)
+      toast.error('Kunne ikke eksportere billede', { id: 'export-image' })
+      setExportingImage(false)
+      
+      const printOnlyElements = scheduleRef.current?.querySelectorAll('.print-only')
+      printOnlyElements?.forEach(el => {
+        (el as HTMLElement).style.display = ''
+      })
+
+      const noPrintElements = scheduleRef.current?.querySelectorAll('.no-print')
+      noPrintElements?.forEach(el => {
+        (el as HTMLElement).style.display = ''
+      })
+    }
+  }
+
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
   }
@@ -134,6 +205,9 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
               {urlCopied ? <Check size={18} /> : <ShareNetwork size={18} />}
               {urlCopied ? 'URL Kopieret!' : 'Del Turnering'}
             </Button>
+            <Button onClick={handleExportImage} variant="outline" size="sm" className="gap-2" disabled={exportingImage}>
+              <Image size={18} /> {exportingImage ? 'Genererer...' : 'Gem som billede'}
+            </Button>
             <Button onClick={handlePrint} variant="outline" size="sm" className="gap-2">
               <Printer size={18} /> Udskriv
             </Button>
@@ -147,8 +221,17 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent ref={scheduleRef}>
         <div className="space-y-6">
+          <div className="print-only border-b pb-4 mb-6">
+            <h1 className="text-3xl font-bold text-center mb-2" style={{ fontFamily: 'var(--font-heading)' }}>
+              {tournamentName || 'Turneringsskema'}
+            </h1>
+            <p className="text-center text-muted-foreground">
+              {schedule.matches.length} kampe • {pitches.length} ban{pitches.length !== 1 ? 'er' : 'e'}
+            </p>
+          </div>
+
           {schedule.warnings.length > 0 && (
             <div className="space-y-2 no-print">
               {schedule.warnings.map((warning, idx) => (
