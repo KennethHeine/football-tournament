@@ -11,10 +11,11 @@ import { Step4Schedule } from '@/components/Step4Schedule'
 import type { Tournament, TournamentSettings, Team, SchedulingConfig, GeneratedSchedule } from '@/lib/types'
 import { generateSchedule } from '@/lib/scheduler'
 import { v4 as uuidv4 } from 'uuid'
-import { Plus, Trash, CalendarBlank, ShareNetwork, User } from '@phosphor-icons/react'
+import { Plus, Trash, CalendarBlank, ShareNetwork, User, ShieldCheck } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 const INITIAL_SETTINGS: TournamentSettings = {
   name: '',
@@ -50,6 +51,7 @@ function App() {
   const [sharedTournamentId, setSharedTournamentId] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [currentUserLogin, setCurrentUserLogin] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -58,6 +60,7 @@ function App() {
         if (user) {
           setCurrentUserId(user.id.toString())
           setCurrentUserLogin(user.login)
+          setIsAdmin(user.isOwner)
         }
       } catch (error) {
         console.error('Failed to fetch user:', error)
@@ -280,6 +283,7 @@ function App() {
 
   const canDeleteTournament = (tournament: Tournament): boolean => {
     if (!currentUserId) return false
+    if (isAdmin) return true
     return tournament.ownerId === currentUserId
   }
 
@@ -321,12 +325,20 @@ function App() {
         <Toaster />
         <div className="container mx-auto px-4 py-12 max-w-5xl">
           <div className="text-center mb-12">
-            <h1 
-              className="text-5xl font-bold mb-4 tracking-tight"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              Fodboldturnering Program Builder
-            </h1>
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <h1 
+                className="text-5xl font-bold tracking-tight"
+                style={{ fontFamily: 'var(--font-heading)' }}
+              >
+                Fodboldturnering Program Builder
+              </h1>
+              {isAdmin && (
+                <Badge variant="default" className="gap-1.5 px-3 py-1 text-sm">
+                  <ShieldCheck size={16} weight="fill" />
+                  Admin
+                </Badge>
+              )}
+            </div>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Opret professionelle kampskemaer på tværs af flere baner med automatisk tidsfordeling og konfliktdetektering
             </p>
@@ -402,14 +414,23 @@ function App() {
                           {sharedTournamentId === tournament.id ? 'Kopieret!' : 'Del'}
                         </Button>
                         {canDeleteTournament(tournament) && (
-                          <Button
-                            onClick={() => handleDeleteTournament(tournament.id)}
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Trash size={20} />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                onClick={() => handleDeleteTournament(tournament.id)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash size={20} />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {isAdmin && tournament.ownerId !== currentUserId
+                                ? 'Slet (Admin rettigheder)'
+                                : 'Slet turnering'}
+                            </TooltipContent>
+                          </Tooltip>
                         )}
                       </div>
                     </div>
