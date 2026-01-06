@@ -66,23 +66,30 @@ export function oklchStringToHex(oklchString: string): string {
   return rgbToHex(rgb.r, rgb.g, rgb.b)
 }
 
+function convertOklch(l: number, c: number, h: number): string {
+  const rgb = oklchToRgb(l, c, h)
+  return rgbToHex(rgb.r, rgb.g, rgb.b)
+}
+
 export const SAFE_COLORS = {
-  background: '#fafafa',
-  foreground: '#3f3f46',
-  card: '#ffffff',
-  border: '#e5e5e5',
-  muted: '#f5f5f5',
-  mutedForeground: '#737373',
-  primary: '#16a34a',
-  primaryForeground: '#ffffff',
-  secondary: '#a8a8b2',
-  destructive: '#dc2626',
-  accent: '#fde047',
-  accentForeground: '#3f3f46',
-  tableBg: '#fafafa',
-  tableAlt: '#ffffff',
-  tableConflict: '#fee2e2',
-  headerBg: '#f5f5f5',
-  headerText: '#525252',
-  text: '#1a1a1a',
+  background: convertOklch(0.98, 0, 0),
+  foreground: convertOklch(0.25, 0.05, 250),
+  card: convertOklch(1, 0, 0),
+  cardForeground: convertOklch(0.25, 0.05, 250),
+  border: convertOklch(0.90, 0, 0),
+  muted: convertOklch(0.96, 0, 0),
+  mutedForeground: convertOklch(0.45, 0.02, 240),
+  primary: convertOklch(0.55, 0.15, 145),
+  primaryForeground: convertOklch(1, 0, 0),
+  secondary: convertOklch(0.65, 0.02, 240),
+  destructive: convertOklch(0.55, 0.22, 25),
+  destructiveForeground: convertOklch(1, 0, 0),
+  accent: convertOklch(0.85, 0.18, 95),
+  accentForeground: convertOklch(0.25, 0.05, 250),
+  tableBg: convertOklch(0.98, 0, 0),
+  tableAlt: convertOklch(1, 0, 0),
+  tableConflict: convertOklch(0.95, 0.05, 25),
+  headerBg: convertOklch(0.96, 0, 0),
+  headerText: convertOklch(0.45, 0.02, 240),
+  text: convertOklch(0.25, 0.05, 250),
 }
