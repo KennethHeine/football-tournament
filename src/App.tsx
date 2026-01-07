@@ -23,6 +23,7 @@ const INITIAL_SETTINGS: TournamentSettings = {
   startDate: new Date().toISOString().split('T')[0],
   startTime: '09:00',
   numPitches: 2,
+  pitchNames: ['Bane 1', 'Bane 2'],
   matchMode: 'full-time',
   matchDurationMinutes: 30,
   breakBetweenMatches: 5,

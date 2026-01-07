@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { GeneratedSchedule, Match, Team, TournamentSettings } from '@/lib/types'
 import { ArrowLeft, Printer, Download, Copy, MagnifyingGlass, WarningCircle, Check, ShareNetwork, Image } from '@phosphor-icons/react'
-import { exportToCSV, exportToText } from '@/lib/scheduler'
+import { exportToCSV, exportToText, getPitchName } from '@/lib/scheduler'
 import { toast } from 'sonner'
 import html2canvas from 'html2canvas'
 import { SAFE_COLORS } from '@/lib/color-utils'
@@ -82,7 +82,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
   }
 
   const handleDownloadCSV = () => {
-    const csv = exportToCSV(schedule.matches)
+    const csv = exportToCSV(schedule.matches, settings)
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -94,7 +94,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
   }
 
   const handleCopyText = async () => {
-    const text = exportToText(schedule.matches)
+    const text = exportToText(schedule.matches, settings)
     await navigator.clipboard.writeText(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -153,7 +153,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
               ${timeCell}
               <td style="padding: 12px 16px; color: ${SAFE_COLORS.text};">
                 <span style="display: inline-block; padding: 4px 10px; background-color: ${SAFE_COLORS.muted}; border: 1px solid ${SAFE_COLORS.border}; border-radius: 6px; font-size: 13px; font-weight: 500; color: ${SAFE_COLORS.text};">
-                  Bane ${match.pitch}
+                  ${getPitchName(match.pitch, settings)}
                 </span>
               </td>
               <td style="padding: 12px 16px; font-weight: 500; color: ${SAFE_COLORS.text};">${match.homeTeam.name}</td>
@@ -332,7 +332,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
                     <SelectItem value="all">Alle baner</SelectItem>
                     {pitches.map(pitch => (
                       <SelectItem key={pitch} value={pitch.toString()}>
-                        Bane {pitch}
+                        {getPitchName(pitch, settings)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -383,7 +383,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
                               </td>
                             ) : null}
                             <td className="px-4 py-3">
-                              <Badge variant="outline">Bane {match.pitch}</Badge>
+                              <Badge variant="outline">{getPitchName(match.pitch, settings)}</Badge>
                             </td>
                             <td className="px-4 py-3 font-medium">{match.homeTeam.name}</td>
                             <td className="px-4 py-3 text-center text-muted-foreground">mod</td>
@@ -447,7 +447,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
                             <div className="flex items-center gap-4">
                               <div className="text-center">
                                 <div className="text-xs text-muted-foreground">Kamp {idx + 1}</div>
-                                <Badge variant="outline" className="mt-1">Bane {match.pitch}</Badge>
+                                <Badge variant="outline" className="mt-1">{getPitchName(match.pitch, settings)}</Badge>
                               </div>
                               <div>
                                 <div className="font-semibold">

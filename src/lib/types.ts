@@ -7,6 +7,7 @@ export interface TournamentSettings {
   startDate: string
   startTime: string
   numPitches: number
+  pitchNames?: string[]
   matchMode: MatchMode
   matchDurationMinutes?: number
   halfDurationMinutes?: number

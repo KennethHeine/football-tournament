@@ -2,6 +2,13 @@ import type { Team, Match, TournamentSettings, SchedulingConfig, GeneratedSchedu
 
 const BYE_TEAM: Team = { id: 'BYE', name: 'BYE' }
 
+export function getPitchName(pitchNumber: number, settings: TournamentSettings): string {
+  if (settings.pitchNames && settings.pitchNames[pitchNumber - 1]) {
+    return settings.pitchNames[pitchNumber - 1]
+  }
+  return `Bane ${pitchNumber}`
+}
+
 export function generateSchedule(
   settings: TournamentSettings,
   teams: Team[],
@@ -272,11 +279,11 @@ function detectConflicts(matches: Match[]): ScheduleConflict[] {
   return conflicts
 }
 
-export function exportToCSV(matches: Match[]): string {
+export function exportToCSV(matches: Match[], settings: TournamentSettings): string {
   const headers = ['Time', 'Pitch', 'Home Team', 'Away Team', 'End Time']
   const rows = matches.map(m => [
     formatTime(m.startTime),
-    m.pitch.toString(),
+    getPitchName(m.pitch, settings),
     m.homeTeam.name,
     m.awayTeam.name,
     formatTime(m.endTime)
@@ -285,7 +292,7 @@ export function exportToCSV(matches: Match[]): string {
   return [headers, ...rows].map(row => row.join(',')).join('\n')
 }
 
-export function exportToText(matches: Match[]): string {
+export function exportToText(matches: Match[], settings: TournamentSettings): string {
   let text = 'FOOTBALL TOURNAMENT SCHEDULE\n'
   text += '='.repeat(60) + '\n\n'
   
@@ -302,7 +309,7 @@ export function exportToText(matches: Match[]): string {
   for (const [time, matchesAtTime] of matchesByTime) {
     text += `${time}\n`
     matchesAtTime.forEach(match => {
-      text += `  Pitch ${match.pitch}: ${match.homeTeam.name} vs ${match.awayTeam.name}\n`
+      text += `  ${getPitchName(match.pitch, settings)}: ${match.homeTeam.name} vs ${match.awayTeam.name}\n`
     })
     text += '\n'
   }

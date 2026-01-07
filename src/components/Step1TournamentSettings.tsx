@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { TournamentSettings, MatchMode } from '@/lib/types'
 import { ArrowRight } from '@phosphor-icons/react'
+import { useState, useEffect } from 'react'
 
 const tournamentSettingsSchema = z.object({
   name: z.string(),
@@ -49,9 +50,36 @@ export function Step1TournamentSettings({ initialData, onNext }: Step1Props) {
   })
 
   const matchMode = watch('matchMode')
+  const numPitches = watch('numPitches')
+  const [pitchNames, setPitchNames] = useState<string[]>(
+    initialData.pitchNames || Array.from({ length: initialData.numPitches }, (_, i) => `Bane ${i + 1}`)
+  )
+
+  useEffect(() => {
+    const currentNum = Number(numPitches) || 1
+    setPitchNames((current) => {
+      const newNames = [...current]
+      if (newNames.length < currentNum) {
+        for (let i = newNames.length; i < currentNum; i++) {
+          newNames.push(`Bane ${i + 1}`)
+        }
+      } else if (newNames.length > currentNum) {
+        newNames.splice(currentNum)
+      }
+      return newNames
+    })
+  }, [numPitches])
+
+  const handlePitchNameChange = (index: number, name: string) => {
+    setPitchNames((current) => {
+      const updated = [...current]
+      updated[index] = name
+      return updated
+    })
+  }
 
   const onSubmit = (data: TournamentSettings) => {
-    onNext(data)
+    onNext({ ...data, pitchNames })
   }
 
   const today = new Date().toISOString().split('T')[0]
@@ -117,6 +145,30 @@ export function Step1TournamentSettings({ initialData, onNext }: Step1Props) {
                 <p className="text-sm text-destructive">{errors.numPitches.message}</p>
               )}
             </div>
+
+            {numPitches && Number(numPitches) > 0 && (
+              <div className="space-y-3 animate-fadeIn">
+                <Label>Banenavne (Valgfri)</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {pitchNames.map((name, index) => (
+                    <div key={index} className="space-y-1.5">
+                      <Label htmlFor={`pitch-${index}`} className="text-xs text-muted-foreground">
+                        Bane {index + 1}
+                      </Label>
+                      <Input
+                        id={`pitch-${index}`}
+                        value={name}
+                        onChange={(e) => handlePitchNameChange(index, e.target.value)}
+                        placeholder={`Bane ${index + 1}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Giv hver bane et specifikt navn (f.eks. "Hovedbane", "Træningsbane A")
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="matchMode">Kamptilstand *</Label>
