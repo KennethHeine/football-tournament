@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import type { GeneratedSchedule, Match, Team } from '@/lib/types'
+import type { GeneratedSchedule, Match, Team, TournamentSettings } from '@/lib/types'
 import { ArrowLeft, Printer, Download, Copy, MagnifyingGlass, WarningCircle, Check, ShareNetwork, Image } from '@phosphor-icons/react'
 import { exportToCSV, exportToText } from '@/lib/scheduler'
 import { toast } from 'sonner'
@@ -17,11 +17,12 @@ interface Step4Props {
   schedule: GeneratedSchedule
   tournamentName: string
   teams: Team[]
+  settings: TournamentSettings
   onBack: () => void
   onSave: () => void
 }
 
-export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave }: Step4Props) {
+export function Step4Schedule({ schedule, tournamentName, teams, settings, onBack, onSave }: Step4Props) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPitch, setSelectedPitch] = useState<string>('all')
   const [selectedTeam, setSelectedTeam] = useState<string>('all')
@@ -108,6 +109,14 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
     toast.success('Turnerings-URL kopieret til udklipsholder')
   }
 
+  const getMatchTimingInfo = () => {
+    if (settings.matchMode === 'full-time') {
+      return `Spilletid: ${settings.matchDurationMinutes} min`
+    } else {
+      return `Spilletid: 2 × ${settings.halfDurationMinutes} min | Halvleg pause: ${settings.halftimeBreakMinutes} min`
+    }
+  }
+
   const handleExportImage = async () => {
     setExportingImage(true)
     const toastId = toast.loading('Genererer billede...')
@@ -161,8 +170,11 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
           <h1 style="font-family: ${headingFont}; font-size: 36px; font-weight: 700; text-align: center; margin: 0 0 12px 0; color: ${SAFE_COLORS.text};">
             ${tournamentName || 'Turneringsskema'}
           </h1>
-          <p style="text-align: center; color: ${SAFE_COLORS.mutedForeground}; font-size: 16px; margin: 0;">
+          <p style="text-align: center; color: ${SAFE_COLORS.mutedForeground}; font-size: 16px; margin: 0 0 8px 0;">
             ${schedule.matches.length} kampe • ${pitches.length} ban${pitches.length !== 1 ? 'er' : 'e'}
+          </p>
+          <p style="text-align: center; color: ${SAFE_COLORS.mutedForeground}; font-size: 14px; margin: 0;">
+            ${getMatchTimingInfo()}
           </p>
         </div>
         <div style="border: 1px solid ${SAFE_COLORS.border}; border-radius: 8px; overflow: hidden;">
@@ -277,6 +289,9 @@ export function Step4Schedule({ schedule, tournamentName, teams, onBack, onSave 
             </h1>
             <p className="text-center text-muted-foreground">
               {schedule.matches.length} kampe • {pitches.length} ban{pitches.length !== 1 ? 'er' : 'e'}
+            </p>
+            <p className="text-center text-muted-foreground text-sm mt-1">
+              {getMatchTimingInfo()}
             </p>
           </div>
 

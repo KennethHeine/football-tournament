@@ -515,6 +515,7 @@ function App() {
             schedule={schedule}
             tournamentName={settings.name}
             teams={teams}
+            settings={settings}
             onBack={() => {
               setCurrentStep(3)
               updateURL(currentTournamentId, 3)
