@@ -16,7 +16,6 @@ import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { ImageExportTest } from '@/components/ImageExportTest'
 
 const INITIAL_SETTINGS: TournamentSettings = {
   name: '',
@@ -441,8 +440,6 @@ function App() {
               </CardContent>
             </Card>
           )}
-
-          <ImageExportTest />
         </div>
 
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
