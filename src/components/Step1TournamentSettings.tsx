@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { TournamentSettings, MatchMode } from '@/lib/types'
-import { ArrowRight } from '@phosphor-icons/react'
+import { ArrowRight, ArrowLeft } from '@phosphor-icons/react'
 import { useState, useEffect } from 'react'
 
 const tournamentSettingsSchema = z.object({
@@ -41,9 +41,10 @@ const tournamentSettingsSchema = z.object({
 interface Step1Props {
   initialData: TournamentSettings
   onNext: (data: TournamentSettings) => void
+  onBack?: () => void
 }
 
-export function Step1TournamentSettings({ initialData, onNext }: Step1Props) {
+export function Step1TournamentSettings({ initialData, onNext, onBack }: Step1Props) {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<TournamentSettings>({
     resolver: zodResolver(tournamentSettingsSchema),
     defaultValues: initialData
@@ -255,8 +256,14 @@ export function Step1TournamentSettings({ initialData, onNext }: Step1Props) {
             </div>
           </div>
 
-          <div className="flex justify-end">
-            <Button type="submit" size="lg" className="gap-2">
+          <div className="flex justify-between">
+            {onBack && (
+              <Button type="button" variant="outline" size="lg" className="gap-2" onClick={onBack}>
+                <ArrowLeft size={20} />
+                Tilbage
+              </Button>
+            )}
+            <Button type="submit" size="lg" className="gap-2 ml-auto">
               Næste <ArrowRight size={20} />
             </Button>
           </div>

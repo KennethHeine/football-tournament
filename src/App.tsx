@@ -482,6 +482,10 @@ function App() {
           <Step1TournamentSettings
             initialData={settings}
             onNext={handleStep1Complete}
+            onBack={() => {
+              setCurrentStep(0)
+              updateURL(null, 0)
+            }}
           />
         )}
 
