@@ -1,0 +1,123 @@
+name: Azure Static Web Apps CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - main
+  workflow_dispatch:
+
+# Add id-token permission for OIDC authentication
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build_and_deploy_job:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    runs-on: ubuntu-latest
+    name: Build and Deploy Job
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          lfs: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run unit tests
+        run: npm test -- --run
+
+      - name: Build application
+        run: npm run build
+
+      # Option 1: Using OIDC with Service Principal (Recommended)
+      # Uncomment this section and comment out Option 2 if using federated credentials
+      # - name: Azure Login with OIDC
+      #   uses: azure/login@v2
+      #   with:
+      #     client-id: ${{ secrets.AZURE_CLIENT_ID }}
+      #     tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+      #     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      #
+      # - name: Get Static Web App Deployment Token
+      #   id: get_token
+      #   run: |
+      #     TOKEN=$(az staticwebapp secrets list \
+      #       --name ${{ secrets.AZURE_STATIC_WEB_APP_NAME }} \
+      #       --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+      #       --query "properties.apiKey" \
+      #       --output tsv)
+      #     echo "::add-mask::$TOKEN"
+      #     echo "deployment_token=$TOKEN" >> $GITHUB_OUTPUT
+
+      # Option 2: Using Static Deployment Token (Current method)
+      # Comment out this section if using Option 1 with OIDC
+      - name: Build And Deploy
+        id: builddeploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          # If using OIDC (Option 1), replace the above line with:
+          # azure_static_web_apps_api_token: ${{ steps.get_token.outputs.deployment_token }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "/" # App source code path
+          api_location: "" # Api source code path - optional
+          output_location: "dist" # Built app content directory - optional
+
+  close_pull_request_job:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request Job
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      # Option 1: Using OIDC with Service Principal (Recommended)
+      # Uncomment this section if using federated credentials
+      # - name: Azure Login with OIDC
+      #   uses: azure/login@v2
+      #   with:
+      #     client-id: ${{ secrets.AZURE_CLIENT_ID }}
+      #     tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+      #     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      #
+      # - name: Get Static Web App Deployment Token
+      #   id: get_token
+      #   run: |
+      #     TOKEN=$(az staticwebapp secrets list \
+      #       --name ${{ secrets.AZURE_STATIC_WEB_APP_NAME }} \
+      #       --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+      #       --query "properties.apiKey" \
+      #       --output tsv)
+      #     echo "::add-mask::$TOKEN"
+      #     echo "deployment_token=$TOKEN" >> $GITHUB_OUTPUT
+
+      # Option 2: Using Static Deployment Token (Current method)
+      - name: Close Pull Request
+        id: closepullrequest
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          # If using OIDC (Option 1), replace the above line with:
+          # azure_static_web_apps_api_token: ${{ steps.get_token.outputs.deployment_token }}
+          action: "close"

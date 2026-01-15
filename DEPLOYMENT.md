@@ -6,28 +6,86 @@ This document provides instructions for deploying the Football Tournament applic
 
 - Azure account (Free tier available)
 - Azure CLI installed locally
+- PowerShell 5.1+ (Windows) or PowerShell Core 7+ (cross-platform)
 - GitHub repository access
 
-## Option 1: Automated Deployment via Script
+## Deployment Options
 
-### Steps:
+### Option 1: Automated Deployment with PowerShell (Recommended)
+
+#### Using Federated Credentials (OIDC - Most Secure) 🔐
+
+This method uses OpenID Connect for secure, keyless authentication. **Recommended for production.**
 
 1. **Login to Azure CLI:**
-   ```bash
+   ```powershell
    az login
    ```
 
 2. **Run the provisioning script:**
+   ```powershell
+   # PowerShell
+   .\scripts\provision-azure.ps1 `
+       -ResourceGroup "football-tournament-rg" `
+       -Location "westeurope" `
+       -AppName "football-tournament-app"
+   ```
+
+3. **Set up Service Principal with Federated Credentials:**
+   ```powershell
+   .\scripts\setup-service-principal.ps1 `
+       -GitHubOrg "YourGitHubUsername" `
+       -GitHubRepo "football-tournament" `
+       -ResourceGroup "football-tournament-rg" `
+       -AppName "football-tournament-app"
+   ```
+
+4. **Add the GitHub Secrets:**
+   The script will output the values you need to add to your GitHub repository:
+   - Go to your GitHub repository
+   - Navigate to Settings > Secrets and variables > Actions
+   - Click "New repository secret" and add each secret:
+     - `AZURE_CLIENT_ID`
+     - `AZURE_TENANT_ID`
+     - `AZURE_SUBSCRIPTION_ID`
+     - `AZURE_RESOURCE_GROUP`
+     - `AZURE_STATIC_WEB_APP_NAME`
+
+5. **Update the GitHub Actions workflow:**
+   - Use `azure-static-web-apps-oidc.yml` or update the existing workflow
+   - See [FEDERATED-CREDENTIALS.md](./FEDERATED-CREDENTIALS.md) for details
+
+6. **Push to main branch or merge a PR:**
+   The GitHub Actions workflow will automatically deploy your app using OIDC authentication.
+
+📖 **See [FEDERATED-CREDENTIALS.md](./FEDERATED-CREDENTIALS.md) for detailed setup instructions.**
+
+#### Using Static Deployment Token (Quick Start)
+
+1. **Login to Azure CLI:**
+   ```powershell
+   az login
+   ```
+
+2. **Run the provisioning script:**
+   
+   **PowerShell:**
+   ```powershell
+   .\scripts\provision-azure.ps1
+   ```
+   
+   **Bash (Linux/Mac):**
    ```bash
    ./scripts/provision-azure.sh
    ```
 
-   You can customize the deployment by setting environment variables:
-   ```bash
-   RESOURCE_GROUP="my-resource-group" \
-   LOCATION="eastus" \
-   APP_NAME="my-tournament-app" \
-   ./scripts/provision-azure.sh
+   You can customize the deployment with parameters:
+   ```powershell
+   # PowerShell
+   .\scripts\provision-azure.ps1 `
+       -ResourceGroup "my-resource-group" `
+       -Location "eastus" `
+       -AppName "my-tournament-app"
    ```
 
 3. **Add the deployment token to GitHub:**
@@ -40,7 +98,7 @@ This document provides instructions for deploying the Football Tournament applic
 4. **Push to main branch or merge a PR:**
    The GitHub Actions workflow will automatically deploy your app.
 
-## Option 2: Manual Deployment via Azure Portal
+### Option 2: Manual Deployment via Azure Portal
 
 1. **Create a Resource Group:**
    - Login to [Azure Portal](https://portal.azure.com)
