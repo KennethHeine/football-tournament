@@ -88,11 +88,30 @@ We use Playwright for end-to-end testing with 5 test scenarios:
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions to Azure Static Web Apps.
 
-### Quick Deploy
+### Quick Deploy Options
 
-1. Run the provisioning script: `./scripts/provision-azure.sh`
-2. Add the deployment token to GitHub Secrets as `AZURE_STATIC_WEB_APPS_API_TOKEN`
-3. Push to main branch - the GitHub Actions workflow will automatically deploy
+**Option 1: OIDC (Recommended - Most Secure)**
+```powershell
+# 1. Provision resources
+.\scripts\provision-azure.ps1
+
+# 2. Setup service principal with federated credentials
+.\scripts\setup-service-principal.ps1 -GitHubOrg "YourUsername" -GitHubRepo "football-tournament"
+
+# 3. Add the 5 secrets to GitHub (shown in script output)
+# 4. Push to main - automatic deployment with OIDC!
+```
+
+**Option 2: Static Token (Quick Start)**
+```bash
+# 1. Run provisioning script
+./scripts/provision-azure.sh  # or .\scripts\provision-azure.ps1
+
+# 2. Add AZURE_STATIC_WEB_APPS_API_TOKEN to GitHub Secrets
+# 3. Push to main - automatic deployment!
+```
+
+📖 **See [DEPLOYMENT-QUICK-REFERENCE.md](./DEPLOYMENT-QUICK-REFERENCE.md) for details**
 
 ## 📝 Usage
 

@@ -98,6 +98,37 @@ This method uses OpenID Connect for secure, keyless authentication. **Recommende
 4. **Push to main branch or merge a PR:**
    The GitHub Actions workflow will automatically deploy your app.
 
+## GitHub Actions Workflow
+
+The deployment workflow (`azure-static-web-apps.yml`) supports both authentication methods automatically:
+
+### How It Works
+
+The workflow automatically detects which authentication method to use:
+
+1. **OIDC Authentication** (if `AZURE_CLIENT_ID` secret exists):
+   - Logs in to Azure using federated credentials
+   - Retrieves deployment token dynamically
+   - More secure, no long-lived secrets
+
+2. **Static Token** (if only `AZURE_STATIC_WEB_APPS_API_TOKEN` exists):
+   - Uses the static deployment token directly
+   - Simpler setup, good for development
+
+### Required Secrets
+
+**For OIDC (Recommended):**
+- `AZURE_CLIENT_ID` - Service principal application ID
+- `AZURE_TENANT_ID` - Azure AD tenant ID
+- `AZURE_SUBSCRIPTION_ID` - Azure subscription ID
+- `AZURE_RESOURCE_GROUP` - Resource group name
+- `AZURE_STATIC_WEB_APP_NAME` - Static Web App name
+
+**For Static Token:**
+- `AZURE_STATIC_WEB_APPS_API_TOKEN` - Deployment token
+
+**Note:** The workflow will use OIDC if available, otherwise fall back to static token. You can use both methods - OIDC will take precedence.
+
 ### Option 2: Manual Deployment via Azure Portal
 
 1. **Create a Resource Group:**
