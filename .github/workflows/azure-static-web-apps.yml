@@ -52,7 +52,7 @@ jobs:
       # Azure Login with OIDC (if using federated credentials)
       # This step will only run if AZURE_CLIENT_ID secret is set
       - name: Azure Login with OIDC
-        if: vars.USE_OIDC == 'true' || secrets.AZURE_CLIENT_ID != ''
+        if: secrets.AZURE_CLIENT_ID != ''
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -61,7 +61,7 @@ jobs:
 
       # Get deployment token from Azure (if using OIDC)
       - name: Get Static Web App Deployment Token
-        if: vars.USE_OIDC == 'true' || secrets.AZURE_CLIENT_ID != ''
+        if: secrets.AZURE_CLIENT_ID != ''
         id: get_token
         run: |
           TOKEN=$(az staticwebapp secrets list \
@@ -96,7 +96,7 @@ jobs:
     steps:
       # Azure Login with OIDC (if using federated credentials)
       - name: Azure Login with OIDC
-        if: vars.USE_OIDC == 'true' || secrets.AZURE_CLIENT_ID != ''
+        if: secrets.AZURE_CLIENT_ID != ''
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -105,7 +105,7 @@ jobs:
 
       # Get deployment token from Azure (if using OIDC)
       - name: Get Static Web App Deployment Token
-        if: vars.USE_OIDC == 'true' || secrets.AZURE_CLIENT_ID != ''
+        if: secrets.AZURE_CLIENT_ID != ''
         id: get_token
         run: |
           TOKEN=$(az staticwebapp secrets list \

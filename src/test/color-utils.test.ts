@@ -119,9 +119,7 @@ describe('Color Utilities', () => {
 
     it('should have greenish primary color', () => {
       // Primary is pitch green, so green channel should be prominent
-      const r = parseInt(SAFE_COLORS.primary.slice(1, 3), 16)
       const g = parseInt(SAFE_COLORS.primary.slice(3, 5), 16)
-      const b = parseInt(SAFE_COLORS.primary.slice(5, 7), 16)
       
       // Green should be a significant component
       expect(g).toBeGreaterThan(50)
