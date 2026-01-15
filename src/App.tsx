@@ -66,7 +66,7 @@ function App() {
     window.history.pushState({ tournamentId, step }, '', newURL)
   }, [])
 
-  const handlePopState = useCallback((event: PopStateEvent) => {
+  const handlePopState = useCallback((_event: PopStateEvent) => {
     const params = new URLSearchParams(window.location.search)
     const tournamentId = params.get('tournament')
     const step = parseInt(params.get('step') || '0')
