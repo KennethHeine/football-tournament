@@ -11,7 +11,7 @@ import { Step4Schedule } from '@/components/Step4Schedule'
 import type { Tournament, TournamentSettings, Team, SchedulingConfig, GeneratedSchedule } from '@/lib/types'
 import { generateSchedule } from '@/lib/scheduler'
 import { v4 as uuidv4 } from 'uuid'
-import { Plus, Trash, CalendarBlank, ShareNetwork } from '@phosphor-icons/react'
+import { Plus, Trash, CalendarBlank } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
 
@@ -47,7 +47,6 @@ function App() {
   const [currentTournamentId, setCurrentTournamentId] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [tournamentToDelete, setTournamentToDelete] = useState<string | null>(null)
-  const [sharedTournamentId, setSharedTournamentId] = useState<string | null>(null)
 
   const isWizardActive = currentStep > 0
 
@@ -273,14 +272,6 @@ function App() {
     }
   }
 
-  const handleShareTournament = async (tournamentId: string) => {
-    const url = `${window.location.origin}${window.location.pathname}?tournament=${tournamentId}&step=4`
-    await navigator.clipboard.writeText(url)
-    setSharedTournamentId(tournamentId)
-    setTimeout(() => setSharedTournamentId(null), 2000)
-    toast.success('Turnerings-URL kopieret til udklipsholder')
-  }
-
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-GB', {
       day: 'numeric',
@@ -361,18 +352,6 @@ function App() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleShareTournament(tournament.id)
-                          }}
-                          variant="ghost"
-                          size="sm"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity gap-2"
-                        >
-                          <ShareNetwork size={20} />
-                          {sharedTournamentId === tournament.id ? 'Kopieret!' : 'Del'}
-                        </Button>
                         <Button
                           onClick={() => handleDeleteTournament(tournament.id)}
                           variant="ghost"
