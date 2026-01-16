@@ -30,6 +30,10 @@ export default tseslint.config(
           varsIgnorePattern: '^_',
         },
       ],
+      // Disable strict React Compiler rules that conflict with common patterns
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/purity': 'off',
+      'react-hooks/incompatible-library': 'off',
     },
   },
 )
