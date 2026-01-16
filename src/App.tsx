@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -11,11 +11,9 @@ import { Step4Schedule } from '@/components/Step4Schedule'
 import type { Tournament, TournamentSettings, Team, SchedulingConfig, GeneratedSchedule } from '@/lib/types'
 import { generateSchedule } from '@/lib/scheduler'
 import { v4 as uuidv4 } from 'uuid'
-import { Plus, Trash, CalendarBlank, ShareNetwork, User, ShieldCheck } from '@phosphor-icons/react'
+import { Plus, Trash, CalendarBlank } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
-import { Badge } from '@/components/ui/badge'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 const INITIAL_SETTINGS: TournamentSettings = {
   name: '',
@@ -40,7 +38,7 @@ const steps = [
 ]
 
 function App() {
-  const [tournaments, setTournaments] = useKV<Tournament[]>('tournaments', [])
+  const [tournaments, setTournaments] = useLocalStorage<Tournament[]>('tournaments', [])
   const [currentStep, setCurrentStep] = useState(0)
   const [settings, setSettings] = useState<TournamentSettings>(INITIAL_SETTINGS)
   const [teams, setTeams] = useState<Team[]>([])
@@ -49,26 +47,6 @@ function App() {
   const [currentTournamentId, setCurrentTournamentId] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [tournamentToDelete, setTournamentToDelete] = useState<string | null>(null)
-  const [sharedTournamentId, setSharedTournamentId] = useState<string | null>(null)
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [currentUserLogin, setCurrentUserLogin] = useState<string | null>(null)
-  const [isAdmin, setIsAdmin] = useState(false)
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const user = await window.spark.user()
-        if (user) {
-          setCurrentUserId(user.id.toString())
-          setCurrentUserLogin(user.login)
-          setIsAdmin(user.isOwner)
-        }
-      } catch (error) {
-        console.error('Failed to fetch user:', error)
-      }
-    }
-    fetchUser()
-  }, [])
 
   const isWizardActive = currentStep > 0
 
@@ -87,7 +65,7 @@ function App() {
     window.history.pushState({ tournamentId, step }, '', newURL)
   }, [])
 
-  const handlePopState = useCallback((event: PopStateEvent) => {
+  const handlePopState = useCallback((_event: PopStateEvent) => {
     const params = new URLSearchParams(window.location.search)
     const tournamentId = params.get('tournament')
     const step = parseInt(params.get('step') || '0')
@@ -225,8 +203,6 @@ function App() {
         ? (tournaments || []).find(t => t.id === currentTournamentId)?.createdAt || new Date().toISOString()
         : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      ownerId: currentUserId || undefined,
-      ownerLogin: currentUserLogin || undefined,
     }
 
     setTournaments((current) => {
@@ -282,12 +258,6 @@ function App() {
     }
   }
 
-  const canDeleteTournament = (tournament: Tournament): boolean => {
-    if (!currentUserId) return false
-    if (isAdmin) return true
-    return tournament.ownerId === currentUserId
-  }
-
   const handleDeleteTournament = (id: string) => {
     setTournamentToDelete(id)
     setDeleteDialogOpen(true)
@@ -300,14 +270,6 @@ function App() {
       setDeleteDialogOpen(false)
       setTournamentToDelete(null)
     }
-  }
-
-  const handleShareTournament = async (tournamentId: string) => {
-    const url = `${window.location.origin}${window.location.pathname}?tournament=${tournamentId}&step=4`
-    await navigator.clipboard.writeText(url)
-    setSharedTournamentId(tournamentId)
-    setTimeout(() => setSharedTournamentId(null), 2000)
-    toast.success('Turnerings-URL kopieret til udklipsholder')
   }
 
   const formatDate = (dateStr: string) => {
@@ -333,12 +295,6 @@ function App() {
               >
                 Fodboldturnering Program Builder
               </h1>
-              {isAdmin && (
-                <Badge variant="default" className="gap-1.5 px-3 py-1 text-sm">
-                  <ShieldCheck size={16} weight="fill" />
-                  Admin
-                </Badge>
-              )}
             </div>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Opret professionelle kampskemaer på tværs af flere baner med automatisk tidsfordeling og konfliktdetektering
@@ -380,12 +336,6 @@ function App() {
                               <h3 className="font-semibold text-lg" style={{ fontFamily: 'var(--font-heading)' }}>
                                 {tournament.settings.name || 'Unavngivet Turnering'}
                               </h3>
-                              {tournament.ownerLogin && (
-                                <Badge variant="secondary" className="gap-1 text-xs">
-                                  <User size={14} weight="fill" />
-                                  {tournament.ownerLogin}
-                                </Badge>
-                              )}
                             </div>
                             <div className="text-sm text-muted-foreground mt-1 space-y-1">
                               <p>
@@ -403,36 +353,13 @@ function App() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleShareTournament(tournament.id)
-                          }}
+                          onClick={() => handleDeleteTournament(tournament.id)}
                           variant="ghost"
                           size="sm"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity gap-2"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <ShareNetwork size={20} />
-                          {sharedTournamentId === tournament.id ? 'Kopieret!' : 'Del'}
+                          <Trash size={20} />
                         </Button>
-                        {canDeleteTournament(tournament) && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                onClick={() => handleDeleteTournament(tournament.id)}
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <Trash size={20} />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {isAdmin && tournament.ownerId !== currentUserId
-                                ? 'Slet (Admin rettigheder)'
-                                : 'Slet turnering'}
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
                       </div>
                     </div>
                   ))}
