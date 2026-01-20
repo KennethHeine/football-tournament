@@ -11,7 +11,7 @@ test.describe('PWA Update Notifications', () => {
     await page.goto('/');
     
     // Verify the app loads correctly
-    await expect(page.locator('h1')).toContainText('Fodboldturnering Program Builder');
+    await expect(page.locator('h1')).toContainText('Fodboldturnering');
     
     // The PWAUpdatePrompt component should be rendered in the React tree
     // (even if not visible when no update is available)
@@ -39,7 +39,7 @@ test.describe('PWA Update Notifications', () => {
     await page.goto('/');
     
     // Verify the page title
-    await expect(page).toHaveTitle(/Fodboldturnering Program Builder/);
+    await expect(page).toHaveTitle(/Fodboldturnering/);
     
     // Verify the main content loads
     await expect(page.locator('h1')).toBeVisible();
@@ -73,7 +73,7 @@ test.describe('PWA Update Notifications', () => {
     await page.getByRole('button', { name: /Opret Ny Turnering/i }).click();
     
     // Verify we're on the tournament settings step
-    await expect(page.locator('h1')).toContainText('Fodboldturnering Program Builder');
+    await expect(page.locator('h1')).toContainText('Fodboldturnering');
     
     // Fill in tournament name
     const nameInput = page.locator('input[name="name"]');
