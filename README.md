@@ -13,7 +13,6 @@ Deploy to Azure Static Web Apps - see [DEPLOYMENT.md](./DEPLOYMENT.md) for instr
 - **Professional Output** - Print-ready outputs with clean typography and structured data exports (CSV, PNG)
 - **Browser-based Storage** - All data stored in browser localStorage (no backend required)
 - **No Authentication** - Public access, no login required
-- **Share Tournaments** - Share tournament schedules via URL
 - **Responsive Design** - Works on desktop, tablet, and mobile devices
 
 ## 🛠️ Technology Stack
