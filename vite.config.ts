@@ -13,7 +13,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon-192.svg', 'icon-512.svg', 'apple-touch-icon.svg'],
+      includeAssets: ['icon-192.svg', 'icon-512.svg', 'icon-maskable.svg', 'apple-touch-icon.svg'],
       manifest: {
         name: 'Fodboldturnering Program Builder',
         short_name: 'Fodbold',
@@ -38,7 +38,7 @@ export default defineConfig({
             purpose: 'any'
           },
           {
-            src: 'icon-512.svg',
+            src: 'icon-maskable.svg',
             sizes: '512x512',
             type: 'image/svg+xml',
             purpose: 'maskable'
