@@ -88,6 +88,14 @@ We use Playwright for end-to-end testing with 5 test scenarios:
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions to Azure Static Web Apps.
 
+### GitHub Actions Workflow
+
+The repository uses automated CI/CD workflows. See [WORKFLOW-GUIDE.md](./WORKFLOW-GUIDE.md) for details on:
+- Automatic production deployment on push to main
+- PR preview environments for testing before merge
+- Test-only execution for Dependabot PRs
+- Automatic cleanup of temporary environments
+
 ### Quick Deploy Options
 
 **Option 1: OIDC (Recommended - Most Secure)**
