@@ -113,7 +113,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
     const toastId = toast.loading('Genererer billede...')
     
     try {
-      const headingFont = 'Outfit, system-ui, sans-serif'
+      const headingFont = "'Outfit', system-ui, sans-serif"
       
       const tableRows = matchesByTime.map(([_timeKey, matches]) => 
         matches.map((match, idx) => {
@@ -160,10 +160,11 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
         <!DOCTYPE html>
         <html>
         <head>
+          <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { 
-              font-family: Inter, system-ui, sans-serif;
+              font-family: 'Inter', system-ui, sans-serif;
               background-color: ${SAFE_COLORS.card};
               color: ${SAFE_COLORS.text};
             }
@@ -205,7 +206,13 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
       `)
       iframeDoc.close()
       
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Wait for fonts to load before capturing
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      // Additional wait for fonts to be ready
+      if (iframe.contentWindow?.document?.fonts) {
+        await iframe.contentWindow.document.fonts.ready
+      }
       
       const captureElement = iframeDoc.getElementById('capture')
       if (!captureElement) {
