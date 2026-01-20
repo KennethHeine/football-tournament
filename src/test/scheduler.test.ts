@@ -220,6 +220,18 @@ describe('Scheduler', () => {
         expect(escapeCsvField('FC "Copenhagen"')).toBe('"FC ""Copenhagen"""')
       })
 
+      it('should handle formula injection with commas', async () => {
+        const { escapeCsvField } = await import('../lib/scheduler')
+        // Formula char + comma: should quote AND add apostrophe inside
+        expect(escapeCsvField('=SUM, data')).toBe("\"'=SUM, data\"")
+      })
+
+      it('should handle formula injection with quotes', async () => {
+        const { escapeCsvField } = await import('../lib/scheduler')
+        // Formula char + quote: should escape quotes AND add apostrophe
+        expect(escapeCsvField('=SUM"test"')).toBe("\"'=SUM\"\"test\"\"\"")
+      })
+
       it('should not modify normal fields', async () => {
         const { escapeCsvField } = await import('../lib/scheduler')
         expect(escapeCsvField('Normal Team')).toBe('Normal Team')

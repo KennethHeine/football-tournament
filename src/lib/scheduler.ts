@@ -18,17 +18,30 @@ export function escapeHtml(str: string): string {
 /**
  * Escapes CSV field to prevent formula injection and handle special characters.
  * Prefixes with apostrophe if starts with =, +, -, @ (formula characters).
- * Properly quotes and escapes fields containing commas or quotes.
+ * Properly quotes and escapes fields containing commas, quotes, or newlines.
  */
 export function escapeCsvField(field: string): string {
-  // Prevent CSV formula injection
-  if (/^[=+\-@]/.test(field)) {
-    field = `'${field}`
+  // First, check if quoting is needed
+  const needsQuoting = field.includes(',') || field.includes('"') || field.includes('\n')
+  
+  // Check for formula injection characters
+  const isFormulaChar = /^[=+\-@]/.test(field)
+  
+  if (needsQuoting) {
+    // Escape quotes first, then wrap in quotes
+    const escaped = field.replace(/"/g, '""')
+    // If it starts with a formula character, add apostrophe prefix inside quotes
+    if (isFormulaChar) {
+      return `"'${escaped}"`
+    }
+    return `"${escaped}"`
   }
-  // Quote fields containing commas, quotes, or newlines
-  if (field.includes(',') || field.includes('"') || field.includes('\n')) {
-    return `"${field.replace(/"/g, '""')}"`
+  
+  // No quoting needed - just prefix formula characters with apostrophe
+  if (isFormulaChar) {
+    return `'${field}`
   }
+  
   return field
 }
 
