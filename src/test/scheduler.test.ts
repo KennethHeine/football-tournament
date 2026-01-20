@@ -123,7 +123,7 @@ describe('Scheduler', () => {
         }
       })
 
-      teamMatchCounts.forEach((count, teamId) => {
+      teamMatchCounts.forEach((count, _teamId) => {
         expect(count).toBeLessThanOrEqual(limitedConfig.maxMatchesPerTeam!)
       })
     })

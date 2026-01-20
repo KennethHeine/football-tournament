@@ -22,7 +22,7 @@ export function Stepper({ steps, currentStep }: StepperProps) {
           />
         </div>
         
-        {steps.map((step, index) => {
+        {steps.map((step) => {
           const isCompleted = currentStep > step.number
           const isCurrent = currentStep === step.number
           

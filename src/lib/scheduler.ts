@@ -175,7 +175,6 @@ function generateLimitedMatches(
 
 function assignTimeSlots(matches: Match[], settings: TournamentSettings): Match[] {
   const matchDuration = calculateMatchDuration(settings)
-  const slotDuration = matchDuration + settings.breakBetweenMatches
   
   const startDateTime = new Date(`${settings.startDate}T${settings.startTime}`)
   
@@ -184,7 +183,6 @@ function assignTimeSlots(matches: Match[], settings: TournamentSettings): Match[
   const pitchNextAvailable: Date[] = Array.from({ length: settings.numPitches }, () => new Date(startDateTime))
   
   for (const match of matches) {
-    let assigned = false
     let bestPitch = -1
     let bestStartTime: Date | null = null
     let earliestPossibleStart = new Date(startDateTime)
@@ -218,8 +216,6 @@ function assignTimeSlots(matches: Match[], settings: TournamentSettings): Match[
       pitchNextAvailable[bestPitch] = new Date(match.endTime.getTime() + settings.breakBetweenMatches * 60000)
       teamLastEndTime.set(match.homeTeam.id, match.endTime)
       teamLastEndTime.set(match.awayTeam.id, match.endTime)
-      
-      assigned = true
     }
   }
   

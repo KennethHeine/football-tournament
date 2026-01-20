@@ -161,6 +161,8 @@ function App() {
     } else if (step > 0) {
       setCurrentStep(step)
     }
+  // Run once on initial mount to restore state from URL - intentionally no dependencies
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleStartNew = () => {
