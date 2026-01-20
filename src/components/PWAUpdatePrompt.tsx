@@ -3,6 +3,8 @@ import { useRegisterSW } from 'virtual:pwa-register/react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
+const UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000 // 1 hour
+
 export function PWAUpdatePrompt() {
   const intervalRef = useRef<number | null>(null)
   const toastIdRef = useRef<string | number | undefined>(undefined)
@@ -18,7 +20,7 @@ export function PWAUpdatePrompt() {
       if (registration) {
         intervalRef.current = window.setInterval(() => {
           registration.update()
-        }, 60 * 60 * 1000) // 1 hour
+        }, UPDATE_CHECK_INTERVAL_MS)
       }
     },
     onRegisterError(error) {
@@ -29,7 +31,14 @@ export function PWAUpdatePrompt() {
         duration: Infinity,
         action: {
           label: 'Opdater',
-          onClick: () => updateServiceWorker(true)
+          onClick: async () => {
+            try {
+              await updateServiceWorker(true)
+            } catch (error) {
+              console.error('Failed to update service worker:', error)
+              toast.error('Kunne ikke opdatere. Prøv igen senere.')
+            }
+          }
         }
       })
     },
@@ -51,6 +60,15 @@ export function PWAUpdatePrompt() {
     }
   }
 
+  const handleUpdate = async () => {
+    try {
+      await updateServiceWorker(true)
+    } catch (error) {
+      console.error('Failed to update service worker:', error)
+      toast.error('Kunne ikke opdatere. Prøv igen senere.')
+    }
+  }
+
   if (!needRefresh) return null
 
   return (
@@ -64,7 +82,7 @@ export function PWAUpdatePrompt() {
         </div>
         <div className="flex gap-2">
           <Button
-            onClick={() => updateServiceWorker(true)}
+            onClick={handleUpdate}
             size="sm"
           >
             Opdater nu
