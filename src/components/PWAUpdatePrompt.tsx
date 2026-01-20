@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
 export function PWAUpdatePrompt() {
   const [showPrompt, setShowPrompt] = useState(false)
+  const intervalRef = useRef<number | null>(null)
 
   const {
     needRefresh: [needRefresh],
@@ -15,7 +16,7 @@ export function PWAUpdatePrompt() {
       
       // Check for updates every hour
       if (registration) {
-        setInterval(() => {
+        intervalRef.current = window.setInterval(() => {
           registration.update()
         }, 60 * 60 * 1000) // 1 hour
       }
@@ -40,6 +41,15 @@ export function PWAUpdatePrompt() {
       setShowPrompt(true)
     }
   }, [needRefresh])
+
+  useEffect(() => {
+    // Cleanup interval on component unmount
+    return () => {
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current)
+      }
+    }
+  }, [])
 
   if (!showPrompt) return null
 
