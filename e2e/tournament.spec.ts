@@ -12,7 +12,7 @@ test.describe('Football Tournament App', () => {
     await page.goto('/');
     
     // Check for the main title
-    await expect(page.locator('h1')).toContainText('Fodboldturnering Program Builder');
+    await expect(page.locator('h1')).toContainText('Fodboldturnering');
     
     // Check for the create new tournament button
     const createButton = page.getByRole('button', { name: /Opret Ny Turnering/i });
@@ -26,7 +26,7 @@ test.describe('Football Tournament App', () => {
     await page.getByRole('button', { name: /Opret Ny Turnering/i }).click();
     
     // Step 1: Tournament Settings
-    await expect(page.locator('h1')).toContainText('Fodboldturnering Program Builder');
+    await expect(page.locator('h1')).toContainText('Fodboldturnering');
     
     // Fill in tournament name
     const nameInput = page.locator('input[name="name"]');

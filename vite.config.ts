@@ -15,7 +15,7 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['icon-192.svg', 'icon-512.svg', 'icon-maskable.svg', 'apple-touch-icon.svg'],
       manifest: {
-        name: 'Fodboldturnering Program Builder',
+        name: 'Fodboldturnering',
         short_name: 'Fodbold',
         description: 'Opret professionelle kampskemaer til fodboldturneringer',
         theme_color: '#16a34a',

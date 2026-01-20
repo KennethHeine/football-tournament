@@ -313,12 +313,9 @@ function App() {
                 className="text-5xl font-bold tracking-tight"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
-                Fodboldturnering Program Builder
+                Fodboldturnering
               </h1>
             </div>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Opret professionelle kampskemaer på tværs af flere baner med automatisk tidsfordeling og konfliktdetektering
-            </p>
           </div>
 
           <div className="flex justify-center mb-8">
@@ -429,7 +426,7 @@ function App() {
             className="text-3xl font-bold mb-2 text-center"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
-            Fodboldturnering Program Builder
+            Fodboldturnering
           </h1>
           <Stepper steps={steps} currentStep={currentStep} />
         </div>
