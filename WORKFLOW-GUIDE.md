@@ -14,8 +14,13 @@ This document explains how the GitHub Actions workflows are configured for the F
 └────────┬─────────┘
          │
          ▼
+    ┌──────────┐
+    │ test_job │ ← Runs lint, unit tests, E2E tests, build
+    └────┬─────┘
+         │
+         ▼
     ┌────────────────────┐
-    │ deploy_production  │ ← Runs tests, builds, deploys to production
+    │ deploy_production  │ ← Builds and deploys to production (depends on test_job)
     └────────────────────┘
 
 
@@ -28,7 +33,7 @@ This document explains how the GitHub Actions workflows are configured for the F
            │             │
            ▼             ▼
     ┌──────────┐  ┌─────────────┐
-    │ test_job │  │deploy_preview│ ← Deploys to pr-{number} environment
+    │ test_job │  │deploy_preview│ ← Builds and deploys to pr-{number} (no tests)
     └──────────┘  └─────────────┘
 
 
@@ -54,6 +59,11 @@ This document explains how the GitHub Actions workflows are configured for the F
            │
            │ (if merged)
            ▼
+    ┌──────────┐
+    │ test_job │
+    └────┬─────┘
+         │
+         ▼
     ┌────────────────────┐
     │ deploy_production  │ ← Deploys to production (from push to main)
     └────────────────────┘
@@ -69,6 +79,7 @@ The application uses a single workflow file (`.github/workflows/azure-static-web
 
 **When it runs:**
 - On all pull requests (opened, synchronize, reopened)
+- On pushes to the `main` branch
 - Including Dependabot PRs
 
 **What it does:**
@@ -81,35 +92,42 @@ The application uses a single workflow file (`.github/workflows/azure-static-web
 - Runs E2E tests (`npm run test:e2e`)
 - Builds the application (`npm run build`)
 
-**Purpose:** Ensures code quality for all PRs without deploying
+**Purpose:** Ensures code quality for all PRs and acts as a gate for production deployment
 
 ### 2. Deploy Production (`deploy_production`)
 
 **When it runs:**
 - Only when pushing directly to the `main` branch
-- Not on pull requests
+- **Depends on `test_job`** - will not run if tests fail
 
 **What it does:**
-- All steps from test job (lint, unit tests, E2E tests, build)
+- Checks out code
+- Sets up Node.js
+- Installs dependencies
+- Builds the application
 - Authenticates with Azure using OIDC
 - Retrieves deployment token
 - Deploys to production Azure Static Web App
 
-**Purpose:** Automatic deployment to production on merge
+**Purpose:** Automatic deployment to production on merge (after tests pass)
 
 ### 3. Deploy Preview (`deploy_preview`)
 
 **When it runs:**
 - On pull requests (opened, synchronize, reopened)
 - **Excludes Dependabot PRs** (via `github.actor != 'dependabot[bot]'`)
+- **Does NOT depend on test_job** - runs in parallel with tests
 
 **What it does:**
-- All steps from test job (lint, unit tests, E2E tests, build)
+- Checks out code
+- Sets up Node.js
+- Installs dependencies
+- Builds the application (no tests)
 - Authenticates with Azure using OIDC
 - Retrieves deployment token
 - Deploys to PR-specific environment: `pr-{PR_NUMBER}`
 
-**Purpose:** Creates preview deployments for manual testing before merge
+**Purpose:** Creates preview deployments quickly for manual testing before merge
 
 **Example:** PR #42 deploys to environment `pr-42`
 
@@ -130,10 +148,10 @@ The application uses a single workflow file (`.github/workflows/azure-static-web
 ### For Regular PRs (Non-Dependabot)
 
 ```
-1. Open PR → test_job + deploy_preview (separate PR environment)
-2. Update PR → test_job + deploy_preview (updates PR environment)
+1. Open PR → test_job (tests) + deploy_preview (no tests, runs in parallel)
+2. Update PR → test_job (tests) + deploy_preview (no tests, runs in parallel)
 3. Close/Merge PR → cleanup_preview (removes PR environment)
-   └─ If merged → deploy_production (deploys to production)
+   └─ If merged → test_job → deploy_production (depends on test_job)
 ```
 
 ### For Dependabot PRs
@@ -141,13 +159,13 @@ The application uses a single workflow file (`.github/workflows/azure-static-web
 ```
 1. Open PR → test_job only (no deployment)
 2. Update PR → test_job only (no deployment)
-3. Merge PR → cleanup_preview (no-op) + deploy_production
+3. Merge PR → cleanup_preview (no-op) + test_job → deploy_production
 ```
 
 ### For Direct Push to Main
 
 ```
-Push to main → deploy_production (direct production deployment)
+Push to main → test_job → deploy_production (depends on test_job)
 ```
 
 ## Environment URLs
