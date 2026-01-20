@@ -3,6 +3,7 @@ import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
+import eslintConfigPrettier from 'eslint-config-prettier'
 
 export default tseslint.config(
   { ignores: ['dist', 'node_modules', 'playwright-report', 'test-results'] },
@@ -36,4 +37,13 @@ export default tseslint.config(
       'react-hooks/incompatible-library': 'off',
     },
   },
+  // Disable react-refresh warnings for shadcn/ui components which commonly export variants
+  {
+    files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+  // Prettier must be last to override other configs
+  eslintConfigPrettier,
 )

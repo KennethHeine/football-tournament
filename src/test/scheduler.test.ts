@@ -189,4 +189,99 @@ describe('Scheduler', () => {
       })
     })
   })
+
+  describe('Security Functions', () => {
+    describe('escapeHtml', () => {
+      it('should escape HTML entities', async () => {
+        const { escapeHtml } = await import('../lib/scheduler')
+        expect(escapeHtml('<script>alert("xss")</script>')).toBe('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;')
+        expect(escapeHtml('Team & Friends')).toBe('Team &amp; Friends')
+        expect(escapeHtml("Team's Name")).toBe("Team&#039;s Name")
+        expect(escapeHtml('Normal Team Name')).toBe('Normal Team Name')
+      })
+    })
+
+    describe('escapeCsvField', () => {
+      it('should escape CSV formula injection', async () => {
+        const { escapeCsvField } = await import('../lib/scheduler')
+        expect(escapeCsvField('=SUM(A1)')).toBe("'=SUM(A1)")
+        expect(escapeCsvField('+1234')).toBe("'+1234")
+        expect(escapeCsvField('-1234')).toBe("'-1234")
+        expect(escapeCsvField('@mention')).toBe("'@mention")
+      })
+
+      it('should handle fields with commas', async () => {
+        const { escapeCsvField } = await import('../lib/scheduler')
+        expect(escapeCsvField('Team, with comma')).toBe('"Team, with comma"')
+      })
+
+      it('should handle fields with quotes', async () => {
+        const { escapeCsvField } = await import('../lib/scheduler')
+        expect(escapeCsvField('FC "Copenhagen"')).toBe('"FC ""Copenhagen"""')
+      })
+
+      it('should not modify normal fields', async () => {
+        const { escapeCsvField } = await import('../lib/scheduler')
+        expect(escapeCsvField('Normal Team')).toBe('Normal Team')
+      })
+    })
+  })
+
+  describe('Edge Cases', () => {
+    it('should handle 1 team (returns empty schedule)', () => {
+      const singleTeam = [{ id: '1', name: 'Lonely Team' }]
+      const schedule = generateSchedule(defaultSettings, singleTeam, { mode: 'round-robin' })
+      expect(schedule.matches.length).toBe(0)
+    })
+
+    it('should handle 2 teams in round-robin mode', () => {
+      const twoTeams = [
+        { id: '1', name: 'Team A' },
+        { id: '2', name: 'Team B' }
+      ]
+      const schedule = generateSchedule(defaultSettings, twoTeams, { mode: 'round-robin' })
+      expect(schedule.matches.length).toBe(1)
+      expect(schedule.conflicts.length).toBe(0)
+    })
+
+    it('should handle 3 teams in round-robin mode (odd teams)', () => {
+      const threeTeams = [
+        { id: '1', name: 'Team A' },
+        { id: '2', name: 'Team B' },
+        { id: '3', name: 'Team C' }
+      ]
+      const schedule = generateSchedule(defaultSettings, threeTeams, { mode: 'round-robin' })
+      // 3 teams = 3 matches (A vs B, A vs C, B vs C)
+      expect(schedule.matches.length).toBe(3)
+      expect(schedule.warnings.some(w => w.includes('BYE'))).toBe(true)
+    })
+
+    it('should generate warning for large tournaments', () => {
+      const manyTeams: Team[] = Array.from({ length: 15 }, (_, i) => ({
+        id: `team-${i}`,
+        name: `Team ${i + 1}`,
+      }))
+      
+      const schedule = generateSchedule(defaultSettings, manyTeams, { mode: 'round-robin' })
+      // 15 teams = 105 matches, should trigger >100 warning
+      expect(schedule.matches.length).toBe(105)
+      expect(schedule.warnings.some(w => w.includes('Large tournament'))).toBe(true)
+    })
+
+    it('should handle special characters in team names for CSV export', async () => {
+      const specialTeams = [
+        { id: '1', name: '=DANGEROUS' },
+        { id: '2', name: 'Team, with comma' },
+        { id: '3', name: 'FC "Copenhagen"' },
+        { id: '4', name: 'Normal Team' }
+      ]
+      const schedule = generateSchedule(defaultSettings, specialTeams, { mode: 'limited-matches', maxMatchesPerTeam: 1 })
+      
+      const { exportToCSV } = await import('../lib/scheduler')
+      const csv = exportToCSV(schedule.matches, defaultSettings)
+      
+      // Verify CSV escaping is applied
+      expect(csv).toContain("'=DANGEROUS") // Formula injection protected
+    })
+  })
 })

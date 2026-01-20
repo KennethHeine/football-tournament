@@ -2,6 +2,36 @@ import type { Team, Match, TournamentSettings, SchedulingConfig, GeneratedSchedu
 
 const BYE_TEAM: Team = { id: 'BYE', name: 'BYE' }
 
+/**
+ * Escapes HTML entities in a string to prevent XSS attacks.
+ * Used when generating HTML strings for image export.
+ */
+export function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+/**
+ * Escapes CSV field to prevent formula injection and handle special characters.
+ * Prefixes with apostrophe if starts with =, +, -, @ (formula characters).
+ * Properly quotes and escapes fields containing commas or quotes.
+ */
+export function escapeCsvField(field: string): string {
+  // Prevent CSV formula injection
+  if (/^[=+\-@]/.test(field)) {
+    field = `'${field}`
+  }
+  // Quote fields containing commas, quotes, or newlines
+  if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+    return `"${field.replace(/"/g, '""')}"`
+  }
+  return field
+}
+
 export function getPitchName(pitchNumber: number, settings: TournamentSettings): string {
   if (settings.pitchNames && settings.pitchNames[pitchNumber - 1]) {
     return settings.pitchNames[pitchNumber - 1]
@@ -178,6 +208,11 @@ function assignTimeSlots(matches: Match[], settings: TournamentSettings): Match[
   
   const startDateTime = new Date(`${settings.startDate}T${settings.startTime}`)
   
+  // Bug fix: Validate that the constructed date is valid
+  if (isNaN(startDateTime.getTime())) {
+    throw new Error(`Invalid tournament start date/time: ${settings.startDate} ${settings.startTime}`)
+  }
+  
   const pitchSchedules: Match[][] = Array.from({ length: settings.numPitches }, () => [])
   const teamLastEndTime = new Map<string, Date>()
   const pitchNextAvailable: Date[] = Array.from({ length: settings.numPitches }, () => new Date(startDateTime))
@@ -278,11 +313,11 @@ function detectConflicts(matches: Match[]): ScheduleConflict[] {
 export function exportToCSV(matches: Match[], settings: TournamentSettings): string {
   const headers = ['Time', 'Pitch', 'Home Team', 'Away Team', 'End Time']
   const rows = matches.map(m => [
-    formatTime(m.startTime),
-    getPitchName(m.pitch, settings),
-    m.homeTeam.name,
-    m.awayTeam.name,
-    formatTime(m.endTime)
+    escapeCsvField(formatTime(m.startTime)),
+    escapeCsvField(getPitchName(m.pitch, settings)),
+    escapeCsvField(m.homeTeam.name),
+    escapeCsvField(m.awayTeam.name),
+    escapeCsvField(formatTime(m.endTime))
   ])
   
   return [headers, ...rows].map(row => row.join(',')).join('\n')

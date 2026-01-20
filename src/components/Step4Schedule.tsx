@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { GeneratedSchedule, Match, Team, TournamentSettings } from '@/lib/types'
 import { ArrowLeft, Printer, Download, Copy, MagnifyingGlass, WarningCircle, Check, Image } from '@phosphor-icons/react'
-import { exportToCSV, exportToText, getPitchName } from '@/lib/scheduler'
+import { exportToCSV, exportToText, getPitchName, escapeHtml } from '@/lib/scheduler'
 import { toast } from 'sonner'
 import html2canvas from 'html2canvas'
 import { SAFE_COLORS } from '@/lib/color-utils'
@@ -133,12 +133,12 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
               ${timeCell}
               <td style="padding: 12px 16px; color: ${SAFE_COLORS.text};">
                 <span style="display: inline-block; padding: 4px 10px; background-color: ${SAFE_COLORS.muted}; border: 1px solid ${SAFE_COLORS.border}; border-radius: 6px; font-size: 13px; font-weight: 500; color: ${SAFE_COLORS.text};">
-                  ${getPitchName(match.pitch, settings)}
+                  ${escapeHtml(getPitchName(match.pitch, settings))}
                 </span>
               </td>
-              <td style="padding: 12px 16px; font-weight: 500; color: ${SAFE_COLORS.text};">${match.homeTeam.name}</td>
+              <td style="padding: 12px 16px; font-weight: 500; color: ${SAFE_COLORS.text};">${escapeHtml(match.homeTeam.name)}</td>
               <td style="padding: 12px 16px; text-align: center; color: ${SAFE_COLORS.mutedForeground};">mod</td>
-              <td style="padding: 12px 16px; font-weight: 500; color: ${SAFE_COLORS.text};">${match.awayTeam.name}</td>
+              <td style="padding: 12px 16px; font-weight: 500; color: ${SAFE_COLORS.text};">${escapeHtml(match.awayTeam.name)}</td>
               <td style="padding: 12px 16px; color: ${SAFE_COLORS.mutedForeground};">${formatTime(match.endTime)}</td>
             </tr>
           `
@@ -174,13 +174,13 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
           <div id="capture" style="width: 1200px; padding: 40px; background-color: ${SAFE_COLORS.card};">
             <div style="margin-bottom: 32px; border-bottom: 2px solid ${SAFE_COLORS.border}; padding-bottom: 24px;">
               <h1 style="font-family: ${headingFont}; font-size: 36px; font-weight: 700; text-align: center; margin: 0 0 12px 0; color: ${SAFE_COLORS.text};">
-                ${tournamentName || 'Turneringsskema'}
+                ${escapeHtml(tournamentName || 'Turneringsskema')}
               </h1>
               <p style="text-align: center; color: ${SAFE_COLORS.mutedForeground}; font-size: 16px; margin: 0 0 8px 0;">
                 ${schedule.matches.length} kampe • ${pitches.length} ban${pitches.length !== 1 ? 'er' : 'e'}
               </p>
               <p style="text-align: center; color: ${SAFE_COLORS.mutedForeground}; font-size: 14px; margin: 0;">
-                ${getMatchTimingInfo()}
+                ${escapeHtml(getMatchTimingInfo())}
               </p>
             </div>
             <div style="border: 1px solid ${SAFE_COLORS.border}; border-radius: 8px; overflow: hidden;">
