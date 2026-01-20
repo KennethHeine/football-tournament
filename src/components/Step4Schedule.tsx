@@ -113,17 +113,6 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
     const toastId = toast.loading('Genererer billede...')
     
     try {
-      const captureElement = document.createElement('div')
-      captureElement.style.cssText = `
-        position: absolute;
-        left: -9999px;
-        top: 0;
-        width: 1200px;
-        background-color: ${SAFE_COLORS.card};
-        padding: 40px;
-        font-family: Inter, system-ui, sans-serif;
-      `
-      
       const headingFont = 'Outfit, system-ui, sans-serif'
       
       const tableRows = matchesByTime.map(([_timeKey, matches]) => 
@@ -156,40 +145,72 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
         }).join('')
       ).join('')
       
-      captureElement.innerHTML = `
-        <div style="margin-bottom: 32px; border-bottom: 2px solid ${SAFE_COLORS.border}; padding-bottom: 24px;">
-          <h1 style="font-family: ${headingFont}; font-size: 36px; font-weight: 700; text-align: center; margin: 0 0 12px 0; color: ${SAFE_COLORS.text};">
-            ${tournamentName || 'Turneringsskema'}
-          </h1>
-          <p style="text-align: center; color: ${SAFE_COLORS.mutedForeground}; font-size: 16px; margin: 0 0 8px 0;">
-            ${schedule.matches.length} kampe • ${pitches.length} ban${pitches.length !== 1 ? 'er' : 'e'}
-          </p>
-          <p style="text-align: center; color: ${SAFE_COLORS.mutedForeground}; font-size: 14px; margin: 0;">
-            ${getMatchTimingInfo()}
-          </p>
-        </div>
-        <div style="border: 1px solid ${SAFE_COLORS.border}; border-radius: 8px; overflow: hidden;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-              <tr style="background-color: ${SAFE_COLORS.headerBg};">
-                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">Tidspunkt</th>
-                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">Bane</th>
-                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">Hjemme</th>
-                <th style="padding: 12px 16px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">mod</th>
-                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">Ude</th>
-                <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">Sluttid</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${tableRows}
-            </tbody>
-          </table>
-        </div>
-      `
+      // Create an iframe to isolate from page CSS (avoids oklch color parsing issues in html2canvas)
+      const iframe = document.createElement('iframe')
+      iframe.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 1280px; height: 2000px; border: none;'
+      document.body.appendChild(iframe)
       
-      document.body.appendChild(captureElement)
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
+      if (!iframeDoc) {
+        throw new Error('Could not access iframe document')
+      }
+      
+      iframeDoc.open()
+      iframeDoc.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: Inter, system-ui, sans-serif;
+              background-color: ${SAFE_COLORS.card};
+              color: ${SAFE_COLORS.text};
+            }
+          </style>
+        </head>
+        <body>
+          <div id="capture" style="width: 1200px; padding: 40px; background-color: ${SAFE_COLORS.card};">
+            <div style="margin-bottom: 32px; border-bottom: 2px solid ${SAFE_COLORS.border}; padding-bottom: 24px;">
+              <h1 style="font-family: ${headingFont}; font-size: 36px; font-weight: 700; text-align: center; margin: 0 0 12px 0; color: ${SAFE_COLORS.text};">
+                ${tournamentName || 'Turneringsskema'}
+              </h1>
+              <p style="text-align: center; color: ${SAFE_COLORS.mutedForeground}; font-size: 16px; margin: 0 0 8px 0;">
+                ${schedule.matches.length} kampe • ${pitches.length} ban${pitches.length !== 1 ? 'er' : 'e'}
+              </p>
+              <p style="text-align: center; color: ${SAFE_COLORS.mutedForeground}; font-size: 14px; margin: 0;">
+                ${getMatchTimingInfo()}
+              </p>
+            </div>
+            <div style="border: 1px solid ${SAFE_COLORS.border}; border-radius: 8px; overflow: hidden;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr style="background-color: ${SAFE_COLORS.headerBg};">
+                    <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">Tidspunkt</th>
+                    <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">Bane</th>
+                    <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">Hjemme</th>
+                    <th style="padding: 12px 16px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">mod</th>
+                    <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">Ude</th>
+                    <th style="padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: ${SAFE_COLORS.headerText}; border-bottom: 1px solid ${SAFE_COLORS.border};">Sluttid</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tableRows}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </body>
+        </html>
+      `)
+      iframeDoc.close()
       
       await new Promise(resolve => setTimeout(resolve, 100))
+      
+      const captureElement = iframeDoc.getElementById('capture')
+      if (!captureElement) {
+        throw new Error('Could not find capture element')
+      }
       
       const canvas = await html2canvas(captureElement, {
         scale: 2,
@@ -200,7 +221,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
         foreignObjectRendering: false,
       })
       
-      document.body.removeChild(captureElement)
+      document.body.removeChild(iframe)
       
       canvas.toBlob((blob) => {
         if (!blob) {
