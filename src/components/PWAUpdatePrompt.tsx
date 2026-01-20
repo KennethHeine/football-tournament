@@ -1,14 +1,14 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
 export function PWAUpdatePrompt() {
-  const [showPrompt, setShowPrompt] = useState(false)
   const intervalRef = useRef<number | null>(null)
+  const toastIdRef = useRef<string | number | undefined>(undefined)
 
   const {
-    needRefresh: [needRefresh],
+    needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(swUrl, registration) {
@@ -25,8 +25,7 @@ export function PWAUpdatePrompt() {
       console.error('SW registration error:', error)
     },
     onNeedRefresh() {
-      setShowPrompt(true)
-      toast.info('En ny version er tilgængelig!', {
+      toastIdRef.current = toast.info('En ny version er tilgængelig!', {
         duration: Infinity,
         action: {
           label: 'Opdater',
@@ -37,12 +36,6 @@ export function PWAUpdatePrompt() {
   })
 
   useEffect(() => {
-    if (needRefresh) {
-      setShowPrompt(true)
-    }
-  }, [needRefresh])
-
-  useEffect(() => {
     // Cleanup interval on component unmount
     return () => {
       if (intervalRef.current !== null) {
@@ -51,7 +44,14 @@ export function PWAUpdatePrompt() {
     }
   }, [])
 
-  if (!showPrompt) return null
+  const handleDismiss = () => {
+    setNeedRefresh(false)
+    if (toastIdRef.current !== undefined) {
+      toast.dismiss(toastIdRef.current)
+    }
+  }
+
+  if (!needRefresh) return null
 
   return (
     <div className="fixed bottom-4 right-4 z-50 bg-card border border-border rounded-lg shadow-lg p-4 max-w-sm">
@@ -70,7 +70,7 @@ export function PWAUpdatePrompt() {
             Opdater nu
           </Button>
           <Button
-            onClick={() => setShowPrompt(false)}
+            onClick={handleDismiss}
             variant="outline"
             size="sm"
           >
