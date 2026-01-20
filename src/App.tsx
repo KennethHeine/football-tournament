@@ -11,7 +11,7 @@ import { Step4Schedule } from '@/components/Step4Schedule'
 import type { Tournament, TournamentSettings, Team, SchedulingConfig, GeneratedSchedule } from '@/lib/types'
 import { generateSchedule } from '@/lib/scheduler'
 import { v4 as uuidv4 } from 'uuid'
-import { Plus, Trash, CalendarBlank } from '@phosphor-icons/react'
+import { Plus, Trash, CalendarBlank, Copy } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
 
@@ -29,6 +29,8 @@ const INITIAL_SETTINGS: TournamentSettings = {
 const INITIAL_CONFIG: SchedulingConfig = {
   mode: 'round-robin',
 }
+
+const UNNAMED_TOURNAMENT = 'Unavngivet Turnering'
 
 const steps = [
   { number: 1, title: 'Turnerings Opsætning' },
@@ -272,6 +274,22 @@ function App() {
     }
   }
 
+  const handleCopyTournament = (tournament: Tournament) => {
+    const copiedTournament: Tournament = {
+      ...tournament,
+      id: uuidv4(),
+      settings: {
+        ...tournament.settings,
+        name: `${tournament.settings.name || UNNAMED_TOURNAMENT} (Kopi)`,
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    setTournaments((current) => [...(current || []), copiedTournament])
+    toast.success('Turnering kopieret')
+  }
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-GB', {
       day: 'numeric',
@@ -334,7 +352,7 @@ function App() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="font-semibold text-lg" style={{ fontFamily: 'var(--font-heading)' }}>
-                                {tournament.settings.name || 'Unavngivet Turnering'}
+                                {tournament.settings.name || UNNAMED_TOURNAMENT}
                               </h3>
                             </div>
                             <div className="text-sm text-muted-foreground mt-1 space-y-1">
@@ -352,6 +370,14 @@ function App() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
+                        <Button
+                          onClick={() => handleCopyTournament(tournament)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-primary hover:text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Copy size={20} />
+                        </Button>
                         <Button
                           onClick={() => handleDeleteTournament(tournament.id)}
                           variant="ghost"
