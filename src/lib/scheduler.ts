@@ -345,7 +345,7 @@ function detectConflicts(matches: Match[]): ScheduleConflict[] {
 }
 
 export function exportToCSV(matches: Match[], settings: TournamentSettings): string {
-  const headers = ['Time', 'Pitch', 'Home Team', 'Away Team', 'End Time']
+  const headers = ['Time', 'Pitch', 'Home Team', 'Away Team', 'End Time'].map(escapeCsvField)
   const rows = matches.map(m => [
     escapeCsvField(formatTime(m.startTime)),
     escapeCsvField(getPitchName(m.pitch, settings)),

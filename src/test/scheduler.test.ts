@@ -304,5 +304,21 @@ describe('Scheduler', () => {
       // Verify CSV escaping is applied
       expect(csv).toContain("'=DANGEROUS") // Formula injection protected
     })
+
+    it('should throw error for invalid date/time', () => {
+      const invalidSettings: TournamentSettings = {
+        ...defaultSettings,
+        startDate: 'invalid-date',
+        startTime: 'not-a-time',
+      }
+      const testTeams = [
+        { id: '1', name: 'Team A' },
+        { id: '2', name: 'Team B' },
+      ]
+
+      expect(() => generateSchedule(invalidSettings, testTeams, { mode: 'round-robin' })).toThrow(
+        'Invalid tournament start date/time: invalid-date not-a-time'
+      )
+    })
   })
 })
