@@ -12,7 +12,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['icon-192.svg', 'icon-512.svg', 'icon-maskable.svg', 'apple-touch-icon.svg'],
       manifest: {
         name: 'Fodboldturnering Program Builder',

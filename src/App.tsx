@@ -8,6 +8,7 @@ import { Step1TournamentSettings } from '@/components/Step1TournamentSettings'
 import { Step2Teams } from '@/components/Step2Teams'
 import { Step3SchedulingMode } from '@/components/Step3SchedulingMode'
 import { Step4Schedule } from '@/components/Step4Schedule'
+import { PWAUpdatePrompt } from '@/components/PWAUpdatePrompt'
 import type { Tournament, TournamentSettings, Team, SchedulingConfig, GeneratedSchedule } from '@/lib/types'
 import { generateSchedule } from '@/lib/scheduler'
 import { v4 as uuidv4 } from 'uuid'
@@ -304,6 +305,7 @@ function App() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
         <Toaster />
+        <PWAUpdatePrompt />
         <div className="container mx-auto px-4 py-12 max-w-5xl">
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-3 mb-4">
@@ -420,6 +422,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <Toaster />
+      <PWAUpdatePrompt />
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="mb-8">
           <h1 
