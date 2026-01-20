@@ -65,7 +65,7 @@ The Football Tournament Program Builder is a client-side web application designe
 | **Language** | TypeScript | 5.9.3 |
 | **Build Tool** | Vite | 7.3.1 |
 | **Styling** | Tailwind CSS | 4.1.18 |
-| **UI Components** | Radix UI + Shadcn | Various |
+| **UI Components** | Radix UI + shadcn/ui | Various |
 | **Form Validation** | Zod + React Hook Form | 4.3.5 / 7.71.1 |
 | **Unit Testing** | Vitest | 4.0.17 |
 | **E2E Testing** | Playwright | 1.57.0 |
