@@ -30,6 +30,8 @@ const INITIAL_CONFIG: SchedulingConfig = {
   mode: 'round-robin',
 }
 
+const UNNAMED_TOURNAMENT = 'Unavngivet Turnering'
+
 const steps = [
   { number: 1, title: 'Turnerings Opsætning' },
   { number: 2, title: 'Tilføj Hold' },
@@ -278,7 +280,7 @@ function App() {
       id: uuidv4(),
       settings: {
         ...tournament.settings,
-        name: `${tournament.settings.name || 'Unavngivet Turnering'} (Kopi)`,
+        name: `${tournament.settings.name || UNNAMED_TOURNAMENT} (Kopi)`,
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -350,7 +352,7 @@ function App() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="font-semibold text-lg" style={{ fontFamily: 'var(--font-heading)' }}>
-                                {tournament.settings.name || 'Unavngivet Turnering'}
+                                {tournament.settings.name || UNNAMED_TOURNAMENT}
                               </h3>
                             </div>
                             <div className="text-sm text-muted-foreground mt-1 space-y-1">
