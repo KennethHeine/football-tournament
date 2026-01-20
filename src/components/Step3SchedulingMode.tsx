@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import type { SchedulingConfig, SchedulingMode } from '@/lib/types'
-import { ArrowRight, ArrowLeft, Users } from '@phosphor-icons/react'
+import { ArrowRight, ArrowLeft } from '@phosphor-icons/react'
 
 interface Step3Props {
   initialConfig: SchedulingConfig

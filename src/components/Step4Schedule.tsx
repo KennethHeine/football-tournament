@@ -135,7 +135,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
       
       const headingFont = 'Outfit, system-ui, sans-serif'
       
-      const tableRows = matchesByTime.map(([timeKey, matches]) => 
+      const tableRows = matchesByTime.map(([_timeKey, matches]) => 
         matches.map((match, idx) => {
           const conflict = isConflict(match)
           const rowBg = conflict 
@@ -367,7 +367,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {matchesByTime.map(([timeKey, matches]) => (
+                      {matchesByTime.map(([_timeKey, matches]) => (
                         matches.map((match, idx) => (
                           <tr 
                             key={match.id}
