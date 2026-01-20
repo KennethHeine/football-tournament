@@ -110,7 +110,7 @@ describe('Color Utilities', () => {
       const r = parseInt(SAFE_COLORS.foreground.slice(1, 3), 16)
       const g = parseInt(SAFE_COLORS.foreground.slice(3, 5), 16)
       const b = parseInt(SAFE_COLORS.foreground.slice(5, 7), 16)
-      
+
       // All channels should be relatively dark
       expect(r).toBeLessThan(128)
       expect(g).toBeLessThan(128)
@@ -120,7 +120,7 @@ describe('Color Utilities', () => {
     it('should have greenish primary color', () => {
       // Primary is pitch green, so green channel should be prominent
       const g = parseInt(SAFE_COLORS.primary.slice(3, 5), 16)
-      
+
       // Green should be a significant component
       expect(g).toBeGreaterThan(50)
     })
@@ -136,7 +136,7 @@ describe('Color Utilities', () => {
     it('should handle edge cases in lightness', () => {
       const black = oklchStringToHex('oklch(0 0 0)')
       const white = oklchStringToHex('oklch(1 0 0)')
-      
+
       expect(black).toBe('#000000')
       expect(white).toMatch(/^#[ef][0-9a-f]{5}$/)
     })

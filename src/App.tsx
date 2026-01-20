@@ -2,14 +2,27 @@ import { useState, useEffect, useCallback } from 'react'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Stepper } from '@/components/Stepper'
 import { Step1TournamentSettings } from '@/components/Step1TournamentSettings'
 import { Step2Teams } from '@/components/Step2Teams'
 import { Step3SchedulingMode } from '@/components/Step3SchedulingMode'
 import { Step4Schedule } from '@/components/Step4Schedule'
 import { PWAUpdatePrompt } from '@/components/PWAUpdatePrompt'
-import type { Tournament, TournamentSettings, Team, SchedulingConfig, GeneratedSchedule } from '@/lib/types'
+import type {
+  Tournament,
+  TournamentSettings,
+  Team,
+  SchedulingConfig,
+  GeneratedSchedule,
+} from '@/lib/types'
 import { generateSchedule } from '@/lib/scheduler'
 import { v4 as uuidv4 } from 'uuid'
 import { Plus, Trash, CalendarBlank, Copy } from '@phosphor-icons/react'
@@ -55,66 +68,69 @@ function App() {
 
   const updateURL = useCallback((tournamentId: string | null, step: number) => {
     const params = new URLSearchParams()
-    
+
     if (tournamentId) {
       params.set('tournament', tournamentId)
     }
-    
+
     if (step > 0) {
       params.set('step', step.toString())
     }
-    
+
     const newURL = params.toString() ? `?${params.toString()}` : '/'
     window.history.pushState({ tournamentId, step }, '', newURL)
   }, [])
 
-  const handlePopState = useCallback((_event: PopStateEvent) => {
-    const params = new URLSearchParams(window.location.search)
-    const tournamentId = params.get('tournament')
-    const step = parseInt(params.get('step') || '0')
+  const handlePopState = useCallback(
+    (_event: PopStateEvent) => {
+      const params = new URLSearchParams(window.location.search)
+      const tournamentId = params.get('tournament')
+      const step = parseInt(params.get('step') || '0')
 
-    if (tournamentId && (tournaments || []).length > 0) {
-      const tournament = (tournaments || []).find(t => t.id === tournamentId)
-      if (tournament) {
-        setSettings(tournament.settings)
-        setTeams(tournament.teams)
-        setSchedulingConfig(tournament.schedulingConfig)
-        
-        if (tournament.schedule) {
-          const rehydratedSchedule: GeneratedSchedule = {
-            ...tournament.schedule,
-            matches: tournament.schedule.matches.map(match => ({
-              ...match,
-              startTime: new Date(match.startTime),
-              endTime: new Date(match.endTime)
-            })),
-            conflicts: tournament.schedule.conflicts.map(conflict => ({
-              ...conflict,
-              matches: conflict.matches.map(match => ({
+      if (tournamentId && (tournaments || []).length > 0) {
+        const tournament = (tournaments || []).find(t => t.id === tournamentId)
+        if (tournament) {
+          setSettings(tournament.settings)
+          setTeams(tournament.teams)
+          setSchedulingConfig(tournament.schedulingConfig)
+
+          if (tournament.schedule) {
+            const rehydratedSchedule: GeneratedSchedule = {
+              ...tournament.schedule,
+              matches: tournament.schedule.matches.map(match => ({
                 ...match,
                 startTime: new Date(match.startTime),
-                endTime: new Date(match.endTime)
-              }))
-            }))
+                endTime: new Date(match.endTime),
+              })),
+              conflicts: tournament.schedule.conflicts.map(conflict => ({
+                ...conflict,
+                matches: conflict.matches.map(match => ({
+                  ...match,
+                  startTime: new Date(match.startTime),
+                  endTime: new Date(match.endTime),
+                })),
+              })),
+            }
+            setSchedule(rehydratedSchedule)
+          } else {
+            setSchedule(null)
           }
-          setSchedule(rehydratedSchedule)
+
+          setCurrentTournamentId(tournament.id)
+          setCurrentStep(step || (tournament.schedule ? 4 : 1))
         } else {
-          setSchedule(null)
+          setCurrentStep(0)
+          setCurrentTournamentId(null)
         }
-        
-        setCurrentTournamentId(tournament.id)
-        setCurrentStep(step || (tournament.schedule ? 4 : 1))
       } else {
-        setCurrentStep(0)
-        setCurrentTournamentId(null)
+        setCurrentStep(step)
+        if (step === 0) {
+          setCurrentTournamentId(null)
+        }
       }
-    } else {
-      setCurrentStep(step)
-      if (step === 0) {
-        setCurrentTournamentId(null)
-      }
-    }
-  }, [tournaments])
+    },
+    [tournaments]
+  )
 
   useEffect(() => {
     window.addEventListener('popstate', handlePopState)
@@ -132,37 +148,37 @@ function App() {
         setSettings(tournament.settings)
         setTeams(tournament.teams)
         setSchedulingConfig(tournament.schedulingConfig)
-        
+
         if (tournament.schedule) {
           const rehydratedSchedule: GeneratedSchedule = {
             ...tournament.schedule,
             matches: tournament.schedule.matches.map(match => ({
               ...match,
               startTime: new Date(match.startTime),
-              endTime: new Date(match.endTime)
+              endTime: new Date(match.endTime),
             })),
             conflicts: tournament.schedule.conflicts.map(conflict => ({
               ...conflict,
               matches: conflict.matches.map(match => ({
                 ...match,
                 startTime: new Date(match.startTime),
-                endTime: new Date(match.endTime)
-              }))
-            }))
+                endTime: new Date(match.endTime),
+              })),
+            })),
           }
           setSchedule(rehydratedSchedule)
         } else {
           setSchedule(null)
         }
-        
+
         setCurrentTournamentId(tournament.id)
         setCurrentStep(step || (tournament.schedule ? 4 : 1))
       }
     } else if (step > 0) {
       setCurrentStep(step)
     }
-  // Run once on initial mount to restore state from URL - intentionally no dependencies
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Run once on initial mount to restore state from URL - intentionally no dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleStartNew = () => {
@@ -204,13 +220,14 @@ function App() {
       teams,
       schedulingConfig,
       schedule,
-      createdAt: currentTournamentId 
-        ? (tournaments || []).find(t => t.id === currentTournamentId)?.createdAt || new Date().toISOString()
+      createdAt: currentTournamentId
+        ? (tournaments || []).find(t => t.id === currentTournamentId)?.createdAt ||
+          new Date().toISOString()
         : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
 
-    setTournaments((current) => {
+    setTournaments(current => {
       const currentList = current || []
       const existing = currentList.findIndex(t => t.id === tournament.id)
       if (existing >= 0) {
@@ -231,33 +248,33 @@ function App() {
     setSettings(tournament.settings)
     setTeams(tournament.teams)
     setSchedulingConfig(tournament.schedulingConfig)
-    
+
     if (tournament.schedule) {
       const rehydratedSchedule: GeneratedSchedule = {
         ...tournament.schedule,
         matches: tournament.schedule.matches.map(match => ({
           ...match,
           startTime: new Date(match.startTime),
-          endTime: new Date(match.endTime)
+          endTime: new Date(match.endTime),
         })),
         conflicts: tournament.schedule.conflicts.map(conflict => ({
           ...conflict,
           matches: conflict.matches.map(match => ({
             ...match,
             startTime: new Date(match.startTime),
-            endTime: new Date(match.endTime)
-          }))
-        }))
+            endTime: new Date(match.endTime),
+          })),
+        })),
       }
       setSchedule(rehydratedSchedule)
     } else {
       setSchedule(null)
     }
-    
+
     setCurrentTournamentId(tournament.id)
     const step = tournament.schedule ? 4 : 1
     setCurrentStep(step)
-    
+
     if (shouldUpdateURL) {
       updateURL(tournament.id, step)
     }
@@ -270,7 +287,7 @@ function App() {
 
   const confirmDelete = () => {
     if (tournamentToDelete) {
-      setTournaments((current) => (current || []).filter(t => t.id !== tournamentToDelete))
+      setTournaments(current => (current || []).filter(t => t.id !== tournamentToDelete))
       toast.success('Turnering slettet')
       setDeleteDialogOpen(false)
       setTournamentToDelete(null)
@@ -289,7 +306,7 @@ function App() {
       updatedAt: new Date().toISOString(),
     }
 
-    setTournaments((current) => [...(current || []), copiedTournament])
+    setTournaments(current => [...(current || []), copiedTournament])
     toast.success('Turnering kopieret')
   }
 
@@ -297,13 +314,13 @@ function App() {
     return new Date(dateStr).toLocaleDateString('en-GB', {
       day: 'numeric',
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
     })
   }
 
   if (!isWizardActive) {
     const tournamentList = tournaments || []
-    
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
         <Toaster />
@@ -311,7 +328,7 @@ function App() {
         <div className="container mx-auto px-4 py-12 max-w-5xl">
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-3 mb-4">
-              <h1 
+              <h1
                 className="text-5xl font-bold tracking-tight"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
@@ -339,12 +356,12 @@ function App() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {tournamentList.map((tournament) => (
+                  {tournamentList.map(tournament => (
                     <div
                       key={tournament.id}
                       className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors group"
                     >
-                      <div 
+                      <div
                         className="flex-1 cursor-pointer"
                         onClick={() => handleLoadTournament(tournament)}
                       >
@@ -352,16 +369,23 @@ function App() {
                           <CalendarBlank size={24} className="text-primary mt-1" />
                           <div className="flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-semibold text-lg" style={{ fontFamily: 'var(--font-heading)' }}>
+                              <h3
+                                className="font-semibold text-lg"
+                                style={{ fontFamily: 'var(--font-heading)' }}
+                              >
                                 {tournament.settings.name || UNNAMED_TOURNAMENT}
                               </h3>
                             </div>
                             <div className="text-sm text-muted-foreground mt-1 space-y-1">
                               <p>
-                                {tournament.teams.length} hold • {tournament.schedule?.matches.length || 0} kampe • {tournament.settings.numPitches} ban{tournament.settings.numPitches !== 1 ? 'er' : 'e'}
+                                {tournament.teams.length} hold •{' '}
+                                {tournament.schedule?.matches.length || 0} kampe •{' '}
+                                {tournament.settings.numPitches} ban
+                                {tournament.settings.numPitches !== 1 ? 'er' : 'e'}
                               </p>
                               <p>
-                                {formatDate(tournament.settings.startDate)} kl. {tournament.settings.startTime}
+                                {formatDate(tournament.settings.startDate)} kl.{' '}
+                                {tournament.settings.startTime}
                               </p>
                               <p className="text-xs">
                                 Sidst opdateret: {formatDate(tournament.updatedAt)}
@@ -401,7 +425,8 @@ function App() {
             <DialogHeader>
               <DialogTitle>Slet Turnering</DialogTitle>
               <DialogDescription>
-                Er du sikker på, at du vil slette denne turnering? Denne handling kan ikke fortrydes.
+                Er du sikker på, at du vil slette denne turnering? Denne handling kan ikke
+                fortrydes.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -424,7 +449,7 @@ function App() {
       <PWAUpdatePrompt />
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="mb-8">
-          <h1 
+          <h1
             className="text-3xl font-bold mb-2 text-center"
             style={{ fontFamily: 'var(--font-heading)' }}
           >

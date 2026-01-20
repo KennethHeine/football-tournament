@@ -46,30 +46,30 @@ The Football Tournament Program Builder is a client-side web application designe
 
 ### Main Components/Modules
 
-| Component | Purpose |
-|-----------|---------|
-| `App.tsx` | Main application orchestrator, state management, wizard navigation |
-| `Step1TournamentSettings.tsx` | Tournament configuration form with Zod validation |
-| `Step2Teams.tsx` | Team management (add, bulk import, remove) |
-| `Step3SchedulingMode.tsx` | Scheduling mode selection (round-robin vs limited) |
-| `Step4Schedule.tsx` | Schedule display, filtering, export functionality |
-| `scheduler.ts` | Core scheduling algorithm (round-robin, conflict detection) |
-| `color-utils.ts` | OKLCH to RGB/HEX color conversion for image export |
-| `useLocalStorage.ts` | Custom hook for persistent browser storage |
+| Component                     | Purpose                                                            |
+| ----------------------------- | ------------------------------------------------------------------ |
+| `App.tsx`                     | Main application orchestrator, state management, wizard navigation |
+| `Step1TournamentSettings.tsx` | Tournament configuration form with Zod validation                  |
+| `Step2Teams.tsx`              | Team management (add, bulk import, remove)                         |
+| `Step3SchedulingMode.tsx`     | Scheduling mode selection (round-robin vs limited)                 |
+| `Step4Schedule.tsx`           | Schedule display, filtering, export functionality                  |
+| `scheduler.ts`                | Core scheduling algorithm (round-robin, conflict detection)        |
+| `color-utils.ts`              | OKLCH to RGB/HEX color conversion for image export                 |
+| `useLocalStorage.ts`          | Custom hook for persistent browser storage                         |
 
 ### Technology Stack
 
-| Category | Technology | Version |
-|----------|------------|---------|
-| **Framework** | React | 19.2.3 |
-| **Language** | TypeScript | 5.9.3 |
-| **Build Tool** | Vite | 7.3.1 |
-| **Styling** | Tailwind CSS | 4.1.18 |
-| **UI Components** | Radix UI + shadcn/ui | Various |
+| Category            | Technology            | Version        |
+| ------------------- | --------------------- | -------------- |
+| **Framework**       | React                 | 19.2.3         |
+| **Language**        | TypeScript            | 5.9.3          |
+| **Build Tool**      | Vite                  | 7.3.1          |
+| **Styling**         | Tailwind CSS          | 4.1.18         |
+| **UI Components**   | Radix UI + shadcn/ui  | Various        |
 | **Form Validation** | Zod + React Hook Form | 4.3.5 / 7.71.1 |
-| **Unit Testing** | Vitest | 4.0.17 |
-| **E2E Testing** | Playwright | 1.57.0 |
-| **Deployment** | Azure Static Web Apps | - |
+| **Unit Testing**    | Vitest                | 4.0.17         |
+| **E2E Testing**     | Playwright            | 1.57.0         |
+| **Deployment**      | Azure Static Web Apps | -              |
 
 ### Runtime Assumptions
 
@@ -111,6 +111,7 @@ The Football Tournament Program Builder is a client-side web application designe
 ### Top 10 Highest-Impact Refactors
 
 #### 1. **Extract Tournament Context** (High Impact)
+
 **Current:** Tournament state scattered across multiple `useState` calls in `App.tsx`  
 **Problem:** 500+ line App component with prop drilling through steps  
 **Recommendation:** Create a `TournamentContext` provider
@@ -118,16 +119,17 @@ The Football Tournament Program Builder is a client-side web application designe
 ```typescript
 // src/context/TournamentContext.tsx
 interface TournamentContextType {
-  tournament: Tournament | null;
-  settings: TournamentSettings;
-  teams: Team[];
-  schedule: GeneratedSchedule | null;
-  updateSettings: (settings: TournamentSettings) => void;
+  tournament: Tournament | null
+  settings: TournamentSettings
+  teams: Team[]
+  schedule: GeneratedSchedule | null
+  updateSettings: (settings: TournamentSettings) => void
   // ... other methods
 }
 ```
 
 #### 2. **Separate URL Routing from State** (High Impact)
+
 **Current:** Manual URL manipulation with `window.history.pushState` in App.tsx  
 **Problem:** Duplicated hydration logic, fragile popstate handling  
 **Recommendation:** Use a lightweight router (TanStack Router or Wouter)
@@ -141,6 +143,7 @@ const routes = {
 ```
 
 #### 3. **Extract Schedule Rehydration Logic** (Medium Impact)
+
 **Current:** Date rehydration repeated 4 times in App.tsx (lines 84-100, 136-152, 236-252)  
 **Duplicate Code:**
 
@@ -165,20 +168,24 @@ export function rehydrateSchedule(schedule: SerializedSchedule): GeneratedSchedu
 ```
 
 #### 4. **Improve Scheduler Algorithm Testability** (Medium Impact)
+
 **Current:** `assignTimeSlots` function is private and tightly coupled  
 **Problem:** Hard to test time slot assignment in isolation  
 **Recommendation:** Export helper functions, use dependency injection for date handling
 
 #### 5. **Split Step4Schedule Component** (Medium Impact)
+
 **Current:** 507-line component handling display, filtering, and multiple export formats  
 **Problem:** Too many responsibilities, hard to maintain  
 **Recommendation:** Extract into smaller components:
+
 - `ScheduleTable.tsx` - Table display
 - `ScheduleFilters.tsx` - Search and filters
 - `ExportButtons.tsx` - Export functionality
 - `TeamScheduleView.tsx` - Team-specific view
 
 #### 6. **Create Shared Form Components** (Low-Medium Impact)
+
 **Current:** Repetitive form field patterns across Step components  
 **Recommendation:** Create reusable form field components
 
@@ -188,27 +195,32 @@ export function NumberField({ name, label, min, max, error, hint }: Props)
 ```
 
 #### 7. **Improve Error Handling** (Medium Impact)
+
 **Current:** Basic try-catch with console.error in useLocalStorage  
 **Problem:** Silent failures, no error boundaries except at root  
-**Recommendation:** 
+**Recommendation:**
+
 - Add ErrorBoundary around each step
 - Implement toast notifications for errors
 - Add Sentry or similar for production error tracking
 
 #### 8. **Implement Match Duration Type Safety** (Low Impact)
+
 **Current:** Match duration calculation relies on optional fields with fallbacks  
 **Problem:** `settings.matchDurationMinutes || 30` pattern repeated  
 **Recommendation:** Use discriminated union types
 
 ```typescript
-type MatchMode = 
+type MatchMode =
   | { type: 'full-time'; duration: number }
   | { type: 'two-halves'; halfDuration: number; breakDuration: number }
 ```
 
 #### 9. **Extract Constants** (Low Impact)
+
 **Current:** Magic numbers scattered throughout code  
 **Examples:**
+
 - `100` for large tournament warning threshold
 - `5` for minimum match duration
 - `3` for minimum half duration
@@ -225,24 +237,24 @@ export const SCHEDULER = {
 ```
 
 #### 10. **Add Input Sanitization** (Low-Medium Impact)
+
 **Current:** Team names stored as-is from user input  
 **Problem:** Potential for XSS if data is rendered without escaping  
 **Recommendation:** Sanitize team names on input
 
 ```typescript
-const sanitizeTeamName = (name: string) => 
-  name.trim().replace(/[<>]/g, '').slice(0, 100)
+const sanitizeTeamName = (name: string) => name.trim().replace(/[<>]/g, '').slice(0, 100)
 ```
 
 ### Code Smells Identified
 
-| Issue | Location | Severity |
-|-------|----------|----------|
-| God Component | `App.tsx` (486 lines) | High |
-| Duplicate Code | Date rehydration (4 occurrences) | Medium |
-| Magic Numbers | `scheduler.ts`, `Step1TournamentSettings.tsx` | Low |
-| Long Method | `handleExportImage` (147 lines) | Medium |
-| Feature Envy | Image export logic accesses many component states | Low |
+| Issue          | Location                                          | Severity |
+| -------------- | ------------------------------------------------- | -------- |
+| God Component  | `App.tsx` (486 lines)                             | High     |
+| Duplicate Code | Date rehydration (4 occurrences)                  | Medium   |
+| Magic Numbers  | `scheduler.ts`, `Step1TournamentSettings.tsx`     | Low      |
+| Long Method    | `handleExportImage` (147 lines)                   | Medium   |
+| Feature Envy   | Image export logic accesses many component states | Low      |
 
 ---
 
@@ -251,22 +263,26 @@ const sanitizeTeamName = (name: string) =>
 ### Likely Bugs
 
 #### 1. **Round-Robin Match Count for Odd Teams**
+
 **Location:** `scheduler.ts` lines 48-91  
 **Issue:** When adding a BYE team for odd team counts, the round calculation uses `n-1` rounds where `n` is the padded (even) count. This is correct, but the warning message says "BYE team added" which may confuse users.
 
 **Edge Case:** 3 teams should produce 3 matches, which works correctly.
 
 #### 2. **Limited Matches Algorithm Infinite Loop Risk**
+
 **Location:** `scheduler.ts` lines 93-174  
 **Issue:** The `while` loop has `maxAttempts = targetMatches * 10` as a safety valve, but this could still take a long time for large tournaments with unusual constraints.
 
 **Problematic Case:**
+
 ```typescript
 // 100 teams, 2 matches per team, but all pairs have been used
 // Algorithm will spin for 1000 iterations doing nothing useful
 ```
 
 #### 3. **Date Parsing Vulnerability**
+
 **Location:** `scheduler.ts` line 179  
 **Issue:** Date construction assumes valid format but doesn't validate
 
@@ -276,6 +292,7 @@ const startDateTime = new Date(`${settings.startDate}T${settings.startTime}`)
 ```
 
 **Fix:**
+
 ```typescript
 const startDateTime = new Date(`${settings.startDate}T${settings.startTime}`)
 if (isNaN(startDateTime.getTime())) {
@@ -284,8 +301,10 @@ if (isNaN(startDateTime.getTime())) {
 ```
 
 #### 4. **Pitch Index Off-by-One Confusion**
+
 **Location:** `scheduler.ts`  
 **Issue:** Pitches are 1-indexed externally but 0-indexed internally, creating confusion:
+
 - `match.pitch` stores 1-indexed value
 - `pitchSchedules` array uses 0-indexed access
 - `getPitchName(match.pitch, settings)` expects 1-indexed
@@ -310,19 +329,19 @@ This works but is error-prone for future modifications.
 
 ### Edge Cases That May Fail
 
-| Edge Case | Expected Behavior | Actual Behavior | Risk |
-|-----------|-------------------|-----------------|------|
-| 1 team only | Error message | Form validation blocks | ✅ OK |
-| 2 teams, odd mode | Should work | Works correctly | ✅ OK |
-| 100+ teams | Performance warning | Shows warning, may be slow | ⚠️ Medium |
-| Special characters in team names | Handle gracefully | May cause issues in CSV export | ⚠️ Medium |
-| Very long team names (500+ chars) | Truncate or warn | No limit enforced | ⚠️ Medium |
-| Empty localStorage | Show empty state | Works correctly | ✅ OK |
-| Corrupted localStorage | Graceful fallback | Falls back to initial value | ✅ OK |
-| Same team added twice | Block with error | Shows inline error | ✅ OK |
-| 0 minute break between matches | Allow or warn | Allowed, no warning | ⚠️ Low |
-| Past date selection | May want to warn | Allowed with min=today | ✅ OK |
-| Duplicate pitch names | Allow | Allowed, may confuse | ⚠️ Low |
+| Edge Case                         | Expected Behavior   | Actual Behavior                | Risk      |
+| --------------------------------- | ------------------- | ------------------------------ | --------- |
+| 1 team only                       | Error message       | Form validation blocks         | ✅ OK     |
+| 2 teams, odd mode                 | Should work         | Works correctly                | ✅ OK     |
+| 100+ teams                        | Performance warning | Shows warning, may be slow     | ⚠️ Medium |
+| Special characters in team names  | Handle gracefully   | May cause issues in CSV export | ⚠️ Medium |
+| Very long team names (500+ chars) | Truncate or warn    | No limit enforced              | ⚠️ Medium |
+| Empty localStorage                | Show empty state    | Works correctly                | ✅ OK     |
+| Corrupted localStorage            | Graceful fallback   | Falls back to initial value    | ✅ OK     |
+| Same team added twice             | Block with error    | Shows inline error             | ✅ OK     |
+| 0 minute break between matches    | Allow or warn       | Allowed, no warning            | ⚠️ Low    |
+| Past date selection               | May want to warn    | Allowed with min=today         | ✅ OK     |
+| Duplicate pitch names             | Allow               | Allowed, may confuse           | ⚠️ Low    |
 
 ---
 
@@ -330,14 +349,14 @@ This works but is error-prone for future modifications.
 
 ### Current Test Coverage
 
-| Area | Tests | Coverage | Quality |
-|------|-------|----------|---------|
-| **Scheduler Logic** | 13 tests | Good | ⭐⭐⭐⭐ |
-| **Color Utilities** | 19 tests | Excellent | ⭐⭐⭐⭐⭐ |
-| **useLocalStorage Hook** | 8 tests | Good | ⭐⭐⭐⭐ |
-| **E2E Flows** | 9 tests | Moderate | ⭐⭐⭐ |
-| **Component Unit Tests** | 0 tests | None | ❌ |
-| **Form Validation** | 0 tests | None | ❌ |
+| Area                     | Tests    | Coverage  | Quality    |
+| ------------------------ | -------- | --------- | ---------- |
+| **Scheduler Logic**      | 13 tests | Good      | ⭐⭐⭐⭐   |
+| **Color Utilities**      | 19 tests | Excellent | ⭐⭐⭐⭐⭐ |
+| **useLocalStorage Hook** | 8 tests  | Good      | ⭐⭐⭐⭐   |
+| **E2E Flows**            | 9 tests  | Moderate  | ⭐⭐⭐     |
+| **Component Unit Tests** | 0 tests  | None      | ❌         |
+| **Form Validation**      | 0 tests  | None      | ❌         |
 
 ### Test Gaps
 
@@ -393,16 +412,17 @@ This works but is error-prone for future modifications.
 ### 10 Concrete Test Cases
 
 #### Test Case 1: Round-Robin with Odd Teams
+
 ```typescript
 describe('Scheduler: Odd Team Count', () => {
   it('should generate correct matches for 5 teams', () => {
     const teams = createTeams(5)
     const schedule = generateSchedule(defaultSettings, teams, { mode: 'round-robin' })
-    
+
     // Expected: 5 choose 2 = 10 matches
     expect(schedule.matches.length).toBe(10)
     expect(schedule.warnings).toContain(expect.stringContaining('BYE'))
-    
+
     // Each team should play exactly 4 matches
     const matchCounts = countMatchesPerTeam(schedule.matches)
     teams.forEach(team => {
@@ -413,12 +433,13 @@ describe('Scheduler: Odd Team Count', () => {
 ```
 
 #### Test Case 2: Limited Matches Constraint
+
 ```typescript
 it('should not exceed max matches per team', () => {
   const teams = createTeams(10)
   const config = { mode: 'limited-matches', maxMatchesPerTeam: 3 }
   const schedule = generateSchedule(defaultSettings, teams, config)
-  
+
   const matchCounts = countMatchesPerTeam(schedule.matches)
   matchCounts.forEach(count => {
     expect(count).toBeLessThanOrEqual(3)
@@ -427,6 +448,7 @@ it('should not exceed max matches per team', () => {
 ```
 
 #### Test Case 3: Conflict Detection
+
 ```typescript
 it('should detect simultaneous team bookings', () => {
   // Manually create overlapping matches
@@ -434,7 +456,7 @@ it('should detect simultaneous team bookings', () => {
     createMatch('A', 'B', '09:00', '09:30', 1),
     createMatch('A', 'C', '09:00', '09:30', 2),
   ]
-  
+
   const conflicts = detectConflicts(matches)
   expect(conflicts.length).toBe(1)
   expect(conflicts[0].team.name).toBe('A')
@@ -442,13 +464,14 @@ it('should detect simultaneous team bookings', () => {
 ```
 
 #### Test Case 4: Form Validation
+
 ```typescript
 describe('Step1TournamentSettings', () => {
   it('should require start date and time', async () => {
     render(<Step1TournamentSettings {...defaultProps} />)
-    
+
     fireEvent.click(screen.getByRole('button', { name: /næste/i }))
-    
+
     expect(await screen.findByText(/startdato er påkrævet/i)).toBeInTheDocument()
     expect(defaultProps.onNext).not.toHaveBeenCalled()
   })
@@ -456,28 +479,30 @@ describe('Step1TournamentSettings', () => {
 ```
 
 #### Test Case 5: Team Name Uniqueness
+
 ```typescript
 describe('Step2Teams', () => {
   it('should prevent duplicate team names case-insensitively', async () => {
     render(<Step2Teams initialTeams={[{ id: '1', name: 'Arsenal' }]} {...props} />)
-    
+
     fireEvent.change(screen.getByLabelText(/holdnavn/i), { target: { value: 'ARSENAL' } })
     fireEvent.click(screen.getByRole('button', { name: /tilføj/i }))
-    
+
     expect(screen.getByText(/eksisterer allerede/i)).toBeInTheDocument()
   })
 })
 ```
 
 #### Test Case 6: Bulk Team Import
+
 ```typescript
 it('should parse bulk text correctly', async () => {
   render(<Step2Teams initialTeams={[]} {...props} />)
-  
+
   const bulkText = 'Team A\nTeam B\n\nTeam C\n   Team D   '
   fireEvent.change(screen.getByLabelText(/samlet/i), { target: { value: bulkText } })
   fireEvent.click(screen.getByRole('button', { name: /tilføj alle/i }))
-  
+
   expect(screen.getByText('Team A')).toBeInTheDocument()
   expect(screen.getByText('Team B')).toBeInTheDocument()
   expect(screen.getByText('Team C')).toBeInTheDocument()
@@ -486,15 +511,14 @@ it('should parse bulk text correctly', async () => {
 ```
 
 #### Test Case 7: CSV Export Format
+
 ```typescript
 describe('exportToCSV', () => {
   it('should handle team names with commas', () => {
-    const matches = [
-      createMatch('FC "Copenhagen"', 'Team, with comma', '09:00', '09:30', 1)
-    ]
-    
+    const matches = [createMatch('FC "Copenhagen"', 'Team, with comma', '09:00', '09:30', 1)]
+
     const csv = exportToCSV(matches, defaultSettings)
-    
+
     // Should properly escape or quote fields
     expect(csv).toContain('FC "Copenhagen"')
     expect(csv).toContain('Team, with comma')
@@ -503,6 +527,7 @@ describe('exportToCSV', () => {
 ```
 
 #### Test Case 8: localStorage Quota Exceeded
+
 ```typescript
 describe('useLocalStorage', () => {
   it('should handle quota exceeded error', () => {
@@ -510,13 +535,13 @@ describe('useLocalStorage', () => {
     mockSetItem.mockImplementation(() => {
       throw new DOMException('QuotaExceededError')
     })
-    
+
     const { result } = renderHook(() => useLocalStorage('key', 'initial'))
-    
+
     act(() => {
       result.current[1]('new value')
     })
-    
+
     // Should not crash, should log error
     expect(console.error).toHaveBeenCalled()
   })
@@ -524,32 +549,34 @@ describe('useLocalStorage', () => {
 ```
 
 #### Test Case 9: URL State Restoration
+
 ```typescript
 describe('App URL Navigation', () => {
   it('should restore state from URL on page load', async () => {
     // Prepopulate localStorage
     localStorage.setItem('tournaments', JSON.stringify([mockTournament]))
-    
+
     // Navigate to specific step
     window.history.pushState({}, '', '?tournament=123&step=3')
-    
+
     render(<App />)
-    
+
     expect(screen.getByText(/planlægningstilstand/i)).toBeInTheDocument()
   })
 })
 ```
 
 #### Test Case 10: Large Tournament Performance
+
 ```typescript
 describe('Performance', () => {
   it('should generate schedule for 20 teams in under 1 second', () => {
     const teams = createTeams(20)
-    
+
     const start = performance.now()
     const schedule = generateSchedule(defaultSettings, teams, { mode: 'round-robin' })
     const duration = performance.now() - start
-    
+
     expect(duration).toBeLessThan(1000)
     expect(schedule.matches.length).toBe(190) // 20 choose 2
   })
@@ -559,6 +586,7 @@ describe('Performance', () => {
 ### Test Quality Improvements
 
 1. **Add Test Coverage Reporting**
+
    ```json
    // vitest.config.ts
    test: {
@@ -578,9 +606,10 @@ describe('Performance', () => {
    - Capture Step 4 schedule table in various states
 
 3. **Add Accessibility Testing**
+
    ```typescript
    import { axe, toHaveNoViolations } from 'jest-axe'
-   
+
    it('should have no accessibility violations', async () => {
      const { container } = render(<Step1TournamentSettings {...props} />)
      const results = await axe(container)
@@ -599,20 +628,24 @@ This is a client-side only application with no backend, no authentication, and n
 ### Findings
 
 #### 1. **XSS Potential in Team Names** (Medium Priority)
+
 **Location:** Team names rendered in multiple components  
 **Risk:** If user inputs `<script>alert('xss')</script>` as team name, it could execute  
 **Mitigation:** React's JSX escaping handles this by default ✅
 
 **Verification:**
+
 ```typescript
 // React safely escapes this
 <td className="px-4 py-3 font-medium">{match.homeTeam.name}</td>
 ```
 
 #### 2. **XSS in Image Export** (Medium Priority)
+
 **Location:** `Step4Schedule.tsx` lines 118-200  
 **Risk:** Team names are inserted into HTML string for html2canvas  
 **Current Code:**
+
 ```typescript
 <td style="...">${match.homeTeam.name}</td>
 ```
@@ -620,7 +653,7 @@ This is a client-side only application with no backend, no authentication, and n
 **Recommendation:** Escape HTML entities
 
 ```typescript
-const escapeHtml = (str: string) => 
+const escapeHtml = (str: string) =>
   str.replace(/&/g, '&amp;')
      .replace(/</g, '&lt;')
      .replace(/>/g, '&gt;')
@@ -631,24 +664,27 @@ const escapeHtml = (str: string) =>
 ```
 
 #### 3. **CSV Injection** (Low Priority)
+
 **Location:** `scheduler.ts` line 278-289  
 **Risk:** Team names starting with `=`, `+`, `-`, `@` could be interpreted as formulas in Excel  
 **Current Code:**
+
 ```typescript
 const rows = matches.map(m => [
   formatTime(m.startTime),
   getPitchName(m.pitch, settings),
-  m.homeTeam.name,  // Not escaped
-  m.awayTeam.name,  // Not escaped
-  formatTime(m.endTime)
+  m.homeTeam.name, // Not escaped
+  m.awayTeam.name, // Not escaped
+  formatTime(m.endTime),
 ])
 ```
 
 **Recommendation:**
+
 ```typescript
 const escapeCsvField = (field: string) => {
   if (/^[=+\-@]/.test(field)) {
-    return `'${field}`  // Prefix with apostrophe
+    return `'${field}` // Prefix with apostrophe
   }
   if (field.includes(',') || field.includes('"')) {
     return `"${field.replace(/"/g, '""')}"`
@@ -658,11 +694,13 @@ const escapeCsvField = (field: string) => {
 ```
 
 #### 4. **localStorage Data Integrity** (Low Priority)
+
 **Location:** `useLocalStorage.ts`  
 **Risk:** Malicious data could be injected into localStorage via other scripts or browser extensions  
 **Current Mitigation:** JSON.parse errors are caught and logged
 
 **Recommendation:** Add schema validation on load
+
 ```typescript
 import { z } from 'zod'
 
@@ -679,12 +717,15 @@ return TournamentSchema.parse(parsed) // Throws on invalid data
 ```
 
 #### 5. **Dependency Vulnerabilities** (Low Priority)
+
 **Finding:** npm audit shows 0 vulnerabilities ✅
 **Note:** Regular dependency updates via Dependabot configured
 
 #### 6. **Missing Security Headers** (Low Priority)
+
 **Location:** `staticwebapp.config.json`  
 **Current headers:**
+
 ```json
 "headers": {
   "Cache-Control": "no-cache..."
@@ -692,6 +733,7 @@ return TournamentSchema.parse(parsed) // Throws on invalid data
 ```
 
 **Recommendation:** Add security headers
+
 ```json
 {
   "route": "/*",
@@ -707,12 +749,12 @@ return TournamentSchema.parse(parsed) // Throws on invalid data
 
 ### Prioritized Security Fixes
 
-| Priority | Issue | Effort | Impact |
-|----------|-------|--------|--------|
-| 1 | Add HTML escaping in image export | Low | Medium |
-| 2 | Add CSV field escaping | Low | Low |
-| 3 | Add security headers | Low | Low |
-| 4 | Add localStorage schema validation | Medium | Low |
+| Priority | Issue                              | Effort | Impact |
+| -------- | ---------------------------------- | ------ | ------ |
+| 1        | Add HTML escaping in image export  | Low    | Medium |
+| 2        | Add CSV field escaping             | Low    | Low    |
+| 3        | Add security headers               | Low    | Low    |
+| 4        | Add localStorage schema validation | Medium | Low    |
 
 ### No Issues Found
 
@@ -731,6 +773,7 @@ return TournamentSchema.parse(parsed) // Throws on invalid data
 ### Current Performance Characteristics
 
 #### Build Analysis
+
 ```
 dist/assets/index-B63Rih7n.js  733.87 kB │ gzip: 211.94 kB
 dist/assets/index-LHxTAjtL.css 321.14 kB │ gzip:  60.96 kB
@@ -741,9 +784,11 @@ dist/assets/index-LHxTAjtL.css 321.14 kB │ gzip:  60.96 kB
 ### Bottlenecks Identified
 
 #### 1. **Large Bundle Size** (High Impact)
+
 **Cause:** All Radix UI components bundled, many unused  
 **Current:** 733KB uncompressed JS  
 **Recommendation:**
+
 - Enable tree-shaking verification
 - Code-split by route
 - Lazy load Step4Schedule (largest component)
@@ -758,32 +803,41 @@ const Step4Schedule = lazy(() => import('./components/Step4Schedule'))
 ```
 
 #### 2. **Schedule Generation Algorithm** (Medium Impact)
+
 **Location:** `scheduler.ts` generateLimitedMatches  
 **Current Complexity:** O(n²) for team matching in loop  
 **Issue:** For 100 teams × 10 matches = could be 100,000 iterations
 
 **Recommendation:** Use more efficient data structures
+
 ```typescript
 // Use priority queue for team selection
 class TeamPriorityQueue {
   private heap: Team[] = []
-  
-  insert(team: Team, matchCount: number) { /* ... */ }
-  extractMin(): Team { /* ... */ }
+
+  insert(team: Team, matchCount: number) {
+    /* ... */
+  }
+  extractMin(): Team {
+    /* ... */
+  }
 }
 ```
 
 #### 3. **Image Export Performance** (Medium Impact)
+
 **Location:** `Step4Schedule.tsx` handleExportImage  
 **Issue:** Creates full DOM in iframe, waits 500ms for fonts  
 **Time:** ~2-3 seconds for 50+ matches
 
 **Recommendations:**
+
 - Show progress indicator (already implemented ✅)
 - Consider using server-side rendering for images (out of scope for static app)
 - Pre-load fonts in main document
 
 #### 4. **Unoptimized Re-renders** (Low Impact)
+
 **Location:** `App.tsx`  
 **Issue:** Large state objects may cause unnecessary re-renders  
 **Recommendation:** Use React DevTools Profiler to identify hot paths
@@ -791,22 +845,24 @@ class TeamPriorityQueue {
 ### Measurement Approach
 
 #### 1. Add Performance Metrics
+
 ```typescript
 // src/lib/performance.ts
 export function measureScheduleGeneration(fn: () => GeneratedSchedule) {
   const start = performance.now()
   const result = fn()
   const duration = performance.now() - start
-  
+
   if (duration > 500) {
     console.warn(`Schedule generation took ${duration}ms`)
   }
-  
+
   return result
 }
 ```
 
 #### 2. Add Lighthouse CI to Workflow
+
 ```yaml
 # .github/workflows/lighthouse.yml
 - name: Run Lighthouse CI
@@ -818,6 +874,7 @@ export function measureScheduleGeneration(fn: () => GeneratedSchedule) {
 ```
 
 #### 3. Bundle Size Monitoring
+
 ```bash
 # Add to CI
 npx bundlesize --max-size 300KB
@@ -825,21 +882,23 @@ npx bundlesize --max-size 300KB
 
 ### Scalability Limits
 
-| Metric | Current Limit | Recommended Limit | Notes |
-|--------|---------------|-------------------|-------|
-| Teams per tournament | No limit | 50 | UI becomes crowded |
-| Matches per tournament | 100 (warning) | 100 | Performance concern |
-| Saved tournaments | localStorage limit (~5MB) | ~50 tournaments | Before quota issues |
-| Pitches | No limit | 10 | UI/scheduling complexity |
+| Metric                 | Current Limit             | Recommended Limit | Notes                    |
+| ---------------------- | ------------------------- | ----------------- | ------------------------ |
+| Teams per tournament   | No limit                  | 50                | UI becomes crowded       |
+| Matches per tournament | 100 (warning)             | 100               | Performance concern      |
+| Saved tournaments      | localStorage limit (~5MB) | ~50 tournaments   | Before quota issues      |
+| Pitches                | No limit                  | 10                | UI/scheduling complexity |
 
 ### Optimization Recommendations
 
 1. **Implement Virtual Scrolling for Large Tables**
+
    ```typescript
    import { useVirtualizer } from '@tanstack/react-virtual'
    ```
 
 2. **Web Worker for Schedule Generation**
+
    ```typescript
    // Move heavy computation off main thread
    const worker = new Worker('./scheduler.worker.ts')
@@ -859,11 +918,13 @@ npx bundlesize --max-size 300KB
 ### README/Setup Experience
 
 #### Strengths ✅
+
 - Clear feature list
 - Well-documented commands
 - Multiple deployment options explained
 
 #### Improvements Needed
+
 - Add troubleshooting section
 - Add development prerequisites (Node version)
 - Add architecture diagram
@@ -871,11 +932,14 @@ npx bundlesize --max-size 300KB
 ### Environment Configuration
 
 #### Current State
+
 - Uses Vite environment handling
 - Azure secrets documented in DEPLOYMENT.md
 
 #### Recommendations
+
 1. Add `.nvmrc` file for Node version pinning
+
    ```
    20
    ```
@@ -889,12 +953,14 @@ npx bundlesize --max-size 300KB
 ### Linting/Formatting
 
 #### Current State
+
 - ESLint configured with TypeScript rules
 - 5 warnings (all react-refresh related)
 
 #### Recommendations
 
 1. **Add Prettier for Formatting**
+
    ```json
    // .prettierrc
    {
@@ -909,6 +975,7 @@ npx bundlesize --max-size 300KB
    - Move `buttonVariants`, `badgeVariants`, etc. to separate files
 
 3. **Add Pre-commit Hooks**
+
    ```json
    // package.json
    "scripts": {
@@ -925,6 +992,7 @@ npx bundlesize --max-size 300KB
 ### CI/CD
 
 #### Current State ✅
+
 - GitHub Actions workflow configured
 - Tests run on PR
 - Automatic deployment to Azure
@@ -933,6 +1001,7 @@ npx bundlesize --max-size 300KB
 #### Recommendations
 
 1. **Add Caching for Playwright Browsers**
+
    ```yaml
    - name: Cache Playwright Browsers
      uses: actions/cache@v3
@@ -942,6 +1011,7 @@ npx bundlesize --max-size 300KB
    ```
 
 2. **Add Parallel Test Execution**
+
    ```yaml
    - name: Run Playwright tests
      run: npm run test:e2e -- --shard=${{ matrix.shard }}
@@ -959,24 +1029,27 @@ npx bundlesize --max-size 300KB
 ### Release Process
 
 #### Current State
+
 - No versioning strategy
 - No changelog
 
 #### Recommendations
 
 1. **Add Semantic Versioning**
+
    ```json
    // package.json
    "version": "1.0.0"
    ```
 
 2. **Add Release Workflow**
+
    ```yaml
    # .github/workflows/release.yml
    on:
      push:
        tags: ['v*']
-   
+
    jobs:
      release:
        steps:
@@ -993,11 +1066,13 @@ npx bundlesize --max-size 300KB
 ### Containerization
 
 **Not Recommended** for this project because:
+
 - Static site deployment is simpler
 - Azure Static Web Apps handles all infrastructure
 - No server-side code to containerize
 
 If needed for local development consistency:
+
 ```dockerfile
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -1013,26 +1088,27 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 ### Monitoring
 
 #### Current State
+
 - No monitoring configured
 
 #### Recommendations
 
 1. **Add Application Insights (Azure)**
+
    ```typescript
    // src/lib/analytics.ts
    import { ApplicationInsights } from '@microsoft/applicationinsights-web'
-   
+
    export const appInsights = new ApplicationInsights({
      config: {
-       connectionString: import.meta.env.VITE_APPINSIGHTS_CONNECTION_STRING
-     }
+       connectionString: import.meta.env.VITE_APPINSIGHTS_CONNECTION_STRING,
+     },
    })
    appInsights.loadAppInsights()
    ```
 
 2. **Add Error Tracking**
    - Sentry or similar for production error tracking
-   
 3. **Add Usage Analytics**
    - Track tournament creation success rate
    - Track export usage
@@ -1040,6 +1116,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 ### Suggested GitHub Actions Workflows
 
 #### 1. Build/Test/Lint (Current - Improve)
+
 ```yaml
 # Already exists, add:
 - Playwright browser caching
@@ -1048,6 +1125,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 ```
 
 #### 2. Security Scanning (New)
+
 ```yaml
 name: Security Scan
 
@@ -1058,10 +1136,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Run npm audit
         run: npm audit --audit-level=high
-        
+
       - name: Run CodeQL
         uses: github/codeql-action/analyze@v3
 ```
@@ -1069,6 +1147,7 @@ jobs:
 #### 3. Dependency Updates (Current - via Dependabot) ✅
 
 #### 4. Performance Budget (New)
+
 ```yaml
 name: Performance
 
@@ -1100,24 +1179,24 @@ The Football Tournament Application is a **well-structured, functional applicati
 
 ### Recommended Action Items
 
-| Priority | Action | Effort | Impact |
-|----------|--------|--------|--------|
-| High | Extract TournamentContext | 2 days | High |
-| High | Add component unit tests | 3 days | High |
-| Medium | Implement code splitting | 1 day | Medium |
-| Medium | Add HTML escaping in exports | 2 hours | Medium |
-| Medium | Add security headers | 1 hour | Low |
-| Low | Add Prettier + pre-commit hooks | 2 hours | Medium |
-| Low | Add performance monitoring | 1 day | Low |
+| Priority | Action                          | Effort  | Impact |
+| -------- | ------------------------------- | ------- | ------ |
+| High     | Extract TournamentContext       | 2 days  | High   |
+| High     | Add component unit tests        | 3 days  | High   |
+| Medium   | Implement code splitting        | 1 day   | Medium |
+| Medium   | Add HTML escaping in exports    | 2 hours | Medium |
+| Medium   | Add security headers            | 1 hour  | Low    |
+| Low      | Add Prettier + pre-commit hooks | 2 hours | Medium |
+| Low      | Add performance monitoring      | 1 day   | Low    |
 
 ### Metrics Summary
 
-| Metric | Current | Target |
-|--------|---------|--------|
-| Unit Test Count | 40 | 80+ |
-| Test Coverage | Unknown | 80%+ |
-| Bundle Size (gzip) | 212KB | <150KB |
-| Lighthouse Performance | Unknown | 90+ |
-| ESLint Errors | 0 | 0 |
-| ESLint Warnings | 5 | 0 |
-| Security Vulnerabilities | 0 | 0 |
+| Metric                   | Current | Target |
+| ------------------------ | ------- | ------ |
+| Unit Test Count          | 40      | 80+    |
+| Test Coverage            | Unknown | 80%+   |
+| Bundle Size (gzip)       | 212KB   | <150KB |
+| Lighthouse Performance   | Unknown | 90+    |
+| ESLint Errors            | 0       | 0      |
+| ESLint Warnings          | 5       | 0      |
+| Security Vulnerabilities | 0       | 0      |

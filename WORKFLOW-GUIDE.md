@@ -78,11 +78,13 @@ The application uses a single workflow file (`.github/workflows/azure-static-web
 ### 1. Test Job (`test_job`)
 
 **When it runs:**
+
 - On all pull requests (opened, synchronize, reopened)
 - On pushes to the `main` branch
 - Including Dependabot PRs
 
 **What it does:**
+
 - Checks out code
 - Sets up Node.js
 - Installs dependencies
@@ -97,10 +99,12 @@ The application uses a single workflow file (`.github/workflows/azure-static-web
 ### 2. Deploy Production (`deploy_production`)
 
 **When it runs:**
+
 - Only when pushing directly to the `main` branch
 - **Depends on `test_job`** - will not run if tests fail
 
 **What it does:**
+
 - Checks out code
 - Sets up Node.js
 - Installs dependencies
@@ -114,11 +118,13 @@ The application uses a single workflow file (`.github/workflows/azure-static-web
 ### 3. Deploy Preview (`deploy_preview`)
 
 **When it runs:**
+
 - On pull requests (opened, synchronize, reopened)
 - **Excludes Dependabot PRs** (via `github.actor != 'dependabot[bot]'`)
 - **Does NOT depend on test_job** - runs in parallel with tests
 
 **What it does:**
+
 - Checks out code
 - Sets up Node.js
 - Installs dependencies
@@ -134,9 +140,11 @@ The application uses a single workflow file (`.github/workflows/azure-static-web
 ### 4. Cleanup Preview (`cleanup_preview`)
 
 **When it runs:**
+
 - When a pull request is closed (merged or cancelled)
 
 **What it does:**
+
 - Authenticates with Azure using OIDC
 - Retrieves deployment token
 - Closes/removes the PR preview deployment
@@ -195,11 +203,13 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for setup instructions.
 ## Testing the Workflow
 
 ### To test Dependabot behavior:
+
 1. Create a PR from the Dependabot bot account
 2. Verify only `test_job` runs
 3. Verify no deployment occurs
 
 ### To test regular PR behavior:
+
 1. Create a PR from your branch
 2. Verify both `test_job` and `deploy_preview` run
 3. Check the deployment URL in the PR comments
@@ -208,6 +218,7 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for setup instructions.
 6. Verify `cleanup_preview` runs and environment is removed
 
 ### To test production deployment:
+
 1. Merge a PR to `main`
 2. Verify `deploy_production` runs
 3. Check production URL is updated
@@ -215,16 +226,19 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for setup instructions.
 ## Troubleshooting
 
 ### PR deployment not working
+
 - Check if the PR is from Dependabot (won't deploy by design)
 - Verify Azure secrets are configured correctly
 - Check workflow logs for authentication errors
 
 ### Production deployment failed
+
 - Verify the push was to `main` branch
 - Check Azure resource exists and is accessible
 - Review deployment logs for build/deployment errors
 
 ### Cleanup not working
+
 - Check if the PR was actually closed
 - Verify cleanup job ran in Actions tab
 - Manual cleanup: Use Azure Portal to delete the environment
@@ -240,6 +254,7 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for setup instructions.
 ## Workflow Maintenance
 
 When updating the workflow:
+
 1. Test changes in a PR first
 2. Verify all jobs run as expected
 3. Check both Dependabot and regular PR paths

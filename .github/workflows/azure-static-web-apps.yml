@@ -41,11 +41,28 @@ jobs:
       - name: Run linter
         run: npm run lint
 
+      - name: Check formatting
+        run: npm run format:check
+
       - name: Run unit tests
         run: npm test -- --run
 
+      - name: Cache Playwright Browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
       - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps
+
+      - name: Install Playwright System Dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps
 
       - name: Run Playwright tests
         run: npm run test:e2e
@@ -104,10 +121,10 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ steps.get_token.outputs.deployment_token }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          action: "upload"
-          app_location: "/"
-          api_location: ""
-          output_location: "dist"
+          action: 'upload'
+          app_location: '/'
+          api_location: ''
+          output_location: 'dist'
 
   # Job for deploying PR preview (non-Dependabot PRs only, no tests)
   deploy_preview:
@@ -160,11 +177,11 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ steps.get_token.outputs.deployment_token }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          action: "upload"
-          app_location: "/"
-          api_location: ""
-          output_location: "dist"
-          deployment_environment: "pr-${{ github.event.pull_request.number }}"
+          action: 'upload'
+          app_location: '/'
+          api_location: ''
+          output_location: 'dist'
+          deployment_environment: 'pr-${{ github.event.pull_request.number }}'
 
   # Job for cleaning up PR preview on close
   cleanup_preview:
@@ -199,5 +216,4 @@ jobs:
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ steps.get_token.outputs.deployment_token }}
-          action: "close"
-
+          action: 'close'

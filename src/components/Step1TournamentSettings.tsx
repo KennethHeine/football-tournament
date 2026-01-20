@@ -4,39 +4,54 @@ import * as z from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { TournamentSettings, MatchMode } from '@/lib/types'
 import { ArrowRight, ArrowLeft } from '@phosphor-icons/react'
 import { useState, useEffect } from 'react'
 
-const tournamentSettingsSchema = z.object({
-  name: z.string(),
-  startDate: z.string().min(1, 'Startdato er påkrævet'),
-  startTime: z.string().min(1, 'Starttidspunkt er påkrævet'),
-  numPitches: z.coerce.number().int().min(1, 'Mindst 1 bane påkrævet'),
-  matchMode: z.enum(['full-time', 'two-halves']),
-  matchDurationMinutes: z.coerce.number().int().min(5, 'Minimum 5 minutter').optional(),
-  halfDurationMinutes: z.coerce.number().int().min(3, 'Minimum 3 minutter').optional(),
-  halftimeBreakMinutes: z.coerce.number().int().min(0, 'Kan ikke være negativ').optional(),
-  breakBetweenMatches: z.coerce.number().int().min(0, 'Kan ikke være negativ'),
-}).refine((data) => {
-  if (data.matchMode === 'full-time') {
-    return data.matchDurationMinutes !== undefined && data.matchDurationMinutes >= 5
-  }
-  return true
-}, {
-  message: 'Kampvarighed påkrævet for fuldtidstilstand',
-  path: ['matchDurationMinutes']
-}).refine((data) => {
-  if (data.matchMode === 'two-halves') {
-    return data.halfDurationMinutes !== undefined && data.halfDurationMinutes >= 3
-  }
-  return true
-}, {
-  message: 'Halvlegvarighed påkrævet for to halvlege tilstand',
-  path: ['halfDurationMinutes']
-})
+const tournamentSettingsSchema = z
+  .object({
+    name: z.string(),
+    startDate: z.string().min(1, 'Startdato er påkrævet'),
+    startTime: z.string().min(1, 'Starttidspunkt er påkrævet'),
+    numPitches: z.coerce.number().int().min(1, 'Mindst 1 bane påkrævet'),
+    matchMode: z.enum(['full-time', 'two-halves']),
+    matchDurationMinutes: z.coerce.number().int().min(5, 'Minimum 5 minutter').optional(),
+    halfDurationMinutes: z.coerce.number().int().min(3, 'Minimum 3 minutter').optional(),
+    halftimeBreakMinutes: z.coerce.number().int().min(0, 'Kan ikke være negativ').optional(),
+    breakBetweenMatches: z.coerce.number().int().min(0, 'Kan ikke være negativ'),
+  })
+  .refine(
+    data => {
+      if (data.matchMode === 'full-time') {
+        return data.matchDurationMinutes !== undefined && data.matchDurationMinutes >= 5
+      }
+      return true
+    },
+    {
+      message: 'Kampvarighed påkrævet for fuldtidstilstand',
+      path: ['matchDurationMinutes'],
+    }
+  )
+  .refine(
+    data => {
+      if (data.matchMode === 'two-halves') {
+        return data.halfDurationMinutes !== undefined && data.halfDurationMinutes >= 3
+      }
+      return true
+    },
+    {
+      message: 'Halvlegvarighed påkrævet for to halvlege tilstand',
+      path: ['halfDurationMinutes'],
+    }
+  )
 
 interface Step1Props {
   initialData: TournamentSettings
@@ -45,20 +60,27 @@ interface Step1Props {
 }
 
 export function Step1TournamentSettings({ initialData, onNext, onBack }: Step1Props) {
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<TournamentSettings>({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<TournamentSettings>({
     resolver: zodResolver(tournamentSettingsSchema),
-    defaultValues: initialData
+    defaultValues: initialData,
   })
 
   const matchMode = watch('matchMode')
   const numPitches = watch('numPitches')
   const [pitchNames, setPitchNames] = useState<string[]>(
-    initialData.pitchNames || Array.from({ length: initialData.numPitches }, (_, i) => `Bane ${i + 1}`)
+    initialData.pitchNames ||
+      Array.from({ length: initialData.numPitches }, (_, i) => `Bane ${i + 1}`)
   )
 
   useEffect(() => {
     const currentNum = Number(numPitches) || 1
-    setPitchNames((current) => {
+    setPitchNames(current => {
       const newNames = [...current]
       if (newNames.length < currentNum) {
         for (let i = newNames.length; i < currentNum; i++) {
@@ -72,7 +94,7 @@ export function Step1TournamentSettings({ initialData, onNext, onBack }: Step1Pr
   }, [numPitches])
 
   const handlePitchNameChange = (index: number, name: string) => {
-    setPitchNames((current) => {
+    setPitchNames(current => {
       const updated = [...current]
       updated[index] = name
       return updated
@@ -88,33 +110,26 @@ export function Step1TournamentSettings({ initialData, onNext, onBack }: Step1Pr
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>Turneringsindstillinger</CardTitle>
-        <CardDescription>Konfigurer din turnerings grundlæggende information og timing</CardDescription>
+        <CardTitle className="text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>
+          Turneringsindstillinger
+        </CardTitle>
+        <CardDescription>
+          Konfigurer din turnerings grundlæggende information og timing
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Turneringsnavn (Valgfri)</Label>
-              <Input
-                id="name"
-                placeholder="f.eks. Sommer Cup 2024"
-                {...register('name')}
-              />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
+              <Input id="name" placeholder="f.eks. Sommer Cup 2024" {...register('name')} />
+              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="startDate">Startdato *</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  min={today}
-                  {...register('startDate')}
-                />
+                <Input id="startDate" type="date" min={today} {...register('startDate')} />
                 {errors.startDate && (
                   <p className="text-sm text-destructive">{errors.startDate.message}</p>
                 )}
@@ -122,11 +137,7 @@ export function Step1TournamentSettings({ initialData, onNext, onBack }: Step1Pr
 
               <div className="space-y-2">
                 <Label htmlFor="startTime">Starttidspunkt *</Label>
-                <Input
-                  id="startTime"
-                  type="time"
-                  {...register('startTime')}
-                />
+                <Input id="startTime" type="time" {...register('startTime')} />
                 {errors.startTime && (
                   <p className="text-sm text-destructive">{errors.startTime.message}</p>
                 )}
@@ -159,7 +170,7 @@ export function Step1TournamentSettings({ initialData, onNext, onBack }: Step1Pr
                       <Input
                         id={`pitch-${index}`}
                         value={name}
-                        onChange={(e) => handlePitchNameChange(index, e.target.value)}
+                        onChange={e => handlePitchNameChange(index, e.target.value)}
                         placeholder={`Bane ${index + 1}`}
                       />
                     </div>
@@ -175,7 +186,7 @@ export function Step1TournamentSettings({ initialData, onNext, onBack }: Step1Pr
               <Label htmlFor="matchMode">Kamptilstand *</Label>
               <Select
                 value={matchMode}
-                onValueChange={(value) => setValue('matchMode', value as MatchMode)}
+                onValueChange={value => setValue('matchMode', value as MatchMode)}
               >
                 <SelectTrigger id="matchMode">
                   <SelectValue placeholder="Vælg kamptilstand" />
@@ -219,7 +230,9 @@ export function Step1TournamentSettings({ initialData, onNext, onBack }: Step1Pr
                       {...register('halfDurationMinutes')}
                     />
                     {errors.halfDurationMinutes && (
-                      <p className="text-sm text-destructive">{errors.halfDurationMinutes.message}</p>
+                      <p className="text-sm text-destructive">
+                        {errors.halfDurationMinutes.message}
+                      </p>
                     )}
                   </div>
 
@@ -233,7 +246,9 @@ export function Step1TournamentSettings({ initialData, onNext, onBack }: Step1Pr
                       {...register('halftimeBreakMinutes')}
                     />
                     {errors.halftimeBreakMinutes && (
-                      <p className="text-sm text-destructive">{errors.halftimeBreakMinutes.message}</p>
+                      <p className="text-sm text-destructive">
+                        {errors.halftimeBreakMinutes.message}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -249,7 +264,9 @@ export function Step1TournamentSettings({ initialData, onNext, onBack }: Step1Pr
                 placeholder="f.eks. 5"
                 {...register('breakBetweenMatches')}
               />
-              <p className="text-xs text-muted-foreground">Tid afsat til hold skift på samme bane</p>
+              <p className="text-xs text-muted-foreground">
+                Tid afsat til hold skift på samme bane
+              </p>
               {errors.breakBetweenMatches && (
                 <p className="text-sm text-destructive">{errors.breakBetweenMatches.message}</p>
               )}

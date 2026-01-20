@@ -5,6 +5,7 @@ This guide explains how to set up a service principal with federated credentials
 ## Why Federated Credentials?
 
 Federated credentials (OIDC) provide a more secure alternative to storing static secrets:
+
 - **No secret rotation needed** - Tokens are short-lived and automatically rotated
 - **Better security** - No long-lived credentials stored in GitHub
 - **Audit trail** - Azure AD logs all authentication attempts
@@ -31,6 +32,7 @@ Federated credentials (OIDC) provide a more secure alternative to storing static
 ```
 
 **Parameters:**
+
 - `GitHubOrg` (required) - Your GitHub username or organization name
 - `GitHubRepo` (required) - Your repository name
 - `ResourceGroup` (optional) - Azure resource group name (default: "football-tournament-rg")
@@ -47,13 +49,13 @@ After running the script, add these secrets to your GitHub repository:
 3. Click **New repository secret**
 4. Add each of the following secrets:
 
-| Secret Name | Description |
-|-------------|-------------|
-| `AZURE_CLIENT_ID` | The Application (client) ID of the service principal |
-| `AZURE_TENANT_ID` | Your Azure AD tenant ID |
-| `AZURE_SUBSCRIPTION_ID` | Your Azure subscription ID |
-| `AZURE_RESOURCE_GROUP` | The resource group containing your Static Web App |
-| `AZURE_STATIC_WEB_APP_NAME` | The name of your Static Web App |
+| Secret Name                 | Description                                          |
+| --------------------------- | ---------------------------------------------------- |
+| `AZURE_CLIENT_ID`           | The Application (client) ID of the service principal |
+| `AZURE_TENANT_ID`           | Your Azure AD tenant ID                              |
+| `AZURE_SUBSCRIPTION_ID`     | Your Azure subscription ID                           |
+| `AZURE_RESOURCE_GROUP`      | The resource group containing your Static Web App    |
+| `AZURE_STATIC_WEB_APP_NAME` | The name of your Static Web App                      |
 
 The script output will show you the exact values to use for each secret.
 
@@ -190,7 +192,7 @@ az role assignment create \
 ### "Login failed" in GitHub Actions
 
 - **Cause**: GitHub secrets may be incorrect or the federated credential subject doesn't match
-- **Solution**: 
+- **Solution**:
   1. Verify all secrets are correctly set in GitHub
   2. Ensure the subject in the federated credential matches: `repo:ORG/REPO:ref:refs/heads/main` or `repo:ORG/REPO:pull_request`
   3. Check that you've enabled OIDC in your GitHub organization settings (if using an organization)
@@ -198,21 +200,21 @@ az role assignment create \
 ### "Insufficient privileges to complete the operation"
 
 - **Cause**: The service principal doesn't have the necessary permissions
-- **Solution**: 
+- **Solution**:
   1. Verify the service principal has Contributor role on the resource group
   2. Verify the service principal has Website Contributor role on the Static Web App
   3. Re-run the setup script to ensure all role assignments are complete
 
 ## Comparison: OIDC vs Static Token
 
-| Feature | OIDC (Recommended) | Static Token |
-|---------|-------------------|--------------|
-| Security | ✅ Short-lived tokens | ⚠️ Long-lived secret |
-| Rotation | ✅ Automatic | ⚠️ Manual |
-| Audit | ✅ Full Azure AD logs | ⚠️ Limited |
-| Setup complexity | ⚠️ More steps | ✅ Simple |
-| Secret storage | ✅ 5 config values | ✅ 1 secret |
-| Recommended for | Production | Development/Testing |
+| Feature          | OIDC (Recommended)    | Static Token         |
+| ---------------- | --------------------- | -------------------- |
+| Security         | ✅ Short-lived tokens | ⚠️ Long-lived secret |
+| Rotation         | ✅ Automatic          | ⚠️ Manual            |
+| Audit            | ✅ Full Azure AD logs | ⚠️ Limited           |
+| Setup complexity | ⚠️ More steps         | ✅ Simple            |
+| Secret storage   | ✅ 5 config values    | ✅ 1 secret          |
+| Recommended for  | Production            | Development/Testing  |
 
 ## Additional Resources
 
@@ -223,6 +225,7 @@ az role assignment create \
 ## Support
 
 If you encounter issues:
+
 1. Check the troubleshooting section above
 2. Review Azure AD sign-in logs in the Azure Portal
 3. Check GitHub Actions workflow logs for detailed error messages

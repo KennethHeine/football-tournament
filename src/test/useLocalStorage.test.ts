@@ -43,7 +43,7 @@ describe('useLocalStorage', () => {
 
   it('should update localStorage when value changes', () => {
     const { result } = renderHook(() => useLocalStorage('test-key', 'initial'))
-    
+
     act(() => {
       result.current[1]('new-value')
     })
@@ -54,7 +54,7 @@ describe('useLocalStorage', () => {
 
   it('should support functional updates', () => {
     const { result } = renderHook(() => useLocalStorage('test-key', 5))
-    
+
     act(() => {
       result.current[1](prev => prev + 10)
     })
@@ -66,7 +66,7 @@ describe('useLocalStorage', () => {
   it('should handle complex objects', () => {
     const initialValue = { name: 'Test', count: 0 }
     const { result } = renderHook(() => useLocalStorage('test-key', initialValue))
-    
+
     const newValue = { name: 'Updated', count: 5 }
     act(() => {
       result.current[1](newValue)
@@ -79,7 +79,7 @@ describe('useLocalStorage', () => {
   it('should handle arrays', () => {
     const initialValue = [1, 2, 3]
     const { result } = renderHook(() => useLocalStorage('test-key', initialValue))
-    
+
     const newValue = [4, 5, 6]
     act(() => {
       result.current[1](newValue)
@@ -92,19 +92,19 @@ describe('useLocalStorage', () => {
   it('should return initial value when localStorage has invalid JSON', () => {
     localStorageMock.setItem('test-key', 'invalid-json{')
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    
+
     const { result } = renderHook(() => useLocalStorage('test-key', 'fallback'))
-    
+
     expect(result.current[0]).toBe('fallback')
     expect(consoleErrorSpy).toHaveBeenCalled()
-    
+
     consoleErrorSpy.mockRestore()
   })
 
   it('should persist different keys independently', () => {
     const { result: result1 } = renderHook(() => useLocalStorage('key1', 'value1'))
     const { result: result2 } = renderHook(() => useLocalStorage('key2', 'value2'))
-    
+
     act(() => {
       result1.current[1]('updated1')
     })

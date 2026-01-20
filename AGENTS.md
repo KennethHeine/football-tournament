@@ -30,24 +30,28 @@ When working on this project, GitHub Copilot should be aware of:
 ### Code Conventions
 
 #### TypeScript
+
 - Use strict TypeScript types
 - Prefer interfaces over types for object shapes
 - Use `const` for immutable values
 - Avoid `any` - use proper typing
 
 #### React
+
 - Use functional components with hooks
 - Prefer `useCallback` and `useMemo` for optimization
 - Use custom hooks for reusable logic
 - Follow React 19 best practices
 
 #### Styling
+
 - Use Tailwind utility classes
 - OKLCH color format for theme colors (defined in `src/styles/theme.css`)
 - Responsive design with mobile-first approach
 - Use Radix UI primitives for accessible components
 
 #### Testing
+
 - Unit tests with Vitest in `src/test/` directory
 - E2E tests with Playwright in `e2e/` directory
 - Test naming: `*.test.ts` for unit tests, `*.spec.ts` for E2E tests
@@ -72,6 +76,7 @@ football-tournament/
 ### Common Tasks
 
 #### Running Tests
+
 ```bash
 npm test              # Unit tests
 npm run test:ui       # Unit tests with UI
@@ -79,6 +84,7 @@ npm run test:e2e      # E2E tests
 ```
 
 #### Building & Running
+
 ```bash
 npm run dev           # Development server
 npm run build         # Production build
@@ -87,6 +93,7 @@ npm run lint          # ESLint
 ```
 
 #### Deployment
+
 ```powershell
 # PowerShell
 .\scripts\provision-azure.ps1
@@ -96,6 +103,7 @@ npm run lint          # ESLint
 ### Custom Hooks
 
 #### useLocalStorage
+
 Replacement for Spark's `useKV` - stores data in browser localStorage.
 
 ```typescript
@@ -113,6 +121,7 @@ const [value, setValue] = useLocalStorage<Type>('key', defaultValue)
 ### Color System
 
 Colors use OKLCH format for better perceptual uniformity:
+
 - Primary (Pitch Green): `oklch(0.55 0.15 145)`
 - Accent (Referee Yellow): `oklch(0.85 0.18 95)`
 - See `src/lib/color-utils.ts` for conversion utilities
@@ -120,6 +129,7 @@ Colors use OKLCH format for better perceptual uniformity:
 ### Data Models
 
 Key types in `src/lib/types.ts`:
+
 - `Tournament` - Main tournament object
 - `Team` - Team in a tournament
 - `Match` - A scheduled match
@@ -162,6 +172,7 @@ See `DEPLOYMENT.md` and `FEDERATED-CREDENTIALS.md` for details.
 ### Adding a New Feature
 
 When adding a new feature:
+
 1. Update types in `src/lib/types.ts`
 2. Create/update components in `src/components/`
 3. Add unit tests in `src/test/`
@@ -171,6 +182,7 @@ When adding a new feature:
 ### Fixing a Bug
 
 When fixing a bug:
+
 1. Write a failing test that reproduces the bug
 2. Fix the bug
 3. Verify the test passes

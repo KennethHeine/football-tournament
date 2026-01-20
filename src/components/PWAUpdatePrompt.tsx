@@ -15,7 +15,7 @@ export function PWAUpdatePrompt() {
   } = useRegisterSW({
     onRegisteredSW(swUrl, registration) {
       console.log('Service Worker registered:', swUrl)
-      
+
       // Check for updates every hour
       if (registration) {
         intervalRef.current = window.setInterval(() => {
@@ -38,8 +38,8 @@ export function PWAUpdatePrompt() {
               console.error('Failed to update service worker:', error)
               toast.error('Kunne ikke opdatere. Prøv igen senere.')
             }
-          }
-        }
+          },
+        },
       })
     },
   })
@@ -76,22 +76,13 @@ export function PWAUpdatePrompt() {
       <div className="flex flex-col gap-3">
         <div>
           <h3 className="font-semibold">Ny version tilgængelig</h3>
-          <p className="text-sm text-muted-foreground">
-            En opdatering er klar til installation.
-          </p>
+          <p className="text-sm text-muted-foreground">En opdatering er klar til installation.</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            onClick={handleUpdate}
-            size="sm"
-          >
+          <Button onClick={handleUpdate} size="sm">
             Opdater nu
           </Button>
-          <Button
-            onClick={handleDismiss}
-            variant="outline"
-            size="sm"
-          >
+          <Button onClick={handleDismiss} variant="outline" size="sm">
             Senere
           </Button>
         </div>

@@ -2,7 +2,7 @@ name: Dependabot Auto-Merge
 
 on:
   workflow_run:
-    workflows: ["Azure Static Web Apps CI/CD"]
+    workflows: ['Azure Static Web Apps CI/CD']
     types: [completed]
 
 permissions:
@@ -29,10 +29,10 @@ jobs:
               repo: context.repo.repo,
               run_id: context.payload.workflow_run.id
             });
-            
+
             // Use the pull_requests array from the workflow run
             const prs = workflowRun.pull_requests;
-            
+
             if (!prs || prs.length === 0) {
               // Fallback: search for PR by head branch
               const { data: searchPrs } = await github.rest.pulls.list({
@@ -52,11 +52,11 @@ jobs:
               core.setOutput('pr-title', searchPrs[0].title);
               return;
             }
-            
+
             const pr = prs[0];
             core.setOutput('pr-number', pr.number);
             core.setOutput('pr-url', pr.url.replace('api.github.com/repos', 'github.com').replace('/pulls/', '/pull/'));
-            
+
             // Fetch full PR details for the title
             const { data: prDetails } = await github.rest.pulls.get({
               owner: context.repo.owner,

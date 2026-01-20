@@ -3,6 +3,7 @@
 ## Method 1: OIDC with Federated Credentials (Recommended) 🔐
 
 **Advantages:**
+
 - ✅ No long-lived secrets
 - ✅ Automatic token rotation
 - ✅ Better security
@@ -11,11 +12,13 @@
 **Setup Steps:**
 
 1. **Provision Azure Resources:**
+
    ```powershell
    .\scripts\provision-azure.ps1
    ```
 
 2. **Create Service Principal:**
+
    ```powershell
    .\scripts\setup-service-principal.ps1 -GitHubOrg "YourUsername" -GitHubRepo "football-tournament"
    ```
@@ -35,6 +38,7 @@
 ## Method 2: Static Deployment Token (Simple)
 
 **Advantages:**
+
 - ✅ Simple setup
 - ✅ Quick start
 - ✅ Good for testing
@@ -42,6 +46,7 @@
 **Setup Steps:**
 
 1. **Provision Azure Resources:**
+
    ```powershell
    .\scripts\provision-azure.ps1
    ```
