@@ -44,6 +44,12 @@ jobs:
       - name: Run unit tests
         run: npm test -- --run
 
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: npm run test:e2e
+
       - name: Build application
         run: npm run build
 
@@ -75,6 +81,12 @@ jobs:
 
       - name: Run unit tests
         run: npm test -- --run
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: npm run test:e2e
 
       - name: Build application
         run: npm run build
@@ -137,6 +149,12 @@ jobs:
 
       - name: Run unit tests
         run: npm test -- --run
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: npm run test:e2e
 
       - name: Build application
         run: npm run build

@@ -77,6 +77,8 @@ The application uses a single workflow file (`.github/workflows/azure-static-web
 - Installs dependencies
 - Runs linter (`npm run lint`)
 - Runs unit tests (`npm test -- --run`)
+- Installs Playwright browsers
+- Runs E2E tests (`npm run test:e2e`)
 - Builds the application (`npm run build`)
 
 **Purpose:** Ensures code quality for all PRs without deploying
@@ -88,7 +90,7 @@ The application uses a single workflow file (`.github/workflows/azure-static-web
 - Not on pull requests
 
 **What it does:**
-- All steps from test job (lint, test, build)
+- All steps from test job (lint, unit tests, E2E tests, build)
 - Authenticates with Azure using OIDC
 - Retrieves deployment token
 - Deploys to production Azure Static Web App
@@ -102,7 +104,7 @@ The application uses a single workflow file (`.github/workflows/azure-static-web
 - **Excludes Dependabot PRs** (via `github.actor != 'dependabot[bot]'`)
 
 **What it does:**
-- All steps from test job (lint, test, build)
+- All steps from test job (lint, unit tests, E2E tests, build)
 - Authenticates with Azure using OIDC
 - Retrieves deployment token
 - Deploys to PR-specific environment: `pr-{PR_NUMBER}`
