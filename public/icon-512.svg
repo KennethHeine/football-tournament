@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22c55e"/>
+      <stop offset="100%" style="stop-color:#16a34a"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
+  <!-- Football (soccer ball) -->
+  <circle cx="256" cy="256" r="160" fill="white" stroke="#1e293b" stroke-width="8"/>
+  <!-- Pentagon pattern -->
+  <polygon points="256,136 310,176 290,256 222,256 202,176" fill="#1e293b"/>
+  <polygon points="136,256 202,176 222,256 176,320 128,296" fill="#1e293b"/>
+  <polygon points="376,256 310,176 290,256 336,320 384,296" fill="#1e293b"/>
+  <polygon points="222,256 176,320 218,376 294,376 336,320 290,256" fill="#1e293b"/>
+</svg>
