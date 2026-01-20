@@ -72,7 +72,7 @@ describe('Scheduler', () => {
     it('should add BYE team and warning for odd number of teams', () => {
       const oddTeams = teams.slice(0, 3)
       const schedule = generateSchedule(defaultSettings, oddTeams, roundRobinConfig)
-      
+
       // Should warn about BYE team being added
       expect(schedule.warnings.some(w => w.includes('BYE'))).toBe(true)
       // BYE matches are filtered out, so all matches should be between real teams
@@ -82,7 +82,7 @@ describe('Scheduler', () => {
 
     it('should generate matches with valid start and end times', () => {
       const schedule = generateSchedule(defaultSettings, teams, roundRobinConfig)
-      
+
       schedule.matches.forEach(match => {
         expect(match.startTime).toBeInstanceOf(Date)
         expect(match.endTime).toBeInstanceOf(Date)
@@ -92,7 +92,7 @@ describe('Scheduler', () => {
 
     it('should assign matches to available pitches', () => {
       const schedule = generateSchedule(defaultSettings, teams, roundRobinConfig)
-      
+
       schedule.matches.forEach(match => {
         expect(match.pitch).toBeGreaterThanOrEqual(1)
         expect(match.pitch).toBeLessThanOrEqual(defaultSettings.numPitches)
@@ -133,7 +133,7 @@ describe('Scheduler', () => {
     it('should detect no conflicts when schedule is valid', () => {
       const config: SchedulingConfig = { mode: 'round-robin' }
       const schedule = generateSchedule(defaultSettings, teams, config)
-      
+
       // With proper scheduling across multiple pitches, there should be minimal conflicts
       expect(schedule.conflicts).toBeDefined()
     })
@@ -143,10 +143,10 @@ describe('Scheduler', () => {
         id: `team-${i}`,
         name: `Team ${i + 1}`,
       }))
-      
+
       const config: SchedulingConfig = { mode: 'round-robin' }
       const schedule = generateSchedule(defaultSettings, manyTeams, config)
-      
+
       // 12 teams = 66 matches, should trigger warning at >100
       // Or we might see a warning depending on the threshold
       expect(schedule.warnings).toBeDefined()
@@ -156,7 +156,7 @@ describe('Scheduler', () => {
   describe('Match Timing', () => {
     it('should respect break between matches', () => {
       const schedule = generateSchedule(defaultSettings, teams, { mode: 'round-robin' })
-      
+
       // Group matches by pitch
       const matchesByPitch = new Map<number, typeof schedule.matches>()
       schedule.matches.forEach(match => {
@@ -168,21 +168,25 @@ describe('Scheduler', () => {
 
       // Check that matches on same pitch don't overlap
       matchesByPitch.forEach(pitchMatches => {
-        const sorted = [...pitchMatches].sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
-        
+        const sorted = [...pitchMatches].sort(
+          (a, b) => a.startTime.getTime() - b.startTime.getTime()
+        )
+
         for (let i = 1; i < sorted.length; i++) {
           const prevMatch = sorted[i - 1]
           const currentMatch = sorted[i]
-          
+
           // Current match should start after previous match ends
-          expect(currentMatch.startTime.getTime()).toBeGreaterThanOrEqual(prevMatch.endTime.getTime())
+          expect(currentMatch.startTime.getTime()).toBeGreaterThanOrEqual(
+            prevMatch.endTime.getTime()
+          )
         }
       })
     })
 
     it('should calculate correct match duration', () => {
       const schedule = generateSchedule(defaultSettings, teams, { mode: 'round-robin' })
-      
+
       schedule.matches.forEach(match => {
         const duration = (match.endTime.getTime() - match.startTime.getTime()) / (1000 * 60)
         expect(duration).toBe(defaultSettings.matchDurationMinutes)
@@ -194,9 +198,11 @@ describe('Scheduler', () => {
     describe('escapeHtml', () => {
       it('should escape HTML entities', async () => {
         const { escapeHtml } = await import('../lib/scheduler')
-        expect(escapeHtml('<script>alert("xss")</script>')).toBe('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;')
+        expect(escapeHtml('<script>alert("xss")</script>')).toBe(
+          '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;'
+        )
         expect(escapeHtml('Team & Friends')).toBe('Team &amp; Friends')
-        expect(escapeHtml("Team's Name")).toBe("Team&#039;s Name")
+        expect(escapeHtml("Team's Name")).toBe('Team&#039;s Name')
         expect(escapeHtml('Normal Team Name')).toBe('Normal Team Name')
       })
     })
@@ -223,13 +229,13 @@ describe('Scheduler', () => {
       it('should handle formula injection with commas', async () => {
         const { escapeCsvField } = await import('../lib/scheduler')
         // Formula char + comma: should quote AND add apostrophe inside
-        expect(escapeCsvField('=SUM, data')).toBe("\"'=SUM, data\"")
+        expect(escapeCsvField('=SUM, data')).toBe('"\'=SUM, data"')
       })
 
       it('should handle formula injection with quotes', async () => {
         const { escapeCsvField } = await import('../lib/scheduler')
         // Formula char + quote: should escape quotes AND add apostrophe
-        expect(escapeCsvField('=SUM"test"')).toBe("\"'=SUM\"\"test\"\"\"")
+        expect(escapeCsvField('=SUM"test"')).toBe('"\'=SUM""test"""')
       })
 
       it('should not modify normal fields', async () => {
@@ -249,7 +255,7 @@ describe('Scheduler', () => {
     it('should handle 2 teams in round-robin mode', () => {
       const twoTeams = [
         { id: '1', name: 'Team A' },
-        { id: '2', name: 'Team B' }
+        { id: '2', name: 'Team B' },
       ]
       const schedule = generateSchedule(defaultSettings, twoTeams, { mode: 'round-robin' })
       expect(schedule.matches.length).toBe(1)
@@ -260,7 +266,7 @@ describe('Scheduler', () => {
       const threeTeams = [
         { id: '1', name: 'Team A' },
         { id: '2', name: 'Team B' },
-        { id: '3', name: 'Team C' }
+        { id: '3', name: 'Team C' },
       ]
       const schedule = generateSchedule(defaultSettings, threeTeams, { mode: 'round-robin' })
       // 3 teams = 3 matches (A vs B, A vs C, B vs C)
@@ -273,7 +279,7 @@ describe('Scheduler', () => {
         id: `team-${i}`,
         name: `Team ${i + 1}`,
       }))
-      
+
       const schedule = generateSchedule(defaultSettings, manyTeams, { mode: 'round-robin' })
       // 15 teams = 105 matches, should trigger >100 warning
       expect(schedule.matches.length).toBe(105)
@@ -285,13 +291,16 @@ describe('Scheduler', () => {
         { id: '1', name: '=DANGEROUS' },
         { id: '2', name: 'Team, with comma' },
         { id: '3', name: 'FC "Copenhagen"' },
-        { id: '4', name: 'Normal Team' }
+        { id: '4', name: 'Normal Team' },
       ]
-      const schedule = generateSchedule(defaultSettings, specialTeams, { mode: 'limited-matches', maxMatchesPerTeam: 1 })
-      
+      const schedule = generateSchedule(defaultSettings, specialTeams, {
+        mode: 'limited-matches',
+        maxMatchesPerTeam: 1,
+      })
+
       const { exportToCSV } = await import('../lib/scheduler')
       const csv = exportToCSV(schedule.matches, defaultSettings)
-      
+
       // Verify CSV escaping is applied
       expect(csv).toContain("'=DANGEROUS") // Formula injection protected
     })

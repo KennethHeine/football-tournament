@@ -18,11 +18,13 @@ This document provides instructions for deploying the Football Tournament applic
 This method uses OpenID Connect for secure, keyless authentication. **Recommended for production.**
 
 1. **Login to Azure CLI:**
+
    ```powershell
    az login
    ```
 
 2. **Run the provisioning script:**
+
    ```powershell
    # PowerShell
    .\scripts\provision-azure.ps1 `
@@ -32,6 +34,7 @@ This method uses OpenID Connect for secure, keyless authentication. **Recommende
    ```
 
 3. **Set up Service Principal with Federated Credentials:**
+
    ```powershell
    .\scripts\setup-service-principal.ps1 `
        -GitHubOrg "YourGitHubUsername" `
@@ -63,23 +66,27 @@ This method uses OpenID Connect for secure, keyless authentication. **Recommende
 #### Using Static Deployment Token (Quick Start)
 
 1. **Login to Azure CLI:**
+
    ```powershell
    az login
    ```
 
 2. **Run the provisioning script:**
-   
+
    **PowerShell:**
+
    ```powershell
    .\scripts\provision-azure.ps1
    ```
-   
+
    **Bash (Linux/Mac):**
+
    ```bash
    ./scripts/provision-azure.sh
    ```
 
    You can customize the deployment with parameters:
+
    ```powershell
    # PowerShell
    .\scripts\provision-azure.ps1 `
@@ -118,6 +125,7 @@ The workflow automatically detects which authentication method to use:
 ### Required Secrets
 
 **For OIDC (Recommended):**
+
 - `AZURE_CLIENT_ID` - Service principal application ID
 - `AZURE_TENANT_ID` - Azure AD tenant ID
 - `AZURE_SUBSCRIPTION_ID` - Azure subscription ID
@@ -125,6 +133,7 @@ The workflow automatically detects which authentication method to use:
 - `AZURE_STATIC_WEB_APP_NAME` - Static Web App name
 
 **For Static Token:**
+
 - `AZURE_STATIC_WEB_APPS_API_TOKEN` - Deployment token
 
 **Note:** The workflow will use OIDC if available, otherwise fall back to static token. You can use both methods - OIDC will take precedence.
@@ -205,6 +214,7 @@ npm run test:e2e:ui
 ## Monitoring and Management
 
 ### View your deployed app:
+
 ```bash
 az staticwebapp show \
   --name football-tournament-app \
@@ -212,12 +222,14 @@ az staticwebapp show \
 ```
 
 ### View logs:
+
 ```bash
 az monitor activity-log list \
   --resource-group football-tournament-rg
 ```
 
 ### Delete the app:
+
 ```bash
 az staticwebapp delete \
   --name football-tournament-app \
@@ -230,6 +242,7 @@ az group delete \
 ## Configuration
 
 The application uses `staticwebapp.config.json` for routing and caching configuration:
+
 - All routes fallback to `/index.html` for client-side routing
 - Anonymous access allowed
 - Cache headers configured for optimal performance
@@ -237,16 +250,19 @@ The application uses `staticwebapp.config.json` for routing and caching configur
 ## Troubleshooting
 
 ### Build fails in GitHub Actions:
+
 - Check that all dependencies are correctly listed in `package.json`
 - Verify that the build command succeeds locally
 - Check GitHub Actions logs for specific errors
 
 ### App doesn't load after deployment:
+
 - Verify the output location is set to `dist`
 - Check that the build completed successfully
 - Clear browser cache and try again
 
 ### localStorage not persisting:
+
 - Ensure browser cookies are enabled
 - Check browser console for errors
 - Verify that you're using the same domain/URL
@@ -254,6 +270,7 @@ The application uses `staticwebapp.config.json` for routing and caching configur
 ## Support
 
 For issues and questions:
+
 - Check the [Azure Static Web Apps documentation](https://docs.microsoft.com/azure/static-web-apps/)
 - Review GitHub Actions logs
 - Check browser console for errors

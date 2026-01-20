@@ -5,9 +5,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import type { GeneratedSchedule, Match, Team, TournamentSettings } from '@/lib/types'
-import { ArrowLeft, Printer, Download, Copy, MagnifyingGlass, WarningCircle, Check, Image } from '@phosphor-icons/react'
+import {
+  ArrowLeft,
+  Printer,
+  Download,
+  Copy,
+  MagnifyingGlass,
+  WarningCircle,
+  Check,
+  Image,
+} from '@phosphor-icons/react'
 import { exportToCSV, exportToText, getPitchName, escapeHtml } from '@/lib/scheduler'
 import { toast } from 'sonner'
 import html2canvas from 'html2canvas'
@@ -22,7 +37,14 @@ interface Step4Props {
   onSave: () => void
 }
 
-export function Step4Schedule({ schedule, tournamentName, teams, settings, onBack, onSave }: Step4Props) {
+export function Step4Schedule({
+  schedule,
+  tournamentName,
+  teams,
+  settings,
+  onBack,
+  onSave,
+}: Step4Props) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPitch, setSelectedPitch] = useState<string>('all')
   const [selectedTeam, setSelectedTeam] = useState<string>('all')
@@ -38,13 +60,15 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
   const filteredMatches = useMemo(() => {
     return schedule.matches.filter(match => {
       const matchesPitch = selectedPitch === 'all' || match.pitch === Number(selectedPitch)
-      const matchesTeam = selectedTeam === 'all' || 
-        match.homeTeam.id === selectedTeam || 
+      const matchesTeam =
+        selectedTeam === 'all' ||
+        match.homeTeam.id === selectedTeam ||
         match.awayTeam.id === selectedTeam
-      const matchesSearch = searchQuery === '' || 
+      const matchesSearch =
+        searchQuery === '' ||
         match.homeTeam.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         match.awayTeam.name.toLowerCase().includes(searchQuery.toLowerCase())
-      
+
       return matchesPitch && matchesTeam && matchesSearch
     })
   }, [schedule.matches, selectedPitch, selectedTeam, searchQuery])
@@ -58,22 +82,20 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
       }
       grouped.get(timeKey)!.push(match)
     })
-    return Array.from(grouped.entries()).sort((a, b) => 
-      new Date(a[0]).getTime() - new Date(b[0]).getTime()
+    return Array.from(grouped.entries()).sort(
+      (a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime()
     )
   }, [filteredMatches])
 
   const teamMatches = useMemo(() => {
     if (selectedTeam === 'all') return []
-    return schedule.matches.filter(m => 
-      m.homeTeam.id === selectedTeam || m.awayTeam.id === selectedTeam
-    ).sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
+    return schedule.matches
+      .filter(m => m.homeTeam.id === selectedTeam || m.awayTeam.id === selectedTeam)
+      .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
   }, [schedule.matches, selectedTeam])
 
   const isConflict = (match: Match) => {
-    return schedule.conflicts.some(conflict => 
-      conflict.matches.some(m => m.id === match.id)
-    )
+    return schedule.conflicts.some(conflict => conflict.matches.some(m => m.id === match.id))
   }
 
   const handlePrint = () => {
@@ -111,24 +133,31 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
   const handleExportImage = async () => {
     setExportingImage(true)
     const toastId = toast.loading('Genererer billede...')
-    
+
     try {
       const headingFont = "'Outfit', system-ui, sans-serif"
-      
-      const tableRows = matchesByTime.map(([_timeKey, matches]) => 
-        matches.map((match, idx) => {
-          const conflict = isConflict(match)
-          const rowBg = conflict 
-            ? SAFE_COLORS.tableConflict
-            : idx % 2 === 0 ? SAFE_COLORS.tableBg : SAFE_COLORS.tableAlt
-          
-          const timeCell = idx === 0 ? `
+
+      const tableRows = matchesByTime
+        .map(([_timeKey, matches]) =>
+          matches
+            .map((match, idx) => {
+              const conflict = isConflict(match)
+              const rowBg = conflict
+                ? SAFE_COLORS.tableConflict
+                : idx % 2 === 0
+                  ? SAFE_COLORS.tableBg
+                  : SAFE_COLORS.tableAlt
+
+              const timeCell =
+                idx === 0
+                  ? `
             <td rowspan="${matches.length}" style="padding: 12px 16px; font-weight: 600; vertical-align: top; border-right: 1px solid ${SAFE_COLORS.border}; color: ${SAFE_COLORS.text};">
               ${formatTime(match.startTime)}
             </td>
-          ` : ''
-          
-          return `
+          `
+                  : ''
+
+              return `
             <tr style="background-color: ${rowBg};">
               ${timeCell}
               <td style="padding: 12px 16px; color: ${SAFE_COLORS.text};">
@@ -142,19 +171,22 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
               <td style="padding: 12px 16px; color: ${SAFE_COLORS.mutedForeground};">${formatTime(match.endTime)}</td>
             </tr>
           `
-        }).join('')
-      ).join('')
-      
+            })
+            .join('')
+        )
+        .join('')
+
       // Create an iframe to isolate from page CSS (avoids oklch color parsing issues in html2canvas)
       const iframe = document.createElement('iframe')
-      iframe.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 1280px; height: 2000px; border: none;'
+      iframe.style.cssText =
+        'position: absolute; left: -9999px; top: 0; width: 1280px; height: 2000px; border: none;'
       document.body.appendChild(iframe)
-      
+
       const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
       if (!iframeDoc) {
         throw new Error('Could not access iframe document')
       }
-      
+
       iframeDoc.open()
       iframeDoc.write(`
         <!DOCTYPE html>
@@ -205,20 +237,20 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
         </html>
       `)
       iframeDoc.close()
-      
+
       // Wait for fonts to load before capturing
       await new Promise(resolve => setTimeout(resolve, 500))
-      
+
       // Additional wait for fonts to be ready
       if (iframe.contentWindow?.document?.fonts) {
         await iframe.contentWindow.document.fonts.ready
       }
-      
+
       const captureElement = iframeDoc.getElementById('capture')
       if (!captureElement) {
         throw new Error('Could not find capture element')
       }
-      
+
       const canvas = await html2canvas(captureElement, {
         scale: 2,
         backgroundColor: SAFE_COLORS.card,
@@ -227,32 +259,35 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
         allowTaint: false,
         foreignObjectRendering: false,
       })
-      
-      canvas.toBlob((blob) => {
+
+      canvas.toBlob(blob => {
         // Clean up iframe after blob creation
         if (document.body.contains(iframe)) {
           document.body.removeChild(iframe)
         }
-        
+
         if (!blob) {
           toast.error('Kunne ikke generere billede', { id: toastId })
           setExportingImage(false)
           return
         }
-        
+
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
         a.download = `${tournamentName || 'turnering'}-skema.png`
         a.click()
         URL.revokeObjectURL(url)
-        
+
         toast.success('Billede downloadet', { id: toastId })
         setExportingImage(false)
       }, 'image/png')
     } catch (error) {
       console.error('Failed to export image:', error)
-      toast.error(`Kunne ikke eksportere billede: ${error instanceof Error ? error.message : 'Ukendt fejl'}`, { id: toastId })
+      toast.error(
+        `Kunne ikke eksportere billede: ${error instanceof Error ? error.message : 'Ukendt fejl'}`,
+        { id: toastId }
+      )
       setExportingImage(false)
     }
   }
@@ -262,11 +297,11 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
   }
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-GB', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-GB', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     })
   }
 
@@ -279,11 +314,18 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
               {tournamentName || 'Turneringsskema'}
             </CardTitle>
             <CardDescription>
-              {schedule.matches.length} kampe planlagt på tværs af {pitches.length} ban{pitches.length !== 1 ? 'er' : 'e'}
+              {schedule.matches.length} kampe planlagt på tværs af {pitches.length} ban
+              {pitches.length !== 1 ? 'er' : 'e'}
             </CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={handleExportImage} variant="outline" size="sm" className="gap-2" disabled={exportingImage}>
+            <Button
+              onClick={handleExportImage}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              disabled={exportingImage}
+            >
               <Image size={18} /> {exportingImage ? 'Genererer...' : 'Gem som billede'}
             </Button>
             <Button onClick={handlePrint} variant="outline" size="sm" className="gap-2">
@@ -302,21 +344,26 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
       <CardContent ref={scheduleRef}>
         <div className="space-y-6">
           <div className="print-only border-b pb-4 mb-6">
-            <h1 className="text-3xl font-bold text-center mb-2" style={{ fontFamily: 'var(--font-heading)' }}>
+            <h1
+              className="text-3xl font-bold text-center mb-2"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
               {tournamentName || 'Turneringsskema'}
             </h1>
             <p className="text-center text-muted-foreground">
-              {schedule.matches.length} kampe • {pitches.length} ban{pitches.length !== 1 ? 'er' : 'e'}
+              {schedule.matches.length} kampe • {pitches.length} ban
+              {pitches.length !== 1 ? 'er' : 'e'}
             </p>
-            <p className="text-center text-muted-foreground text-sm mt-1">
-              {getMatchTimingInfo()}
-            </p>
+            <p className="text-center text-muted-foreground text-sm mt-1">{getMatchTimingInfo()}</p>
           </div>
 
           {schedule.warnings.length > 0 && (
             <div className="space-y-2 no-print">
               {schedule.warnings.map((warning, idx) => (
-                <Alert key={idx} variant={schedule.conflicts.length > 0 && idx === 0 ? 'destructive' : 'default'}>
+                <Alert
+                  key={idx}
+                  variant={schedule.conflicts.length > 0 && idx === 0 ? 'destructive' : 'default'}
+                >
                   <WarningCircle size={20} />
                   <AlertDescription>{warning}</AlertDescription>
                 </Alert>
@@ -333,11 +380,14 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
             <TabsContent value="program" className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 no-print">
                 <div className="relative">
-                  <MagnifyingGlass size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <MagnifyingGlass
+                    size={18}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  />
                   <Input
                     placeholder="Søg hold..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={e => setSearchQuery(e.target.value)}
                     className="pl-10"
                   />
                 </div>
@@ -362,11 +412,13 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Alle hold</SelectItem>
-                    {teams.filter(t => t.id !== 'BYE').map(team => (
-                      <SelectItem key={team.id} value={team.id}>
-                        {team.name}
-                      </SelectItem>
-                    ))}
+                    {teams
+                      .filter(t => t.id !== 'BYE')
+                      .map(team => (
+                        <SelectItem key={team.id} value={team.id}>
+                          {team.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -376,27 +428,42 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
                   <table className="w-full">
                     <thead className="bg-muted">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Tidspunkt</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Bane</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Hjemme</th>
-                        <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">mod</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Ude</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Sluttid</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
+                          Tidspunkt
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
+                          Bane
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
+                          Hjemme
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">
+                          mod
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
+                          Ude
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">
+                          Sluttid
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {matchesByTime.map(([_timeKey, matches]) => (
+                      {matchesByTime.map(([_timeKey, matches]) =>
                         matches.map((match, idx) => (
-                          <tr 
+                          <tr
                             key={match.id}
                             className={`transition-colors ${
-                              isConflict(match) 
-                                ? 'bg-destructive/10 hover:bg-destructive/20' 
+                              isConflict(match)
+                                ? 'bg-destructive/10 hover:bg-destructive/20'
                                 : 'hover:bg-muted/50'
                             }`}
                           >
                             {idx === 0 ? (
-                              <td rowSpan={matches.length} className="px-4 py-3 font-semibold align-top border-r">
+                              <td
+                                rowSpan={matches.length}
+                                className="px-4 py-3 font-semibold align-top border-r"
+                              >
                                 {formatTime(match.startTime)}
                               </td>
                             ) : null}
@@ -411,7 +478,7 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
                             </td>
                           </tr>
                         ))
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -431,11 +498,13 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
                     <SelectValue placeholder="Vælg et hold" />
                   </SelectTrigger>
                   <SelectContent>
-                    {teams.filter(t => t.id !== 'BYE').map(team => (
-                      <SelectItem key={team.id} value={team.id}>
-                        {team.name}
-                      </SelectItem>
-                    ))}
+                    {teams
+                      .filter(t => t.id !== 'BYE')
+                      .map(team => (
+                        <SelectItem key={team.id} value={team.id}>
+                          {team.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -458,19 +527,19 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
                     {teamMatches.map((match, idx) => {
                       const isHome = match.homeTeam.id === selectedTeam
                       const opponent = isHome ? match.awayTeam : match.homeTeam
-                      
+
                       return (
                         <div key={match.id} className="p-4 hover:bg-muted/50 transition-colors">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                               <div className="text-center">
                                 <div className="text-xs text-muted-foreground">Kamp {idx + 1}</div>
-                                <Badge variant="outline" className="mt-1">{getPitchName(match.pitch, settings)}</Badge>
+                                <Badge variant="outline" className="mt-1">
+                                  {getPitchName(match.pitch, settings)}
+                                </Badge>
                               </div>
                               <div>
-                                <div className="font-semibold">
-                                  mod {opponent.name}
-                                </div>
+                                <div className="font-semibold">mod {opponent.name}</div>
                                 <div className="text-sm text-muted-foreground">
                                   {formatDate(match.startTime)}
                                 </div>

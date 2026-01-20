@@ -31,7 +31,7 @@ jobs:
       - name: Validate Project Documentation
         run: |
           echo "Checking project documentation for Copilot context..."
-          
+
           docs=("README.md" "PRD.md" "DEPLOYMENT.md")
           for doc in "${docs[@]}"; do
             if [ -f "$doc" ]; then
@@ -53,20 +53,20 @@ jobs:
       - name: Verify Test Setup
         run: |
           echo "Checking test infrastructure..."
-          
+
           if [ -f "vitest.config.ts" ]; then
             echo "✅ Vitest configured for unit tests"
           fi
-          
+
           if [ -f "playwright.config.ts" ]; then
             echo "✅ Playwright configured for E2E tests"
           fi
-          
+
           if [ -d "src/test" ]; then
             test_count=$(find src/test -name "*.test.ts" -o -name "*.test.tsx" | wc -l)
             echo "✅ Found $test_count unit test file(s)"
           fi
-          
+
           if [ -d "e2e" ]; then
             e2e_count=$(find e2e -name "*.spec.ts" -o -name "*.spec.tsx" | wc -l)
             echo "✅ Found $e2e_count E2E test file(s)"

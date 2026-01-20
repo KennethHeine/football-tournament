@@ -121,10 +121,10 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ steps.get_token.outputs.deployment_token }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          action: "upload"
-          app_location: "/"
-          api_location: ""
-          output_location: "dist"
+          action: 'upload'
+          app_location: '/'
+          api_location: ''
+          output_location: 'dist'
 
   # Job for deploying PR preview (non-Dependabot PRs only, no tests)
   deploy_preview:
@@ -177,11 +177,11 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ steps.get_token.outputs.deployment_token }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          action: "upload"
-          app_location: "/"
-          api_location: ""
-          output_location: "dist"
-          deployment_environment: "pr-${{ github.event.pull_request.number }}"
+          action: 'upload'
+          app_location: '/'
+          api_location: ''
+          output_location: 'dist'
+          deployment_environment: 'pr-${{ github.event.pull_request.number }}'
 
   # Job for cleaning up PR preview on close
   cleanup_preview:
@@ -216,5 +216,4 @@ jobs:
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ steps.get_token.outputs.deployment_token }}
-          action: "close"
-
+          action: 'close'

@@ -23,7 +23,7 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
 
   const addTeam = () => {
     const trimmedName = newTeamName.trim()
-    
+
     if (!trimmedName) {
       setError('Holdnavn kan ikke være tomt')
       return
@@ -40,8 +40,11 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
   }
 
   const bulkAddTeams = () => {
-    const lines = bulkText.split('\n').map(l => l.trim()).filter(l => l.length > 0)
-    
+    const lines = bulkText
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 0)
+
     if (lines.length === 0) {
       setError('Ingen holdnavne fundet')
       return
@@ -54,7 +57,7 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
 
     for (const name of lines) {
       const lowerName = name.toLowerCase()
-      
+
       if (existingNames.has(lowerName) || addedInBulk.has(lowerName)) {
         duplicatesInBulk.add(name)
         continue
@@ -90,7 +93,9 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>Tilføj Hold</CardTitle>
+        <CardTitle className="text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>
+          Tilføj Hold
+        </CardTitle>
         <CardDescription>Tilføj deltagende hold individuelt eller samlet</CardDescription>
       </CardHeader>
       <CardContent>
@@ -103,9 +108,9 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
                   <Input
                     id="teamName"
                     value={newTeamName}
-                    onChange={(e) => setNewTeamName(e.target.value)}
+                    onChange={e => setNewTeamName(e.target.value)}
                     placeholder="Holdnavn"
-                    onKeyDown={(e) => {
+                    onKeyDown={e => {
                       if (e.key === 'Enter') {
                         e.preventDefault()
                         addTeam()
@@ -123,11 +128,16 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
                 <Textarea
                   id="bulkTeams"
                   value={bulkText}
-                  onChange={(e) => setBulkText(e.target.value)}
+                  onChange={e => setBulkText(e.target.value)}
                   placeholder="Indsæt holdnavne (ét pr. linje)"
                   className="mt-2 min-h-32"
                 />
-                <Button onClick={bulkAddTeams} type="button" variant="secondary" className="mt-2 w-full">
+                <Button
+                  onClick={bulkAddTeams}
+                  type="button"
+                  variant="secondary"
+                  className="mt-2 w-full"
+                >
                   Tilføj Alle Hold
                 </Button>
               </div>
@@ -151,9 +161,14 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
                 <div className="border rounded-lg max-h-96 overflow-y-auto">
                   <div className="divide-y">
                     {teams.map((team, index) => (
-                      <div key={team.id} className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors">
+                      <div
+                        key={team.id}
+                        className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                      >
                         <div className="flex items-center gap-3">
-                          <span className="text-xs font-semibold text-muted-foreground w-6">{index + 1}</span>
+                          <span className="text-xs font-semibold text-muted-foreground w-6">
+                            {index + 1}
+                          </span>
                           <span className="font-medium">{team.name}</span>
                         </div>
                         <Button

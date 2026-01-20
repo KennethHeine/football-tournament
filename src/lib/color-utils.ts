@@ -40,15 +40,20 @@ export function oklchToRgb(l: number, c: number, h: number): { r: number; g: num
   return {
     r: Math.max(0, Math.min(255, Math.round(r * 255))),
     g: Math.max(0, Math.min(255, Math.round(g * 255))),
-    b: Math.max(0, Math.min(255, Math.round(b_ * 255)))
+    b: Math.max(0, Math.min(255, Math.round(b_ * 255))),
   }
 }
 
 export function rgbToHex(r: number, g: number, b: number): string {
-  return '#' + [r, g, b].map(x => {
-    const hex = x.toString(16)
-    return hex.length === 1 ? '0' + hex : hex
-  }).join('')
+  return (
+    '#' +
+    [r, g, b]
+      .map(x => {
+        const hex = x.toString(16)
+        return hex.length === 1 ? '0' + hex : hex
+      })
+      .join('')
+  )
 }
 
 export function oklchStringToHex(oklchString: string): string {
@@ -75,7 +80,7 @@ export const SAFE_COLORS = {
   foreground: convertOklch(0.25, 0.05, 250),
   card: convertOklch(1, 0, 0),
   cardForeground: convertOklch(0.25, 0.05, 250),
-  border: convertOklch(0.90, 0, 0),
+  border: convertOklch(0.9, 0, 0),
   muted: convertOklch(0.96, 0, 0),
   mutedForeground: convertOklch(0.45, 0.02, 240),
   primary: convertOklch(0.55, 0.15, 145),
