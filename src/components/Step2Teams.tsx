@@ -103,13 +103,16 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="teamName">Tilføj Hold Individuelt</Label>
-                <div className="flex gap-2 mt-2">
+                <Label htmlFor="teamName" className="text-base font-medium">
+                  Tilføj Hold Individuelt
+                </Label>
+                <div className="flex flex-col sm:flex-row gap-2 mt-2">
                   <Input
                     id="teamName"
                     value={newTeamName}
                     onChange={e => setNewTeamName(e.target.value)}
                     placeholder="Holdnavn"
+                    className="min-h-12 text-base"
                     onKeyDown={e => {
                       if (e.key === 'Enter') {
                         e.preventDefault()
@@ -117,26 +120,32 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
                       }
                     }}
                   />
-                  <Button onClick={addTeam} type="button" className="gap-2">
+                  <Button
+                    onClick={addTeam}
+                    type="button"
+                    className="gap-2 min-h-12 w-full sm:w-auto"
+                  >
                     <Plus size={20} /> Tilføj
                   </Button>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="bulkTeams">Tilføj Hold Samlet</Label>
+                <Label htmlFor="bulkTeams" className="text-base font-medium">
+                  Tilføj Hold Samlet
+                </Label>
                 <Textarea
                   id="bulkTeams"
                   value={bulkText}
                   onChange={e => setBulkText(e.target.value)}
                   placeholder="Indsæt holdnavne (ét pr. linje)"
-                  className="mt-2 min-h-32"
+                  className="mt-2 min-h-32 text-base"
                 />
                 <Button
                   onClick={bulkAddTeams}
                   type="button"
                   variant="secondary"
-                  className="mt-2 w-full"
+                  className="mt-2 w-full min-h-12"
                 >
                   Tilføj Alle Hold
                 </Button>
@@ -145,7 +154,7 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="flex items-center gap-2">
+                <Label className="flex items-center gap-2 text-base font-medium">
                   <Users size={20} />
                   Hold ({teams.length})
                 </Label>
@@ -201,11 +210,22 @@ export function Step2Teams({ initialTeams, onNext, onBack }: Step2Props) {
             </Alert>
           )}
 
-          <div className="flex justify-between pt-4">
-            <Button onClick={onBack} variant="outline" size="lg" className="gap-2">
+          {/* Mobile-friendly sticky bottom navigation */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:justify-between pt-4 sticky bottom-0 bg-card pb-2 -mx-6 px-6 border-t sm:border-t-0 sm:static sm:bg-transparent sm:pb-0">
+            <Button
+              onClick={onBack}
+              variant="outline"
+              size="lg"
+              className="gap-2 w-full sm:w-auto order-2 sm:order-1 min-h-12"
+            >
               <ArrowLeft size={20} /> Tilbage
             </Button>
-            <Button onClick={handleNext} size="lg" className="gap-2" disabled={teams.length < 2}>
+            <Button
+              onClick={handleNext}
+              size="lg"
+              className="gap-2 w-full sm:w-auto order-1 sm:order-2 min-h-12"
+              disabled={teams.length < 2}
+            >
               Næste <ArrowRight size={20} />
             </Button>
           </div>

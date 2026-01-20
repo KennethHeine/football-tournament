@@ -273,14 +273,25 @@ export function Step1TournamentSettings({ initialData, onNext, onBack }: Step1Pr
             </div>
           </div>
 
-          <div className="flex justify-between">
+          {/* Mobile-friendly sticky bottom navigation */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:justify-between pt-4 sticky bottom-0 bg-card pb-2 -mx-6 px-6 border-t sm:border-t-0 sm:static sm:bg-transparent sm:pb-0">
             {onBack && (
-              <Button type="button" variant="outline" size="lg" className="gap-2" onClick={onBack}>
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="gap-2 w-full sm:w-auto order-2 sm:order-1 min-h-12"
+                onClick={onBack}
+              >
                 <ArrowLeft size={20} />
                 Tilbage
               </Button>
             )}
-            <Button type="submit" size="lg" className="gap-2 ml-auto">
+            <Button
+              type="submit"
+              size="lg"
+              className="gap-2 w-full sm:w-auto sm:ml-auto order-1 sm:order-2 min-h-12"
+            >
               Næste <ArrowRight size={20} />
             </Button>
           </div>

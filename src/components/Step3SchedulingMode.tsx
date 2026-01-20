@@ -169,16 +169,26 @@ export function Step3SchedulingMode({ initialConfig, teamCount, onNext, onBack }
           </RadioGroup>
 
           {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive rounded-md text-sm text-destructive animate-shake">
+            <div className="p-4 bg-destructive/10 border border-destructive rounded-lg text-sm text-destructive animate-shake">
               {error}
             </div>
           )}
 
-          <div className="flex justify-between pt-4">
-            <Button onClick={onBack} variant="outline" size="lg" className="gap-2">
+          {/* Mobile-friendly sticky bottom navigation */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:justify-between pt-4 sticky bottom-0 bg-card pb-2 -mx-6 px-6 border-t sm:border-t-0 sm:static sm:bg-transparent sm:pb-0">
+            <Button
+              onClick={onBack}
+              variant="outline"
+              size="lg"
+              className="gap-2 w-full sm:w-auto order-2 sm:order-1 min-h-12"
+            >
               <ArrowLeft size={20} /> Tilbage
             </Button>
-            <Button onClick={handleNext} size="lg" className="gap-2">
+            <Button
+              onClick={handleNext}
+              size="lg"
+              className="gap-2 w-full sm:w-auto order-1 sm:order-2 min-h-12"
+            >
               Generer Skema <ArrowRight size={20} />
             </Button>
           </div>
