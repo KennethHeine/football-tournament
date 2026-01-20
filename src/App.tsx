@@ -374,7 +374,7 @@ function App() {
                           onClick={() => handleCopyTournament(tournament)}
                           variant="ghost"
                           size="sm"
-                          className="text-primary hover:text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="text-primary hover:text-primary hover:bg-primary/10"
                         >
                           <Copy size={20} />
                         </Button>
@@ -382,7 +382,7 @@ function App() {
                           onClick={() => handleDeleteTournament(tournament.id)}
                           variant="ghost"
                           size="sm"
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
                           <Trash size={20} />
                         </Button>
