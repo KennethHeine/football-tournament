@@ -2,6 +2,63 @@
 
 This document explains how the GitHub Actions workflows are configured for the Football Tournament application.
 
+## Workflow Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    GitHub Actions Workflow Flow                     │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────┐
+│  Push to main    │
+└────────┬─────────┘
+         │
+         ▼
+    ┌────────────────────┐
+    │ deploy_production  │ ← Runs tests, builds, deploys to production
+    └────────────────────┘
+
+
+┌──────────────────────┐
+│  Regular PR opened/  │
+│    synchronized      │
+└──────────┬───────────┘
+           │
+           ├─────────────┐
+           │             │
+           ▼             ▼
+    ┌──────────┐  ┌─────────────┐
+    │ test_job │  │deploy_preview│ ← Deploys to pr-{number} environment
+    └──────────┘  └─────────────┘
+
+
+┌──────────────────────┐
+│  Dependabot PR       │
+│  opened/synchronized │
+└──────────┬───────────┘
+           │
+           ▼
+    ┌──────────┐
+    │ test_job │ ← Tests only, no deployment
+    └──────────┘
+
+
+┌──────────────────────┐
+│  PR closed/merged    │
+└──────────┬───────────┘
+           │
+           ▼
+    ┌──────────────────┐
+    │ cleanup_preview  │ ← Removes PR environment
+    └──────────────────┘
+           │
+           │ (if merged)
+           ▼
+    ┌────────────────────┐
+    │ deploy_production  │ ← Deploys to production (from push to main)
+    └────────────────────┘
+```
+
 ## Workflow Overview
 
 The application uses a single workflow file (`.github/workflows/azure-static-web-apps.yml`) that handles all CI/CD operations with different job paths based on the trigger event and actor.
