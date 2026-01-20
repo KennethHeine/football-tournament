@@ -221,9 +221,12 @@ export function Step4Schedule({ schedule, tournamentName, teams, settings, onBac
         foreignObjectRendering: false,
       })
       
-      document.body.removeChild(iframe)
-      
       canvas.toBlob((blob) => {
+        // Clean up iframe after blob creation
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe)
+        }
+        
         if (!blob) {
           toast.error('Kunne ikke generere billede', { id: toastId })
           setExportingImage(false)

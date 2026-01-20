@@ -66,17 +66,14 @@ test.describe('Save as Image functionality', () => {
     const saveImageButton = page.getByRole('button', { name: /Gem som billede/i });
     await saveImageButton.click();
     
-    // Wait for loading toast or button state change
-    await page.waitForTimeout(5000);
+    // Wait for the button to return to enabled state (indicates operation completed)
+    await expect(page.getByRole('button', { name: /Gem som billede/i })).toBeEnabled({ timeout: 15000 });
     
     // Check for any errors (helpful for debugging)
     if (consoleErrors.length > 0 || pageErrors.length > 0) {
       console.log('Console errors:', consoleErrors);
       console.log('Page errors:', pageErrors);
     }
-    
-    // The button should be back to normal state (not disabled) after completion
-    await expect(page.getByRole('button', { name: /Gem som billede/i })).toBeEnabled({ timeout: 10000 });
   });
 
   test('should download an image file when clicking save as image button', async ({ page }) => {
