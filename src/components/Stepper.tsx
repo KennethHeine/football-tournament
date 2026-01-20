@@ -12,15 +12,24 @@ interface StepperProps {
 }
 
 export function Stepper({ steps, currentStep }: StepperProps) {
+  const progressPercent = ((currentStep - 1) / (steps.length - 1)) * 100
+
   return (
-    <div className="w-full py-6">
+    <div className="w-full py-6" role="navigation" aria-label="Wizard progress">
       <div className="flex items-center justify-between relative">
         {/* Progress line background */}
-        <div className="absolute top-5 left-0 right-0 h-1 bg-border -z-10 rounded-full">
+        <div
+          className="absolute top-5 left-0 right-0 h-1 bg-border -z-10 rounded-full"
+          role="progressbar"
+          aria-valuenow={currentStep}
+          aria-valuemin={1}
+          aria-valuemax={steps.length}
+          aria-label={`Trin ${currentStep} af ${steps.length}`}
+        >
           {/* Progress line fill */}
           <div
             className="h-full bg-primary transition-all duration-500 ease-out rounded-full"
-            style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
+            style={{ width: `${progressPercent}%` }}
           />
         </div>
 
