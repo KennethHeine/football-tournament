@@ -43,8 +43,8 @@ test.describe('Save as Image functionality', () => {
   test('should display the save as image button', async ({ page }) => {
     await navigateToSchedule(page)
 
-    // Check that the "Gem som billede" button is visible
-    const saveImageButton = page.getByRole('button', { name: /Gem som billede/i })
+    // Check that the "Billede" button is visible (text shortened for mobile)
+    const saveImageButton = page.getByRole('button', { name: /Billede/i })
     await expect(saveImageButton).toBeVisible()
     await expect(saveImageButton).toBeEnabled()
   })
@@ -63,8 +63,8 @@ test.describe('Save as Image functionality', () => {
     // Set up download listener
     const downloadPromise = page.waitForEvent('download', { timeout: 30000 })
 
-    // Click the save as image button
-    await page.getByRole('button', { name: /Gem som billede/i }).click()
+    // Click the save as image button (text shortened to "Billede" for mobile)
+    await page.getByRole('button', { name: /Billede/i }).click()
 
     // Wait for the download
     const download = await downloadPromise
@@ -87,8 +87,8 @@ test.describe('Save as Image functionality', () => {
     // Set up download listener
     const downloadPromise = page.waitForEvent('download', { timeout: 30000 })
 
-    // Click the save as image button
-    await page.getByRole('button', { name: /Gem som billede/i }).click()
+    // Click the save as image button (text shortened to "Billede" for mobile)
+    await page.getByRole('button', { name: /Billede/i }).click()
 
     // Wait for download
     await downloadPromise
@@ -111,8 +111,8 @@ test.describe('Save as Image functionality', () => {
 
     const downloadPromise = page.waitForEvent('download', { timeout: 30000 })
 
-    // Click the save as image button
-    await page.getByRole('button', { name: /Gem som billede/i }).click()
+    // Click the save as image button (text shortened to "Billede" for mobile)
+    await page.getByRole('button', { name: /Billede/i }).click()
 
     // Wait for the download
     const download = await downloadPromise
@@ -135,8 +135,8 @@ test.describe('Save as Image functionality', () => {
     // Set up download listener
     const downloadPromise = page.waitForEvent('download', { timeout: 30000 })
 
-    // Click the save as image button
-    await page.getByRole('button', { name: /Gem som billede/i }).click()
+    // Click the save as image button (text shortened to "Billede" for mobile)
+    await page.getByRole('button', { name: /Billede/i }).click()
 
     // Wait for download
     await downloadPromise

@@ -318,23 +318,39 @@ export function Step4Schedule({
               {pitches.length !== 1 ? 'er' : 'e'}
             </CardDescription>
           </div>
-          <div className="flex flex-wrap gap-2">
+          {/* Mobile-friendly export buttons grid */}
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
             <Button
               onClick={handleExportImage}
               variant="outline"
               size="sm"
-              className="gap-2"
+              className="gap-2 min-h-11 text-xs sm:text-sm"
               disabled={exportingImage}
             >
-              <Image size={18} /> {exportingImage ? 'Genererer...' : 'Gem som billede'}
+              <Image size={18} /> {exportingImage ? 'Genererer...' : 'Billede'}
             </Button>
-            <Button onClick={handlePrint} variant="outline" size="sm" className="gap-2">
+            <Button
+              onClick={handlePrint}
+              variant="outline"
+              size="sm"
+              className="gap-2 min-h-11 text-xs sm:text-sm"
+            >
               <Printer size={18} /> Udskriv
             </Button>
-            <Button onClick={handleDownloadCSV} variant="outline" size="sm" className="gap-2">
+            <Button
+              onClick={handleDownloadCSV}
+              variant="outline"
+              size="sm"
+              className="gap-2 min-h-11 text-xs sm:text-sm"
+            >
               <Download size={18} /> CSV
             </Button>
-            <Button onClick={handleCopyText} variant="outline" size="sm" className="gap-2">
+            <Button
+              onClick={handleCopyText}
+              variant="outline"
+              size="sm"
+              className="gap-2 min-h-11 text-xs sm:text-sm"
+            >
               {copied ? <Check size={18} /> : <Copy size={18} />}
               {copied ? 'Kopieret!' : 'Kopiér'}
             </Button>
@@ -372,13 +388,17 @@ export function Step4Schedule({
           )}
 
           <Tabs defaultValue="program" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 no-print">
-              <TabsTrigger value="program">Programvisning</TabsTrigger>
-              <TabsTrigger value="team">Holdvisning</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 no-print h-12">
+              <TabsTrigger value="program" className="text-sm sm:text-base">
+                Programvisning
+              </TabsTrigger>
+              <TabsTrigger value="team" className="text-sm sm:text-base">
+                Holdvisning
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="program" className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 no-print">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 no-print">
                 <div className="relative">
                   <MagnifyingGlass
                     size={18}
@@ -388,12 +408,12 @@ export function Step4Schedule({
                     placeholder="Søg hold..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 min-h-12"
                   />
                 </div>
 
                 <Select value={selectedPitch} onValueChange={setSelectedPitch}>
-                  <SelectTrigger>
+                  <SelectTrigger className="min-h-12">
                     <SelectValue placeholder="Alle baner" />
                   </SelectTrigger>
                   <SelectContent>
@@ -407,7 +427,7 @@ export function Step4Schedule({
                 </Select>
 
                 <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                  <SelectTrigger>
+                  <SelectTrigger className="min-h-12">
                     <SelectValue placeholder="Alle hold" />
                   </SelectTrigger>
                   <SelectContent>
@@ -561,11 +581,21 @@ export function Step4Schedule({
             </TabsContent>
           </Tabs>
 
-          <div className="flex justify-between pt-4 no-print">
-            <Button onClick={onBack} variant="outline" size="lg" className="gap-2">
+          {/* Mobile-friendly sticky bottom navigation */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:justify-between pt-4 no-print sticky bottom-0 bg-card pb-2 -mx-6 px-6 border-t sm:border-t-0 sm:static sm:bg-transparent sm:pb-0">
+            <Button
+              onClick={onBack}
+              variant="outline"
+              size="lg"
+              className="gap-2 w-full sm:w-auto order-2 sm:order-1 min-h-12"
+            >
               <ArrowLeft size={20} /> Tilbage
             </Button>
-            <Button onClick={onSave} size="lg" className="gap-2">
+            <Button
+              onClick={onSave}
+              size="lg"
+              className="gap-2 w-full sm:w-auto order-1 sm:order-2 min-h-12"
+            >
               <Check size={20} /> Gem Turnering
             </Button>
           </div>

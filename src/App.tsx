@@ -25,7 +25,16 @@ import type {
 } from '@/lib/types'
 import { generateSchedule } from '@/lib/scheduler'
 import { v4 as uuidv4 } from 'uuid'
-import { Plus, Trash, CalendarBlank, Copy } from '@phosphor-icons/react'
+import {
+  Plus,
+  Trash,
+  CalendarBlank,
+  Copy,
+  SoccerBall,
+  Timer,
+  ListChecks,
+  Export,
+} from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
 
@@ -326,28 +335,82 @@ function App() {
         <Toaster />
         <PWAUpdatePrompt />
         <div className="container mx-auto px-4 py-12 max-w-5xl">
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <h1
-                className="text-5xl font-bold tracking-tight"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
-                Fodboldturnering
-              </h1>
+          {/* Hero Section */}
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
+              <SoccerBall size={48} weight="duotone" className="text-primary" />
             </div>
-          </div>
-
-          <div className="flex justify-center mb-8">
-            <Button onClick={handleStartNew} size="lg" className="gap-2 text-lg px-8 py-6">
+            <h1
+              className="text-5xl md:text-6xl font-bold tracking-tight mb-4"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
+              Fodboldturnering
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+              Opret kampskemaer til din næste turnering på få minutter
+            </p>
+            <Button
+              onClick={handleStartNew}
+              size="lg"
+              className="gap-2 text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all hover:scale-105"
+            >
               <Plus size={24} weight="bold" />
               Opret Ny Turnering
             </Button>
           </div>
 
+          {/* Feature Highlights */}
+          {tournamentList.length === 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+              <div className="p-6 rounded-xl bg-card border shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Timer size={24} className="text-primary" />
+                </div>
+                <h3
+                  className="font-semibold text-lg mb-2"
+                  style={{ fontFamily: 'var(--font-heading)' }}
+                >
+                  Hurtig Opsætning
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  Fra start til færdigt kampskema på under 2 minutter med vores intuitive guide.
+                </p>
+              </div>
+              <div className="p-6 rounded-xl bg-card border shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <ListChecks size={24} className="text-primary" />
+                </div>
+                <h3
+                  className="font-semibold text-lg mb-2"
+                  style={{ fontFamily: 'var(--font-heading)' }}
+                >
+                  Smart Planlægning
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  Automatisk fordeling af kampe på tværs af baner med optimeret hviletid.
+                </p>
+              </div>
+              <div className="p-6 rounded-xl bg-card border shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Export size={24} className="text-primary" />
+                </div>
+                <h3
+                  className="font-semibold text-lg mb-2"
+                  style={{ fontFamily: 'var(--font-heading)' }}
+                >
+                  Nem Eksport
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  Eksporter til print, CSV eller billede. Del nemt med alle deltagere.
+                </p>
+              </div>
+            </div>
+          )}
+
           {tournamentList.length > 0 && (
-            <Card>
+            <Card className="shadow-md">
               <CardHeader>
-                <CardTitle style={{ fontFamily: 'var(--font-heading)' }}>
+                <CardTitle className="text-xl" style={{ fontFamily: 'var(--font-heading)' }}>
                   Gemte Turneringer
                 </CardTitle>
                 <CardDescription>
@@ -355,61 +418,62 @@ function App() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {tournamentList.map(tournament => (
                     <div
                       key={tournament.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors group"
+                      className="flex items-center justify-between p-4 border rounded-xl hover:bg-muted/50 hover:border-primary/30 transition-all cursor-pointer group"
+                      onClick={() => handleLoadTournament(tournament)}
                     >
-                      <div
-                        className="flex-1 cursor-pointer"
-                        onClick={() => handleLoadTournament(tournament)}
-                      >
-                        <div className="flex items-start gap-3">
-                          <CalendarBlank size={24} className="text-primary mt-1" />
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3
-                                className="font-semibold text-lg"
-                                style={{ fontFamily: 'var(--font-heading)' }}
-                              >
-                                {tournament.settings.name || UNNAMED_TOURNAMENT}
-                              </h3>
-                            </div>
-                            <div className="text-sm text-muted-foreground mt-1 space-y-1">
-                              <p>
-                                {tournament.teams.length} hold •{' '}
-                                {tournament.schedule?.matches.length || 0} kampe •{' '}
-                                {tournament.settings.numPitches} ban
-                                {tournament.settings.numPitches !== 1 ? 'er' : 'e'}
-                              </p>
-                              <p>
-                                {formatDate(tournament.settings.startDate)} kl.{' '}
-                                {tournament.settings.startTime}
-                              </p>
-                              <p className="text-xs">
-                                Sidst opdateret: {formatDate(tournament.updatedAt)}
-                              </p>
-                            </div>
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <CalendarBlank size={24} className="text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3
+                            className="font-semibold text-lg truncate"
+                            style={{ fontFamily: 'var(--font-heading)' }}
+                          >
+                            {tournament.settings.name || UNNAMED_TOURNAMENT}
+                          </h3>
+                          <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground mt-1">
+                            <span>{tournament.teams.length} hold</span>
+                            <span>•</span>
+                            <span>{tournament.schedule?.matches.length || 0} kampe</span>
+                            <span>•</span>
+                            <span>
+                              {tournament.settings.numPitches} ban
+                              {tournament.settings.numPitches !== 1 ? 'er' : 'e'}
+                            </span>
                           </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {formatDate(tournament.settings.startDate)} kl.{' '}
+                            {tournament.settings.startTime}
+                          </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <Button
-                          onClick={() => handleCopyTournament(tournament)}
+                          onClick={e => {
+                            e.stopPropagation()
+                            handleCopyTournament(tournament)
+                          }}
                           variant="ghost"
                           size="sm"
                           className="text-primary hover:text-primary hover:bg-primary/10"
                         >
-                          <Copy size={20} />
+                          <Copy size={18} />
                         </Button>
                         <Button
-                          onClick={() => handleDeleteTournament(tournament.id)}
+                          onClick={e => {
+                            e.stopPropagation()
+                            handleDeleteTournament(tournament.id)
+                          }}
                           variant="ghost"
                           size="sm"
                           className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         >
-                          <Trash size={20} />
+                          <Trash size={18} />
                         </Button>
                       </div>
                     </div>
@@ -419,6 +483,15 @@ function App() {
             </Card>
           )}
         </div>
+
+        {/* Footer */}
+        <footer className="mt-auto py-8 text-center text-sm text-muted-foreground">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <SoccerBall size={16} weight="duotone" className="text-primary" />
+            <span style={{ fontFamily: 'var(--font-heading)' }}>Fodboldturnering</span>
+          </div>
+          <p>Opret og administrer turneringsskemaer nemt og hurtigt</p>
+        </footer>
 
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent>
@@ -449,12 +522,15 @@ function App() {
       <PWAUpdatePrompt />
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="mb-8">
-          <h1
-            className="text-3xl font-bold mb-2 text-center"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            Fodboldturnering
-          </h1>
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <SoccerBall size={32} weight="duotone" className="text-primary" />
+            <h1
+              className="text-3xl font-bold text-center"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
+              Fodboldturnering
+            </h1>
+          </div>
           <Stepper steps={steps} currentStep={currentStep} />
         </div>
 

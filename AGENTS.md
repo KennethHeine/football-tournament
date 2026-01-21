@@ -144,6 +144,19 @@ See `DEPLOYMENT.md` and `FEDERATED-CREDENTIALS.md` for details.
 
 ## Agent Behavior Guidelines
 
+### Before Completing Work
+
+Every time an agent finishes working on a task, it **MUST** run the following commands to verify quality:
+
+```bash
+npm run lint          # Check for ESLint errors
+npm run format        # Fix Prettier formatting issues
+npm test -- --run     # Run unit tests
+npm run build         # Verify build succeeds
+```
+
+All commands must pass before the work is considered complete.
+
 ### When Suggesting Code Changes
 
 1. **Maintain Type Safety**: Always provide proper TypeScript types
