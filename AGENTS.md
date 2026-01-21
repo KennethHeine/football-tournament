@@ -21,7 +21,6 @@ This is a React + TypeScript application for creating football tournament schedu
 ## Dev Environment Tips
 
 - Use `npm run dev` while iterating on the application with hot-reload enabled.
-- Do **not** run `npm run build` during interactive agent sessions - it switches to production mode.
 - The Node.js version is specified in `.nvmrc` (Node 20).
 - All dependencies are locked in `package-lock.json` - use `npm ci` for clean installs.
 - Playwright browsers need to be installed: `npx playwright install --with-deps chromium`
