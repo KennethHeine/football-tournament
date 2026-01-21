@@ -53,16 +53,16 @@ This is a React + TypeScript application for creating football tournament schedu
 
 ## Key Files & Directories
 
-| Path | Purpose |
-| ---- | ------- |
-| `src/components/` | React components |
-| `src/hooks/` | Custom hooks (e.g., `useLocalStorage`) |
-| `src/lib/` | Utilities (scheduler, color-utils, types) |
-| `src/lib/types.ts` | All TypeScript type definitions |
-| `src/test/` | Unit tests |
-| `e2e/` | Playwright E2E tests |
-| `src/styles/theme.css` | Theme colors in OKLCH format |
-| `.github/workflows/` | CI/CD workflows |
+| Path                   | Purpose                                   |
+| ---------------------- | ----------------------------------------- |
+| `src/components/`      | React components                          |
+| `src/hooks/`           | Custom hooks (e.g., `useLocalStorage`)    |
+| `src/lib/`             | Utilities (scheduler, color-utils, types) |
+| `src/lib/types.ts`     | All TypeScript type definitions           |
+| `src/test/`            | Unit tests                                |
+| `e2e/`                 | Playwright E2E tests                      |
+| `src/styles/theme.css` | Theme colors in OKLCH format              |
+| `.github/workflows/`   | CI/CD workflows                           |
 
 ## Important Constraints
 
