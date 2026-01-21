@@ -13,7 +13,7 @@ Deploy to Azure Static Web Apps - see [DEPLOYMENT.md](./DEPLOYMENT.md) for instr
 - **Professional Output** - Print-ready outputs with clean typography and structured data exports (CSV, PNG)
 - **Browser-based Storage** - All data stored in browser localStorage (no backend required)
 - **No Authentication** - Public access, no login required
-- **Responsive Design** - Works on desktop, tablet, and mobile devices
+- **Responsive Design** - Mobile-first design with touch-friendly controls and larger touch targets (44-48px minimum)
 
 ## 🛠️ Technology Stack
 
@@ -80,7 +80,7 @@ npm run preview
 
 ### Unit Tests
 
-We use Vitest for unit testing. Current coverage: **40 tests passing**
+We use Vitest for unit testing. Current coverage: **53 tests passing**
 
 - Scheduler logic tests
 - Color utility tests
