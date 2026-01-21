@@ -46,8 +46,19 @@ This is a React + TypeScript application for creating football tournament schedu
 
 ## PR Instructions
 
-- Always run `npm run lint`, `npm run format`, `npm test -- --run`, and `npm run build` before committing.
-- All commands must pass before the work is considered complete.
+**IMPORTANT: Before completing any task, Copilot MUST run these validation commands:**
+
+```bash
+npm run format      # Fix formatting issues
+npm run lint        # Check for linting errors
+npm test -- --run   # Run all unit tests
+npm run build       # Verify production build succeeds
+```
+
+All commands must pass before the work is considered complete. If any command fails, fix the issues and re-run until all pass.
+
+Additional guidelines:
+
 - Add or update tests for new functionality.
 - Update relevant `.md` files if behavior changes.
 
