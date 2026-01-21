@@ -1,8 +1,10 @@
 # Football Tournament Program Builder
 
+**🌐 Live App: [https://calm-stone-04ffa2303.1.azurestaticapps.net](https://calm-stone-04ffa2303.1.azurestaticapps.net)**
+
 A professional tournament scheduling application that helps organizers create detailed match schedules across multiple pitches with automatic time allocation and conflict detection.
 
-## 🚀 Live Demo
+## 🚀 Deployment
 
 Deploy to Azure Static Web Apps - see [DEPLOYMENT.md](./DEPLOYMENT.md) for instructions.
 

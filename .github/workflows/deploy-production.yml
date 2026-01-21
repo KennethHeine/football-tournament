@@ -64,6 +64,13 @@ jobs:
       - name: Build application
         run: npm run build
 
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-build
+          path: dist
+          retention-days: 1
+
   # Job for deploying to production (depends on test job)
   deploy_production:
     needs: test
@@ -78,17 +85,11 @@ jobs:
           submodules: true
           lfs: false
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build application
-        run: npm run build
+          name: production-build
+          path: dist
 
       - name: Azure Login with OIDC
         uses: azure/login@v2
@@ -115,6 +116,9 @@ jobs:
           azure_static_web_apps_api_token: ${{ steps.get_token.outputs.deployment_token }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: 'upload'
-          app_location: '/'
+          app_location: 'dist'
           api_location: ''
-          output_location: 'dist'
+          output_location: ''
+          # Skip Oryx build since we use pre-built artifacts with Node 20+
+          # This avoids EBADENGINE warnings from Azure's default Node 18.x
+          skip_app_build: true
