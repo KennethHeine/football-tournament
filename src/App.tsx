@@ -347,7 +347,7 @@ function App() {
               Fodboldturnering
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-              Opret professionelle kampskemaer til din næste turnering på få minutter
+              Opret kampskemaer til din næste turnering på få minutter
             </p>
             <Button
               onClick={handleStartNew}

@@ -17,7 +17,7 @@ export default defineConfig({
       manifest: {
         name: 'Fodboldturnering',
         short_name: 'Fodboldturnering',
-        description: 'Opret professionelle kampskemaer til fodboldturneringer',
+        description: 'Opret kampskemaer til fodboldturneringer',
         theme_color: '#16a34a',
         background_color: '#ffffff',
         display: 'standalone',
