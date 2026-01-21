@@ -1,132 +1,89 @@
-# GitHub Copilot Custom Agents & Instructions
+# AGENTS.md
 
-This document describes custom agents and instructions for GitHub Copilot to provide better assistance for this Football Tournament application.
+A guide for AI coding agents working on this Football Tournament application.
 
 ## Project Overview
 
 This is a React + TypeScript application for creating football tournament schedules, deployed as an Azure Static Web App. It uses browser localStorage for data persistence without any backend or authentication.
 
-## Custom Instructions for Copilot
+**Tech Stack**: React 19, TypeScript, Vite 7, Tailwind CSS 4, Radix UI, Vitest, Playwright
 
-When working on this project, GitHub Copilot should be aware of:
+## Setup Commands
 
-### Technology Stack
+- Install dependencies: `npm ci`
+- Start dev server: `npm run dev`
+- Run unit tests: `npm test -- --run`
+- Run E2E tests: `npm run test:e2e`
+- Build for production: `npm run build`
+- Run linter: `npm run lint`
+- Fix formatting: `npm run format`
 
-- **Frontend**: React 19 with TypeScript
-- **Build Tool**: Vite 7
-- **Styling**: Tailwind CSS 4 with custom OKLCH colors
-- **UI Components**: Radix UI + Shadcn
-- **State Management**: React Hooks + localStorage (via custom `useLocalStorage` hook)
-- **Testing**: Vitest (unit tests) + Playwright (E2E tests)
-- **Deployment**: Azure Static Web Apps
+## Dev Environment Tips
 
-### Architecture Patterns
+- Use `npm run dev` while iterating on the application with hot-reload enabled.
+- The Node.js version is specified in `.nvmrc` (Node 20).
+- All dependencies are locked in `package-lock.json` - use `npm ci` for clean installs.
+- Playwright browsers need to be installed: `npx playwright install --with-deps chromium`
 
-1. **No Backend**: All data stored in browser localStorage
-2. **No Authentication**: Public access, no user management
-3. **Client-Side Only**: Pure frontend SPA with no API calls
-4. **Type Safety**: Strict TypeScript with comprehensive type definitions
+## Testing Instructions
 
-### Code Conventions
+- Find the CI plan in `.github/workflows/` folder.
+- Run `npm test -- --run` to execute all unit tests in `src/test/` directory.
+- Run `npm run test:e2e` to execute Playwright E2E tests in `e2e/` directory.
+- To focus on one test, use Vitest pattern: `npm test -- --run -t "<test name>"`
+- Fix any test or type errors until the whole suite is green.
+- After moving files or changing imports, run `npm run lint` to verify ESLint and TypeScript rules pass.
+- Add or update tests for the code you change, even if nobody asked.
+- Test naming: `*.test.ts` for unit tests, `*.spec.ts` for E2E tests.
 
-#### TypeScript
+## Code Style
 
-- Use strict TypeScript types
-- Prefer interfaces over types for object shapes
-- Use `const` for immutable values
-- Avoid `any` - use proper typing
+- **TypeScript**: Use strict types, prefer interfaces over types, avoid `any`.
+- **React**: Use functional components with hooks, prefer `useCallback` and `useMemo` for optimization.
+- **Styling**: Use Tailwind utility classes, OKLCH color format (see `src/styles/theme.css`).
+- **Components**: Use Radix UI primitives for accessible components.
+- **Formatting**: Prettier handles formatting - run `npm run format` before committing.
 
-#### React
+## PR Instructions
 
-- Use functional components with hooks
-- Prefer `useCallback` and `useMemo` for optimization
-- Use custom hooks for reusable logic
-- Follow React 19 best practices
-
-#### Styling
-
-- Use Tailwind utility classes
-- OKLCH color format for theme colors (defined in `src/styles/theme.css`)
-- Responsive design with mobile-first approach
-- Use Radix UI primitives for accessible components
-
-#### Testing
-
-- Unit tests with Vitest in `src/test/` directory
-- E2E tests with Playwright in `e2e/` directory
-- Test naming: `*.test.ts` for unit tests, `*.spec.ts` for E2E tests
-- Aim for meaningful test coverage, not 100% coverage
-
-### Key Files & Directories
-
-```
-football-tournament/
-├── src/
-│   ├── components/        # React components
-│   ├── hooks/            # Custom hooks (e.g., useLocalStorage)
-│   ├── lib/              # Utilities (scheduler, color-utils, types)
-│   ├── test/             # Unit tests
-│   └── styles/           # CSS and theme files
-├── e2e/                  # Playwright E2E tests
-├── scripts/              # Deployment scripts (PowerShell + Bash)
-├── .github/workflows/    # CI/CD workflows
-└── staticwebapp.config.json  # Azure Static Web App config
-```
-
-### Common Tasks
-
-#### Running Tests
+**IMPORTANT: Before completing any task, Copilot MUST run these validation commands:**
 
 ```bash
-npm test              # Unit tests
-npm run test:ui       # Unit tests with UI
-npm run test:e2e      # E2E tests
+npm run format      # Fix formatting issues
+npm run lint        # Check for linting errors
+npm test -- --run   # Run all unit tests
+npm run build       # Verify production build succeeds
 ```
 
-#### Building & Running
+All commands must pass before the work is considered complete. If any command fails, fix the issues and re-run until all pass.
 
-```bash
-npm run dev           # Development server
-npm run build         # Production build
-npm run preview       # Preview production build
-npm run lint          # ESLint
-```
+Additional guidelines:
 
-#### Deployment
+- Add or update tests for new functionality.
+- Update relevant `.md` files if behavior changes.
 
-```powershell
-# PowerShell
-.\scripts\provision-azure.ps1
-.\scripts\setup-service-principal.ps1 -GitHubOrg "user" -GitHubRepo "repo"
-```
+## Key Files & Directories
 
-### Custom Hooks
+| Path                   | Purpose                                   |
+| ---------------------- | ----------------------------------------- |
+| `src/components/`      | React components                          |
+| `src/hooks/`           | Custom hooks (e.g., `useLocalStorage`)    |
+| `src/lib/`             | Utilities (scheduler, color-utils, types) |
+| `src/lib/types.ts`     | All TypeScript type definitions           |
+| `src/test/`            | Unit tests                                |
+| `e2e/`                 | Playwright E2E tests                      |
+| `src/styles/theme.css` | Theme colors in OKLCH format              |
+| `.github/workflows/`   | CI/CD workflows                           |
 
-#### useLocalStorage
+## Important Constraints
 
-Replacement for Spark's `useKV` - stores data in browser localStorage.
+- **No Backend**: All data stored in browser localStorage - never suggest adding a backend API.
+- **No Authentication**: Don't add user login, sessions, or auth flows.
+- **Browser Storage Only**: All data must use localStorage or sessionStorage.
+- **Static Deployment**: Must work as a static site on Azure Static Web Apps.
+- **No Paid Features**: Use Azure Free SKU only.
 
-```typescript
-const [value, setValue] = useLocalStorage<Type>('key', defaultValue)
-```
-
-### Important Constraints
-
-1. **No Backend Dependencies**: Never suggest adding a backend API or database
-2. **No Authentication**: Don't add user login, sessions, or auth flows
-3. **Browser Storage Only**: All data must use localStorage or sessionStorage
-4. **Static Deployment**: Must work as a static site on Azure Static Web Apps
-5. **Free Tier**: Use Azure Free SKU - no paid features
-
-### Color System
-
-Colors use OKLCH format for better perceptual uniformity:
-
-- Primary (Pitch Green): `oklch(0.55 0.15 145)`
-- Accent (Referee Yellow): `oklch(0.85 0.18 95)`
-- See `src/lib/color-utils.ts` for conversion utilities
-
-### Data Models
+## Data Models
 
 Key types in `src/lib/types.ts`:
 
@@ -135,56 +92,19 @@ Key types in `src/lib/types.ts`:
 - `Match` - A scheduled match
 - `GeneratedSchedule` - Complete schedule with conflicts
 
-### Deployment Options
+## Custom Hooks
 
-1. **OIDC (Recommended)**: Service principal with federated credentials
-2. **Static Token**: Traditional deployment token
+### useLocalStorage
 
-See `DEPLOYMENT.md` and `FEDERATED-CREDENTIALS.md` for details.
+Stores data in browser localStorage:
 
-## Agent Behavior Guidelines
-
-### Before Completing Work
-
-Every time an agent finishes working on a task, it **MUST** run the following commands to verify quality:
-
-```bash
-npm run lint          # Check for ESLint errors
-npm run format        # Fix Prettier formatting issues
-npm test -- --run     # Run unit tests
-npm run build         # Verify build succeeds
+```typescript
+const [value, setValue] = useLocalStorage<Type>('key', defaultValue)
 ```
 
-All commands must pass before the work is considered complete.
-
-### When Suggesting Code Changes
-
-1. **Maintain Type Safety**: Always provide proper TypeScript types
-2. **Preserve Existing Patterns**: Follow the established code structure
-3. **No Breaking Changes**: Don't remove localStorage or change data models
-4. **Test Coverage**: Suggest tests for new functionality
-5. **Documentation**: Update relevant .md files if behavior changes
-
-### When Answering Questions
-
-1. **Context Aware**: Reference the specific files and patterns used in this project
-2. **Deployment Aware**: Understand this is a static Azure deployment
-3. **No Backend**: Never suggest server-side solutions
-4. **Practical**: Provide working code examples from the project
-
-### When Reviewing Code
-
-1. **Check Types**: Verify TypeScript types are correct
-2. **Check Tests**: Ensure tests exist and pass
-3. **Check Accessibility**: Verify Radix UI components are used correctly
-4. **Check Performance**: Watch for unnecessary re-renders
-5. **Check Security**: Ensure no secrets in code, proper input sanitization
-
-## Examples
+## Workflow Examples
 
 ### Adding a New Feature
-
-When adding a new feature:
 
 1. Update types in `src/lib/types.ts`
 2. Create/update components in `src/components/`
@@ -193,8 +113,6 @@ When adding a new feature:
 5. Update `README.md` if it's a major feature
 
 ### Fixing a Bug
-
-When fixing a bug:
 
 1. Write a failing test that reproduces the bug
 2. Fix the bug
@@ -205,10 +123,5 @@ When fixing a bug:
 ## Resources
 
 - **Project Docs**: `README.md`, `PRD.md`, `DEPLOYMENT.md`
-- **TypeScript**: `src/lib/types.ts` for all type definitions
-- **Testing**: `vitest.config.ts`, `playwright.config.ts`
 - **Deployment**: `FEDERATED-CREDENTIALS.md`, `DEPLOYMENT-QUICK-REFERENCE.md`
-
----
-
-**Note**: This project migrated from GitHub Spark to Azure Static Web Apps. All Spark-related code and authentication has been removed. The focus is on a simple, static, client-side application.
+- **Testing**: `vitest.config.ts`, `playwright.config.ts`
