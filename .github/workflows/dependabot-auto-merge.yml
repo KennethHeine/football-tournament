@@ -65,12 +65,6 @@ jobs:
             });
             core.setOutput('pr-title', prDetails.title);
 
-      - name: Approve PR
-        run: gh pr review --approve "$PR_NUMBER" --repo "${{ github.repository }}"
-        env:
-          PR_NUMBER: ${{ steps.pr-info.outputs.pr-number }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Enable auto-merge for Dependabot PRs
         run: gh pr merge --auto --squash "$PR_NUMBER" --repo "${{ github.repository }}"
         env:
@@ -83,4 +77,4 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**PR:** ${{ steps.pr-info.outputs.pr-title }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ PR has been approved and auto-merge enabled." >> $GITHUB_STEP_SUMMARY
+          echo "✅ Auto-merge enabled with squash strategy." >> $GITHUB_STEP_SUMMARY
