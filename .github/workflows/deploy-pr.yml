@@ -1,14 +1,10 @@
-name: Azure Static Web Apps CI/CD
+name: Deploy PR Preview
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
       - main
-  workflow_dispatch:
 
 permissions:
   id-token: write
@@ -16,9 +12,9 @@ permissions:
   pull-requests: write
 
 jobs:
-  # Job for testing (runs for all PRs and pushes to main)
-  test_job:
-    if: (github.event_name == 'pull_request' && github.event.action != 'closed') || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+  # Job for testing (runs in parallel with deploy)
+  test:
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     name: Run Tests
     permissions:
@@ -70,65 +66,9 @@ jobs:
       - name: Build application
         run: npm run build
 
-  # Job for deploying to production (main branch only, depends on test_job)
-  deploy_production:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: test_job
-    runs-on: ubuntu-latest
-    name: Deploy to Production
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          submodules: true
-          lfs: false
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build application
-        run: npm run build
-
-      - name: Azure Login with OIDC
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Get Static Web App Deployment Token
-        id: get_token
-        run: |
-          TOKEN=$(az staticwebapp secrets list \
-            --name ${{ secrets.AZURE_STATIC_WEB_APP_NAME }} \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --query "properties.apiKey" \
-            --output tsv)
-          echo "::add-mask::$TOKEN"
-          echo "deployment_token=$TOKEN" >> $GITHUB_OUTPUT
-
-      - name: Deploy to Production
-        id: deploy_production
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ steps.get_token.outputs.deployment_token }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          action: 'upload'
-          app_location: '/'
-          api_location: ''
-          output_location: 'dist'
-
-  # Job for deploying PR preview (non-Dependabot PRs only, no tests)
+  # Job for deploying PR preview (runs in parallel with test, non-Dependabot PRs only)
   deploy_preview:
-    if: github.event_name == 'pull_request' && github.event.action != 'closed' && github.actor != 'dependabot[bot]'
+    if: github.event.action != 'closed' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     name: Deploy PR Preview
     permissions:
@@ -185,7 +125,7 @@ jobs:
 
   # Job for cleaning up PR preview on close
   cleanup_preview:
-    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    if: github.event.action == 'closed'
     runs-on: ubuntu-latest
     name: Cleanup PR Preview
     permissions:

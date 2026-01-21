@@ -9,20 +9,28 @@ This document explains how the GitHub Actions workflows are configured for the F
 │                    GitHub Actions Workflow Flow                     │
 └─────────────────────────────────────────────────────────────────────┘
 
+                        ┌─────────────────────────────────────────┐
+                        │       deploy-production.yml              │
+                        └─────────────────────────────────────────┘
+
 ┌──────────────────┐
 │  Push to main    │
 └────────┬─────────┘
          │
          ▼
     ┌──────────┐
-    │ test_job │ ← Runs lint, unit tests, E2E tests, build
+    │   test   │ ← Runs lint, format check, unit tests, E2E tests, build
     └────┬─────┘
          │
          ▼
     ┌────────────────────┐
-    │ deploy_production  │ ← Builds and deploys to production (depends on test_job)
+    │ deploy_production  │ ← Builds and deploys to production (depends on test)
     └────────────────────┘
 
+
+                        ┌─────────────────────────────────────────┐
+                        │          deploy-pr.yml                   │
+                        └─────────────────────────────────────────┘
 
 ┌──────────────────────┐
 │  Regular PR opened/  │
@@ -33,7 +41,7 @@ This document explains how the GitHub Actions workflows are configured for the F
            │             │
            ▼             ▼
     ┌──────────┐  ┌─────────────┐
-    │ test_job │  │deploy_preview│ ← Builds and deploys to pr-{number} (no tests)
+    │   test   │  │deploy_preview│ ← Both run in PARALLEL
     └──────────┘  └─────────────┘
 
 
@@ -44,7 +52,7 @@ This document explains how the GitHub Actions workflows are configured for the F
            │
            ▼
     ┌──────────┐
-    │ test_job │ ← Tests only, no deployment
+    │   test   │ ← Tests only, no deployment
     └──────────┘
 
 
@@ -60,27 +68,34 @@ This document explains how the GitHub Actions workflows are configured for the F
            │ (if merged)
            ▼
     ┌──────────┐
-    │ test_job │
+    │   test   │
     └────┬─────┘
          │
          ▼
     ┌────────────────────┐
-    │ deploy_production  │ ← Deploys to production (from push to main)
+    │ deploy_production  │ ← Deploys to production (triggered by push to main)
     └────────────────────┘
 ```
 
 ## Workflow Overview
 
-The application uses a single workflow file (`.github/workflows/azure-static-web-apps.yml`) that handles all CI/CD operations with different job paths based on the trigger event and actor.
+The application uses two separate workflow files to handle CI/CD operations:
+
+1. **`.github/workflows/deploy-pr.yml`** - Handles PR preview deployments with tests running in parallel
+2. **`.github/workflows/deploy-production.yml`** - Handles production deployments (push to main)
+
+This separation makes it easy to see production deployments in the GitHub Actions overview.
 
 ## Workflow Jobs
 
-### 1. Test Job (`test_job`)
+### deploy-pr.yml
+
+#### 1. Test Job (`test`)
 
 **When it runs:**
 
 - On all pull requests (opened, synchronize, reopened)
-- On pushes to the `main` branch
+- **Runs in PARALLEL with deploy_preview** (not a dependency)
 - Including Dependabot PRs
 
 **What it does:**
@@ -89,19 +104,21 @@ The application uses a single workflow file (`.github/workflows/azure-static-web
 - Sets up Node.js
 - Installs dependencies
 - Runs linter (`npm run lint`)
+- Checks formatting (`npm run format:check`)
 - Runs unit tests (`npm test -- --run`)
 - Installs Playwright browsers
 - Runs E2E tests (`npm run test:e2e`)
 - Builds the application (`npm run build`)
 
-**Purpose:** Ensures code quality for all PRs and acts as a gate for production deployment
+**Purpose:** Ensures code quality for all PRs while deployment runs in parallel
 
-### 2. Deploy Production (`deploy_production`)
+#### 2. Deploy Preview (`deploy_preview`)
 
 **When it runs:**
 
-- Only when pushing directly to the `main` branch
-- **Depends on `test_job`** - will not run if tests fail
+- On pull requests (opened, synchronize, reopened)
+- **Excludes Dependabot PRs** (via `github.actor != 'dependabot[bot]'`)
+- **Runs in PARALLEL with test** - does not depend on tests passing
 
 **What it does:**
 
@@ -111,33 +128,13 @@ The application uses a single workflow file (`.github/workflows/azure-static-web
 - Builds the application
 - Authenticates with Azure using OIDC
 - Retrieves deployment token
-- Deploys to production Azure Static Web App
-
-**Purpose:** Automatic deployment to production on merge (after tests pass)
-
-### 3. Deploy Preview (`deploy_preview`)
-
-**When it runs:**
-
-- On pull requests (opened, synchronize, reopened)
-- **Excludes Dependabot PRs** (via `github.actor != 'dependabot[bot]'`)
-- **Does NOT depend on test_job** - runs in parallel with tests
-
-**What it does:**
-
-- Checks out code
-- Sets up Node.js
-- Installs dependencies
-- Builds the application (no tests)
-- Authenticates with Azure using OIDC
-- Retrieves deployment token
 - Deploys to PR-specific environment: `pr-{PR_NUMBER}`
 
-**Purpose:** Creates preview deployments quickly for manual testing before merge
+**Purpose:** Creates preview deployments quickly for manual testing while tests run in parallel
 
 **Example:** PR #42 deploys to environment `pr-42`
 
-### 4. Cleanup Preview (`cleanup_preview`)
+#### 3. Cleanup Preview (`cleanup_preview`)
 
 **When it runs:**
 
@@ -151,29 +148,72 @@ The application uses a single workflow file (`.github/workflows/azure-static-web
 
 **Purpose:** Cleans up temporary environments to save resources
 
+### deploy-production.yml
+
+#### 1. Test Job (`test`)
+
+**When it runs:**
+
+- On pushes to the `main` branch
+- On manual workflow dispatch
+
+**What it does:**
+
+- Checks out code
+- Sets up Node.js
+- Installs dependencies
+- Runs linter (`npm run lint`)
+- Checks formatting (`npm run format:check`)
+- Runs unit tests (`npm test -- --run`)
+- Installs Playwright browsers
+- Runs E2E tests (`npm run test:e2e`)
+- Builds the application (`npm run build`)
+
+**Purpose:** Ensures code quality before production deployment
+
+#### 2. Deploy Production (`deploy_production`)
+
+**When it runs:**
+
+- Only when pushing directly to the `main` branch
+- On manual workflow dispatch
+- **Depends on `test`** - will not run if tests fail
+
+**What it does:**
+
+- Checks out code
+- Sets up Node.js
+- Installs dependencies
+- Builds the application
+- Authenticates with Azure using OIDC
+- Retrieves deployment token
+- Deploys to production Azure Static Web App
+
+**Purpose:** Automatic deployment to production on merge (after tests pass)
+
 ## Deployment Flow
 
 ### For Regular PRs (Non-Dependabot)
 
 ```
-1. Open PR → test_job (tests) + deploy_preview (no tests, runs in parallel)
-2. Update PR → test_job (tests) + deploy_preview (no tests, runs in parallel)
+1. Open PR → test (tests) + deploy_preview (runs in PARALLEL)
+2. Update PR → test (tests) + deploy_preview (runs in PARALLEL)
 3. Close/Merge PR → cleanup_preview (removes PR environment)
-   └─ If merged → test_job → deploy_production (depends on test_job)
+   └─ If merged → triggers deploy-production.yml: test → deploy_production
 ```
 
 ### For Dependabot PRs
 
 ```
-1. Open PR → test_job only (no deployment)
-2. Update PR → test_job only (no deployment)
-3. Merge PR → cleanup_preview (no-op) + test_job → deploy_production
+1. Open PR → test only (no deployment)
+2. Update PR → test only (no deployment)
+3. Merge PR → cleanup_preview (no-op) + triggers deploy-production.yml: test → deploy_production
 ```
 
 ### For Direct Push to Main
 
 ```
-Push to main → test_job → deploy_production (depends on test_job)
+Push to main → deploy-production.yml: test → deploy_production (depends on test)
 ```
 
 ## Environment URLs
@@ -205,13 +245,13 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for setup instructions.
 ### To test Dependabot behavior:
 
 1. Create a PR from the Dependabot bot account
-2. Verify only `test_job` runs
+2. Verify only `test` job runs (in deploy-pr.yml workflow)
 3. Verify no deployment occurs
 
 ### To test regular PR behavior:
 
 1. Create a PR from your branch
-2. Verify both `test_job` and `deploy_preview` run
+2. Verify both `test` and `deploy_preview` run in parallel (in deploy-pr.yml workflow)
 3. Check the deployment URL in the PR comments
 4. Verify preview environment is accessible
 5. Close/merge the PR
@@ -220,7 +260,7 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for setup instructions.
 ### To test production deployment:
 
 1. Merge a PR to `main`
-2. Verify `deploy_production` runs
+2. Verify `deploy_production` runs (in deploy-production.yml workflow)
 3. Check production URL is updated
 
 ## Troubleshooting
@@ -253,10 +293,15 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for setup instructions.
 
 ## Workflow Maintenance
 
-When updating the workflow:
+When updating the workflows:
 
 1. Test changes in a PR first
 2. Verify all jobs run as expected
 3. Check both Dependabot and regular PR paths
 4. Validate production deployment after merge
 5. Document any changes in this guide
+
+## Workflow Files
+
+- **`.github/workflows/deploy-pr.yml`** - PR preview deployments with tests in parallel
+- **`.github/workflows/deploy-production.yml`** - Production deployments (push to main)
