@@ -46,7 +46,9 @@ export function Stepper({ steps, currentStep }: StepperProps) {
                     'bg-primary text-primary-foreground shadow-md scale-100 ring-2 ring-primary/20',
                   isCurrent &&
                     'bg-primary text-primary-foreground ring-4 ring-primary/30 shadow-lg scale-110',
-                  !isCompleted && !isCurrent && 'bg-muted text-muted-foreground border-2 border-border'
+                  !isCompleted &&
+                    !isCurrent &&
+                    'bg-muted text-muted-foreground border-2 border-border'
                 )}
               >
                 {isCompleted ? <Check size={22} weight="bold" /> : step.number}
