@@ -452,7 +452,7 @@ function App() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1">
                         <Button
                           onClick={e => {
                             e.stopPropagation()

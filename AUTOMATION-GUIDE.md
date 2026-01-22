@@ -327,6 +327,7 @@ All workflow files are in [`.github/workflows/`](./.github/workflows/).
 **Purpose**: Creates preview environments for pull requests
 
 **Features**:
+
 - Runs tests and deployment in parallel for fast feedback
 - Creates unique PR preview URLs: `https://{app}-pr-{number}.azurestaticapps.net`
 - Skips deployment for Dependabot PRs (security)
@@ -346,6 +347,7 @@ All workflow files are in [`.github/workflows/`](./.github/workflows/).
 **Purpose**: Deploys to production when code is pushed to main
 
 **Features**:
+
 - Tests must pass before deployment
 - Uses build artifacts to avoid rebuilding
 - OIDC authentication with Azure (no static tokens)
@@ -363,12 +365,14 @@ All workflow files are in [`.github/workflows/`](./.github/workflows/).
 **Purpose**: Creates GitHub releases when tags are pushed
 
 **Features**:
+
 - Triggers on version tags (e.g., `v1.0.0`)
 - Generates changelog using [git-cliff](https://git-cliff.org/)
 - Creates GitHub release with release notes
 - Supports pre-release tags (`-alpha`, `-beta`, `-rc`)
 
 **Trigger**:
+
 ```yaml
 on:
   push:
@@ -383,6 +387,7 @@ on:
 **Purpose**: Prepares the environment for GitHub Copilot coding agent
 
 **Features**:
+
 - Installs Node.js and dependencies
 - Caches Playwright browsers
 - Enables Copilot to run tests and builds
@@ -428,11 +433,13 @@ updates:
 **Purpose**: Automatically merges Dependabot PRs after tests pass
 
 **How it works**:
+
 1. Waits for `Deploy PR Preview` workflow to complete
 2. Checks if the workflow was triggered by Dependabot
 3. Enables auto-merge with squash strategy
 
 **Security**:
+
 - Only triggers when tests pass
 - Uses workflow_run event (not direct PR trigger)
 - Dependabot PRs don't get preview deployments
@@ -475,10 +482,10 @@ The `AGENTS.md` file provides instructions for AI coding agents (like GitHub Cop
 **IMPORTANT: Before completing any task, Copilot MUST run these validation commands:**
 
 \`\`\`bash
-npm run format      # Fix formatting issues
-npm run lint        # Check for linting errors
-npm test -- --run   # Run all unit tests
-npm run build       # Verify production build succeeds
+npm run format # Fix formatting issues
+npm run lint # Check for linting errors
+npm test -- --run # Run all unit tests
+npm run build # Verify production build succeeds
 \`\`\`
 ```
 
@@ -517,6 +524,7 @@ jobs:
 ```
 
 **Key Points**:
+
 - Job must be named `copilot-setup-steps`
 - Uses `.nvmrc` for Node.js version
 - Caches Playwright browsers for faster subsequent runs
@@ -553,10 +561,13 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
-      '@typescript-eslint/no-unused-vars': ['warn', {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-      }],
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+        },
+      ],
     },
   },
   eslintConfigPrettier
@@ -564,6 +575,7 @@ export default tseslint.config(
 ```
 
 **Required Dependencies**:
+
 ```json
 {
   "devDependencies": {
@@ -596,6 +608,7 @@ export default tseslint.config(
 📄 **File**: [`.prettierignore`](./.prettierignore) - Files to exclude from formatting
 
 **Required Dependencies**:
+
 ```json
 {
   "devDependencies": {
@@ -605,6 +618,7 @@ export default tseslint.config(
 ```
 
 **Package.json Scripts**:
+
 ```json
 {
   "scripts": {
@@ -620,32 +634,32 @@ export default tseslint.config(
 
 ### All Configuration Files
 
-| File | Purpose | Reference |
-|------|---------|-----------|
-| [`.github/workflows/deploy-pr.yml`](./.github/workflows/deploy-pr.yml) | PR preview deployments | [GitHub Workflows](#github-workflows) |
-| [`.github/workflows/deploy-production.yml`](./.github/workflows/deploy-production.yml) | Production deployment | [GitHub Workflows](#github-workflows) |
-| [`.github/workflows/release.yml`](./.github/workflows/release.yml) | Release automation | [Release Automation](#release-automation) |
-| [`.github/workflows/copilot-setup-steps.yml`](./.github/workflows/copilot-setup-steps.yml) | Copilot environment setup | [Copilot Setup](#copilot-setup-steps-workflow) |
-| [`.github/workflows/dependabot-auto-merge.yml`](./.github/workflows/dependabot-auto-merge.yml) | Auto-merge Dependabot PRs | [Dependabot Auto-Merge](#dependabot-auto-merge) |
-| [`.github/dependabot.yml`](./.github/dependabot.yml) | Dependabot configuration | [Dependabot Configuration](#dependabot-configuration) |
-| [`vitest.config.ts`](./vitest.config.ts) | Unit test configuration | [Unit Testing](#unit-testing-with-vitest) |
-| [`playwright.config.ts`](./playwright.config.ts) | E2E test configuration | [E2E Testing](#e2e-testing-with-playwright) |
-| [`eslint.config.js`](./eslint.config.js) | ESLint configuration | [ESLint](#eslint) |
-| [`.prettierrc`](./.prettierrc) | Prettier configuration | [Prettier](#prettier) |
-| [`AGENTS.md`](./AGENTS.md) | AI agent instructions | [AGENTS.md](#agentsmd-configuration) |
-| [`.nvmrc`](./.nvmrc) | Node.js version | - |
+| File                                                                                           | Purpose                   | Reference                                             |
+| ---------------------------------------------------------------------------------------------- | ------------------------- | ----------------------------------------------------- |
+| [`.github/workflows/deploy-pr.yml`](./.github/workflows/deploy-pr.yml)                         | PR preview deployments    | [GitHub Workflows](#github-workflows)                 |
+| [`.github/workflows/deploy-production.yml`](./.github/workflows/deploy-production.yml)         | Production deployment     | [GitHub Workflows](#github-workflows)                 |
+| [`.github/workflows/release.yml`](./.github/workflows/release.yml)                             | Release automation        | [Release Automation](#release-automation)             |
+| [`.github/workflows/copilot-setup-steps.yml`](./.github/workflows/copilot-setup-steps.yml)     | Copilot environment setup | [Copilot Setup](#copilot-setup-steps-workflow)        |
+| [`.github/workflows/dependabot-auto-merge.yml`](./.github/workflows/dependabot-auto-merge.yml) | Auto-merge Dependabot PRs | [Dependabot Auto-Merge](#dependabot-auto-merge)       |
+| [`.github/dependabot.yml`](./.github/dependabot.yml)                                           | Dependabot configuration  | [Dependabot Configuration](#dependabot-configuration) |
+| [`vitest.config.ts`](./vitest.config.ts)                                                       | Unit test configuration   | [Unit Testing](#unit-testing-with-vitest)             |
+| [`playwright.config.ts`](./playwright.config.ts)                                               | E2E test configuration    | [E2E Testing](#e2e-testing-with-playwright)           |
+| [`eslint.config.js`](./eslint.config.js)                                                       | ESLint configuration      | [ESLint](#eslint)                                     |
+| [`.prettierrc`](./.prettierrc)                                                                 | Prettier configuration    | [Prettier](#prettier)                                 |
+| [`AGENTS.md`](./AGENTS.md)                                                                     | AI agent instructions     | [AGENTS.md](#agentsmd-configuration)                  |
+| [`.nvmrc`](./.nvmrc)                                                                           | Node.js version           | -                                                     |
 
 ### Required GitHub Secrets
 
 For Azure Static Web Apps deployment:
 
-| Secret | Description |
-|--------|-------------|
-| `AZURE_CLIENT_ID` | Service principal application ID |
-| `AZURE_TENANT_ID` | Azure AD tenant ID |
-| `AZURE_SUBSCRIPTION_ID` | Azure subscription ID |
-| `AZURE_RESOURCE_GROUP` | Resource group name |
-| `AZURE_STATIC_WEB_APP_NAME` | Static Web App name |
+| Secret                      | Description                      |
+| --------------------------- | -------------------------------- |
+| `AZURE_CLIENT_ID`           | Service principal application ID |
+| `AZURE_TENANT_ID`           | Azure AD tenant ID               |
+| `AZURE_SUBSCRIPTION_ID`     | Azure subscription ID            |
+| `AZURE_RESOURCE_GROUP`      | Resource group name              |
+| `AZURE_STATIC_WEB_APP_NAME` | Static Web App name              |
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed setup instructions.
 
@@ -714,6 +728,7 @@ npm install -D eslint @eslint/js typescript-eslint eslint-plugin-react-hooks esl
 ### 4. Configure Azure Secrets
 
 Follow [DEPLOYMENT.md](./DEPLOYMENT.md) to:
+
 1. Create Azure Static Web App
 2. Set up service principal with OIDC
 3. Add secrets to GitHub repository
@@ -721,6 +736,7 @@ Follow [DEPLOYMENT.md](./DEPLOYMENT.md) to:
 ### 5. Create AGENTS.md
 
 Customize the `AGENTS.md` file for your project with:
+
 - Project-specific setup commands
 - Code conventions
 - Key files and directories
@@ -760,15 +776,15 @@ npm run build
 
 This automation setup provides:
 
-| Feature | Implementation |
-|---------|---------------|
-| **Unit Testing** | Vitest with React Testing Library |
-| **E2E Testing** | Playwright with mobile device testing |
-| **CI/CD** | GitHub Actions with Azure Static Web Apps |
-| **PR Previews** | Automatic preview URLs for each PR |
-| **Dependency Updates** | Dependabot with auto-merge |
-| **Code Quality** | ESLint + Prettier |
-| **AI Development** | GitHub Copilot with AGENTS.md |
-| **Release Management** | Git-cliff changelog + GitHub Releases |
+| Feature                | Implementation                            |
+| ---------------------- | ----------------------------------------- |
+| **Unit Testing**       | Vitest with React Testing Library         |
+| **E2E Testing**        | Playwright with mobile device testing     |
+| **CI/CD**              | GitHub Actions with Azure Static Web Apps |
+| **PR Previews**        | Automatic preview URLs for each PR        |
+| **Dependency Updates** | Dependabot with auto-merge                |
+| **Code Quality**       | ESLint + Prettier                         |
+| **AI Development**     | GitHub Copilot with AGENTS.md             |
+| **Release Management** | Git-cliff changelog + GitHub Releases     |
 
 By following this guide, you can set up the same level of automation for any static frontend application.
