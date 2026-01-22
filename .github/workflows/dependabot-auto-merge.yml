@@ -67,10 +67,58 @@ jobs:
             core.setOutput('pr-title', prDetails.title);
 
       - name: Enable auto-merge for Dependabot PRs
-        run: gh pr merge --auto --squash "$PR_NUMBER" --repo "${{ github.repository }}"
-        env:
-          PR_NUMBER: ${{ steps.pr-info.outputs.pr-number }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        id: auto-merge
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const prNumber = '${{ steps.pr-info.outputs.pr-number }}';
+            
+            if (!prNumber || prNumber === '') {
+              core.setFailed('No PR number available');
+              return;
+            }
+            
+            // Enable auto-merge using GraphQL API
+            // This works better than gh CLI for PRs that modify workflow files
+            const query = `
+              mutation EnableAutoMerge($pullRequestId: ID!) {
+                enablePullRequestAutoMerge(input: {
+                  pullRequestId: $pullRequestId,
+                  mergeMethod: SQUASH
+                }) {
+                  pullRequest {
+                    autoMergeRequest {
+                      enabledAt
+                    }
+                  }
+                }
+              }
+            `;
+            
+            // Get the PR node ID first
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: parseInt(prNumber, 10)
+            });
+            
+            try {
+              await github.graphql(query, {
+                pullRequestId: pr.node_id
+              });
+              core.info(`Auto-merge enabled for PR #${prNumber}`);
+              core.setOutput('enabled', 'true');
+            } catch (error) {
+              // If auto-merge fails (e.g., branch protection not met), log but don't fail
+              // Sanitize error message to avoid exposing sensitive information
+              const sanitizedError = error.message.replace(/ghp_[a-zA-Z0-9]+/g, '[REDACTED]')
+                                                  .replace(/gho_[a-zA-Z0-9]+/g, '[REDACTED]')
+                                                  .replace(/github_pat_[a-zA-Z0-9]+/g, '[REDACTED]');
+              core.warning(`Could not enable auto-merge: ${sanitizedError}`);
+              core.info('This may happen if branch protection rules are not satisfied yet.');
+              core.setOutput('enabled', 'false');
+              core.setOutput('error', sanitizedError);
+            }
 
       - name: Summary
         run: |
@@ -78,4 +126,10 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**PR:** ${{ steps.pr-info.outputs.pr-title }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Auto-merge enabled with squash strategy." >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.auto-merge.outputs.enabled }}" == "true" ]; then
+            echo "✅ Auto-merge enabled with squash strategy." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Could not enable auto-merge: ${{ steps.auto-merge.outputs.error }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The PR may need manual review or branch protection requirements are not met." >> $GITHUB_STEP_SUMMARY
+          fi
