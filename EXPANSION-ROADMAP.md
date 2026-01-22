@@ -165,11 +165,13 @@ npm install i18next react-i18next
 // src/i18n/index.ts
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
+import da from './locales/da.json'
+import en from './locales/en.json'
 
 i18n.use(initReactI18next).init({
   resources: {
-    da: { translation: require('./locales/da.json') },
-    en: { translation: require('./locales/en.json') },
+    da: { translation: da },
+    en: { translation: en },
   },
   lng: 'da',
   fallbackLng: 'en',
@@ -225,9 +227,10 @@ The app already uses `next-themes` dependency. Enable it:
 
 ```typescript
 // Update src/main.tsx
+import { createRoot } from 'react-dom/client'
 import { ThemeProvider } from 'next-themes'
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById('root')!).render(
   <ThemeProvider attribute="class" defaultTheme="system">
     <App />
   </ThemeProvider>
