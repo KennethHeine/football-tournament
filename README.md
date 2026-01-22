@@ -110,6 +110,16 @@ The repository uses automated CI/CD workflows. See [WORKFLOW-GUIDE.md](./WORKFLO
 - Test-only execution for Dependabot PRs
 - Automatic cleanup of temporary environments
 
+### 🤖 Full Automation Guide
+
+Want to replicate this setup for another project? See [AUTOMATION-GUIDE.md](./AUTOMATION-GUIDE.md) for a complete guide covering:
+
+- Testing setup (Vitest + Playwright)
+- CI/CD workflows with Azure Static Web Apps
+- Dependabot with auto-merge
+- GitHub Copilot configuration
+- Code quality tools (ESLint + Prettier)
+
 ### Quick Deploy Options
 
 **Option 1: OIDC (Recommended - Most Secure)**
