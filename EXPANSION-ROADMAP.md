@@ -872,7 +872,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
     const response = await fetch('/.auth/me')
     const { clientPrincipal } = await response.json()
-    return clientPrincipal
+    return clientPrincipal as AuthUser | null
   } catch {
     return null
   }
@@ -1148,11 +1148,11 @@ CREATE TABLE shared_tournaments (
 ALTER TABLE shared_tournaments ENABLE ROW LEVEL SECURITY;
 
 -- Anyone can read
-CREATE POLICY "Public read" ON shared_tournaments
+CREATE POLICY public_read ON shared_tournaments
   FOR SELECT USING (expires_at > NOW());
 
 -- Anyone can insert (with device ID tracking)
-CREATE POLICY "Anyone can share" ON shared_tournaments
+CREATE POLICY anyone_can_share ON shared_tournaments
   FOR INSERT WITH CHECK (true);
 
 -- Create index for fast lookups
@@ -1167,10 +1167,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-export async function createShareLink(
-  tournament: Tournament,
-  deviceId: string
-): Promise<string> {
+export async function createShareLink(tournament: Tournament, deviceId: string): Promise<string> {
   const { data, error } = await supabase
     .from('shared_tournaments')
     .insert({
@@ -1367,13 +1364,13 @@ export async function loadEncryptedShare(shareId: string, keyString: string): Pr
 
 ### 5.5 Comparison: Sharing Without Backend
 
-| Method                  | Auth Required | Security  | Setup Complexity | Cost     |
-| ----------------------- | ------------- | --------- | ---------------- | -------- |
-| Firebase Direct         | No            | Medium    | Low              | $0       |
-| Supabase Direct         | No            | Medium    | Low              | $0       |
-| Azure Blob (Public SAS) | No            | Low       | Medium           | $0-2     |
-| Azure Blob + Function   | No            | Medium    | Medium           | $0-5     |
-| Any + Client Encryption | No            | High      | Medium           | $0       |
+| Method                  | Auth Required | Security | Setup Complexity | Cost |
+| ----------------------- | ------------- | -------- | ---------------- | ---- |
+| Firebase Direct         | No            | Medium   | Low              | $0   |
+| Supabase Direct         | No            | Medium   | Low              | $0   |
+| Azure Blob (Public SAS) | No            | Low      | Medium           | $0-2 |
+| Azure Blob + Function   | No            | Medium   | Medium           | $0-5 |
+| Any + Client Encryption | No            | High     | Medium           | $0   |
 
 **Recommendation:**
 
@@ -1435,16 +1432,16 @@ Recommended order based on impact vs. effort:
 
 ## Cost Summary
 
-| Configuration              | Monthly Cost | Features Enabled                        |
-| -------------------------- | ------------ | --------------------------------------- |
-| Current (Static Only)      | $0           | All frontend features                   |
-| + Direct Cloud Sharing     | $0           | Firebase/Supabase sharing               |
-| + Social Login             | $0           | User identity via OAuth                 |
-| + Azure Functions          | $0-5         | Short URLs, analytics, email            |
-| + Azure Blob Storage       | $0-2         | Cloud backup, cross-device sync         |
-| + Full Backend + Auth      | $5-15        | All features with complete user system  |
+| Configuration          | Monthly Cost | Features Enabled                       |
+| ---------------------- | ------------ | -------------------------------------- |
+| Current (Static Only)  | $0           | All frontend features                  |
+| + Direct Cloud Sharing | $0           | Firebase/Supabase sharing              |
+| + Social Login         | $0           | User identity via OAuth                |
+| + Azure Functions      | $0-5         | Short URLs, analytics, email           |
+| + Azure Blob Storage   | $0-2         | Cloud backup, cross-device sync        |
+| + Full Backend + Auth  | $5-15        | All features with complete user system |
 
-**Recommendation:** 
+**Recommendation:**
 
 1. Start with Phase 1 (frontend-only) features as they provide significant value at zero cost
 2. Add Phase 2 (secure sharing) using Firebase or Supabase for free cloud sharing without needing a backend
