@@ -485,12 +485,31 @@ function App() {
         </div>
 
         {/* Footer */}
-        <footer className="mt-auto py-8 text-center text-sm text-muted-foreground">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <SoccerBall size={16} weight="duotone" className="text-primary" />
-            <span style={{ fontFamily: 'var(--font-heading)' }}>Fodboldturnering</span>
+        <footer className="mt-auto py-8 text-center text-sm text-muted-foreground border-t border-muted/20">
+          <div className="container mx-auto px-4 max-w-4xl">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <SoccerBall size={16} weight="duotone" className="text-primary" />
+              <span style={{ fontFamily: 'var(--font-heading)' }} className="font-semibold">
+                Fodboldturnering
+              </span>
+            </div>
+            <p className="mb-4 text-muted-foreground/80">
+              Et gratis værktøj til alle frivillige fodboldtrænere, der ønsker at lave kampskemaer
+              til stævner og turneringer – hurtigt og nemt.
+            </p>
+            <div className="flex items-center justify-center gap-2 text-xs">
+              <span>Lavet af</span>
+              <a
+                href="https://kennethheine.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors font-medium"
+              >
+                <img src="/ks-logo.svg" alt="Kenneth Heine logo" className="w-4 h-4" />
+                Kenneth Heine
+              </a>
+            </div>
           </div>
-          <p>Opret og administrer turneringsskemaer nemt og hurtigt</p>
         </footer>
 
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
