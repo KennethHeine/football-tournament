@@ -9,8 +9,7 @@ permissions:
   contents: write
   pull-requests: write
   actions: read
-  workflows: write
-
+  
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
