@@ -7,7 +7,9 @@ This document outlines potential features and enhancements for the Football Tour
 1. [Frontend-Only Enhancements](#1-frontend-only-enhancements-current-architecture)
 2. [Backend API Options](#2-backend-api-options-low-cost)
 3. [Remote Storage Options](#3-remote-storage-options)
-4. [Implementation Priorities](#4-implementation-priorities)
+4. [User Identity Without Account Creation](#4-user-identity-without-account-creation)
+5. [Secure Sharing Without Backend](#5-secure-sharing-without-backend)
+6. [Implementation Priorities](#6-implementation-priorities)
 
 ---
 
@@ -808,7 +810,580 @@ export function useTournamentStorage() {
 
 ---
 
-## 4. Implementation Priorities
+## 4. User Identity Without Account Creation
+
+If adding backend or storage features, you need to identify users without requiring them to create accounts in your app. Here are low-friction options:
+
+### 4.1 Social/OAuth Login (Recommended)
+
+**What it does:** Let users sign in with existing accounts (Google, Microsoft, GitHub, etc.).
+
+**Why it's valuable:**
+
+- Users don't create new passwords
+- No email verification needed
+- Trusted identity providers handle security
+- One-click sign-in experience
+
+#### 4.1.1 Azure Static Web Apps Built-in Auth (Easiest)
+
+Azure Static Web Apps provides built-in authentication with zero configuration:
+
+```json
+// staticwebapp.config.json
+{
+  "routes": [
+    {
+      "route": "/api/*",
+      "allowedRoles": ["authenticated"]
+    }
+  ],
+  "auth": {
+    "identityProviders": {
+      "azureActiveDirectory": {
+        "registration": {
+          "openIdIssuer": "https://login.microsoftonline.com/common/v2.0",
+          "clientIdSettingName": "AAD_CLIENT_ID",
+          "clientSecretSettingName": "AAD_CLIENT_SECRET"
+        }
+      }
+    }
+  }
+}
+```
+
+**Login URLs (no code required):**
+
+- Microsoft: `/.auth/login/aad`
+- GitHub: `/.auth/login/github`
+- Google: `/.auth/login/google`
+
+**Get user info:**
+
+```typescript
+// src/lib/auth.ts
+export interface AuthUser {
+  userId: string
+  userDetails: string // email or username
+  identityProvider: 'aad' | 'github' | 'google'
+}
+
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  try {
+    const response = await fetch('/.auth/me')
+    const { clientPrincipal } = await response.json()
+    return clientPrincipal
+  } catch {
+    return null
+  }
+}
+
+export function loginWithProvider(provider: 'aad' | 'github' | 'google') {
+  window.location.href = `/.auth/login/${provider}?post_login_redirect_uri=${window.location.pathname}`
+}
+
+export function logout() {
+  window.location.href = '/.auth/logout'
+}
+```
+
+**Cost:** $0 - Included with Azure Static Web Apps
+
+---
+
+#### 4.1.2 Firebase Authentication
+
+If using Firebase for storage, use Firebase Auth:
+
+```bash
+npm install firebase
+```
+
+```typescript
+// src/lib/firebase-auth.ts
+import { initializeApp } from 'firebase/app'
+import {
+  getAuth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  GithubAuthProvider,
+  onAuthStateChanged,
+  User,
+} from 'firebase/auth'
+
+const app = initializeApp(firebaseConfig)
+const auth = getAuth(app)
+
+export async function signInWithGoogle(): Promise<User> {
+  const provider = new GoogleAuthProvider()
+  const result = await signInWithPopup(auth, provider)
+  return result.user
+}
+
+export async function signInWithGitHub(): Promise<User> {
+  const provider = new GithubAuthProvider()
+  const result = await signInWithPopup(auth, provider)
+  return result.user
+}
+
+export function onUserChange(callback: (user: User | null) => void) {
+  return onAuthStateChanged(auth, callback)
+}
+
+export function getCurrentUserId(): string | null {
+  return auth.currentUser?.uid || null
+}
+```
+
+**Cost:** Free for up to 10,000 monthly active users
+
+---
+
+#### 4.1.3 Supabase Auth
+
+If using Supabase for storage:
+
+```typescript
+// src/lib/supabase-auth.ts
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+export async function signInWithGoogle() {
+  await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin },
+  })
+}
+
+export async function signInWithGitHub() {
+  await supabase.auth.signInWithOAuth({
+    provider: 'github',
+    options: { redirectTo: window.location.origin },
+  })
+}
+
+export async function getCurrentUser() {
+  const { data } = await supabase.auth.getUser()
+  return data.user
+}
+
+export async function signOut() {
+  await supabase.auth.signOut()
+}
+```
+
+**Cost:** Free tier includes unlimited auth users
+
+---
+
+### 4.2 Anonymous Device-Based Identity
+
+**What it does:** Generate a unique ID per device without any login.
+
+**Why it's valuable:**
+
+- Zero friction for users
+- Works for read-only sharing
+- No account needed for basic features
+
+**Implementation:**
+
+```typescript
+// src/lib/device-identity.ts
+import { useLocalStorage } from '@/hooks/useLocalStorage'
+
+function generateDeviceId(): string {
+  return 'dev_' + crypto.randomUUID()
+}
+
+export function useDeviceIdentity() {
+  const [deviceId] = useLocalStorage<string>('deviceId', generateDeviceId())
+  return deviceId
+}
+
+// Use device ID to claim ownership of tournaments
+export interface Tournament {
+  // ... existing fields
+  ownerId?: string // Device ID or authenticated user ID
+  isPublic?: boolean // Whether others can view
+}
+```
+
+**Hybrid approach:** Start anonymous, upgrade to authenticated:
+
+```typescript
+// src/hooks/useIdentity.ts
+export function useIdentity() {
+  const deviceId = useDeviceIdentity()
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null)
+
+  useEffect(() => {
+    getCurrentUser().then(setAuthUser)
+  }, [])
+
+  return {
+    userId: authUser?.userId || deviceId,
+    isAuthenticated: !!authUser,
+    displayName: authUser?.userDetails || 'Anonymous',
+    login: loginWithProvider,
+    logout,
+  }
+}
+```
+
+**Cost:** $0 - Pure frontend
+
+---
+
+### 4.3 Comparison: Identity Options
+
+| Method                       | Friction  | Security   | Cross-Device | Cost |
+| ---------------------------- | --------- | ---------- | ------------ | ---- |
+| Anonymous (Device ID)        | None      | Low        | No           | $0   |
+| Azure SWA Built-in Auth      | One click | High       | Yes          | $0   |
+| Firebase Auth                | One click | High       | Yes          | $0   |
+| Supabase Auth                | One click | High       | Yes          | $0   |
+| Anonymous + Optional Upgrade | None/Low  | Low → High | Optional     | $0   |
+
+**Recommendation:** Start with Anonymous Device ID for zero friction, add social login buttons as an optional upgrade path for users who want cross-device sync.
+
+---
+
+## 5. Secure Sharing Without Backend
+
+You can enable tournament sharing directly from the frontend to cloud storage without building a backend API.
+
+### 5.1 Firebase Realtime Database (Direct Client Access)
+
+**How it works:** Client writes directly to Firebase with security rules controlling access.
+
+**Setup:**
+
+1. Create Firebase project at console.firebase.google.com
+2. Enable Realtime Database
+3. Configure security rules for public read, owner-only write
+
+**Security Rules:**
+
+```json
+{
+  "rules": {
+    "tournaments": {
+      "$tournamentId": {
+        // Anyone can read public tournaments
+        ".read": "data.child('isPublic').val() === true",
+        // Only the owner can write
+        ".write": "!data.exists() || data.child('ownerId').val() === auth.uid || data.child('ownerId').val() === null"
+      }
+    },
+    "shared": {
+      // Public read-only shares (for anonymous sharing)
+      "$shareId": {
+        ".read": true,
+        ".write": "!data.exists()" // Write once, then read-only
+      }
+    }
+  }
+}
+```
+
+**Implementation:**
+
+```typescript
+// src/lib/firebase-sharing.ts
+import { getDatabase, ref, set, get, push } from 'firebase/database'
+
+const db = getDatabase()
+
+// Create a read-only share link (no auth required)
+export async function createShareLink(tournament: Tournament): Promise<string> {
+  const shareRef = push(ref(db, 'shared'))
+  const shareId = shareRef.key!
+
+  // Store a snapshot - this is read-only after creation
+  await set(shareRef, {
+    tournament: tournament,
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+  })
+
+  return `${window.location.origin}/share/${shareId}`
+}
+
+// Load a shared tournament
+export async function loadSharedTournament(shareId: string): Promise<Tournament | null> {
+  const snapshot = await get(ref(db, `shared/${shareId}`))
+  if (!snapshot.exists()) return null
+
+  const data = snapshot.val()
+  if (new Date(data.expiresAt) < new Date()) return null // Expired
+
+  return data.tournament
+}
+```
+
+**Cost:** Free tier = 1GB storage, 10GB/month bandwidth
+
+---
+
+### 5.2 Supabase Direct Client Access
+
+**How it works:** Client writes directly to Supabase with Row Level Security (RLS).
+
+**Database Schema:**
+
+```sql
+-- Create shared_tournaments table
+CREATE TABLE shared_tournaments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tournament_data JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '30 days',
+  owner_device_id TEXT,
+  view_count INTEGER DEFAULT 0
+);
+
+-- Enable Row Level Security
+ALTER TABLE shared_tournaments ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can read
+CREATE POLICY "Public read" ON shared_tournaments
+  FOR SELECT USING (expires_at > NOW());
+
+-- Anyone can insert (with device ID tracking)
+CREATE POLICY "Anyone can share" ON shared_tournaments
+  FOR INSERT WITH CHECK (true);
+
+-- Create index for fast lookups
+CREATE INDEX idx_shared_tournaments_expires ON shared_tournaments(expires_at);
+```
+
+**Implementation:**
+
+```typescript
+// src/lib/supabase-sharing.ts
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+export async function createShareLink(
+  tournament: Tournament,
+  deviceId: string
+): Promise<string> {
+  const { data, error } = await supabase
+    .from('shared_tournaments')
+    .insert({
+      tournament_data: tournament,
+      owner_device_id: deviceId,
+    })
+    .select('id')
+    .single()
+
+  if (error) throw error
+  return `${window.location.origin}/share/${data.id}`
+}
+
+export async function loadSharedTournament(shareId: string): Promise<Tournament | null> {
+  const { data, error } = await supabase
+    .from('shared_tournaments')
+    .select('tournament_data')
+    .eq('id', shareId)
+    .single()
+
+  if (error || !data) return null
+  return data.tournament_data as Tournament
+}
+```
+
+**Cost:** Free tier = 500MB storage, 2GB bandwidth
+
+---
+
+### 5.3 Azure Blob Storage with SAS Tokens
+
+**How it works:** Generate time-limited upload URLs from a minimal Azure Function, but reads are public.
+
+**Option A: Fully Anonymous (Public Container)**
+
+```typescript
+// Frontend - direct upload to public container
+export async function uploadTournament(tournament: Tournament): Promise<string> {
+  const shareId = crypto.randomUUID()
+  const url = `https://${STORAGE_ACCOUNT}.blob.core.windows.net/shared/${shareId}.json?${SAS_TOKEN}`
+
+  await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'x-ms-blob-type': 'BlockBlob',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(tournament),
+  })
+
+  return `${window.location.origin}/share/${shareId}`
+}
+
+// Frontend - read (no auth needed)
+export async function loadSharedTournament(shareId: string): Promise<Tournament | null> {
+  const url = `https://${STORAGE_ACCOUNT}.blob.core.windows.net/shared/${shareId}.json`
+  const response = await fetch(url)
+  if (!response.ok) return null
+  return response.json()
+}
+```
+
+**Option B: Secure Upload via Azure Function**
+
+```typescript
+// api/generate-upload-url/index.ts (Azure Function)
+import { AzureFunction, Context, HttpRequest } from '@azure/functions'
+import {
+  BlobServiceClient,
+  generateBlobSASQueryParameters,
+  BlobSASPermissions,
+} from '@azure/storage-blob'
+
+const httpTrigger: AzureFunction = async function (
+  context: Context,
+  req: HttpRequest
+): Promise<void> {
+  const shareId = crypto.randomUUID()
+  const blobName = `${shareId}.json`
+
+  const blobServiceClient = BlobServiceClient.fromConnectionString(
+    process.env.STORAGE_CONNECTION_STRING!
+  )
+  const containerClient = blobServiceClient.getContainerClient('shared')
+  const blobClient = containerClient.getBlobClient(blobName)
+
+  // Generate SAS token valid for 5 minutes (upload window)
+  const sasToken = generateBlobSASQueryParameters(
+    {
+      containerName: 'shared',
+      blobName,
+      permissions: BlobSASPermissions.parse('cw'), // Create and Write
+      expiresOn: new Date(Date.now() + 5 * 60 * 1000),
+    },
+    blobServiceClient.credential!
+  ).toString()
+
+  context.res = {
+    body: {
+      uploadUrl: `${blobClient.url}?${sasToken}`,
+      shareUrl: `${req.headers['origin']}/share/${shareId}`,
+    },
+  }
+}
+```
+
+**Cost:** ~$0.02/GB storage + minimal transaction costs
+
+---
+
+### 5.4 Client-Side Encryption for Sensitive Data
+
+For extra security, encrypt tournament data before storing:
+
+```typescript
+// src/lib/encryption.ts
+
+// Generate a random encryption key
+export async function generateEncryptionKey(): Promise<CryptoKey> {
+  return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt'])
+}
+
+// Export key as URL-safe string
+export async function exportKey(key: CryptoKey): Promise<string> {
+  const exported = await crypto.subtle.exportKey('raw', key)
+  return btoa(String.fromCharCode(...new Uint8Array(exported)))
+}
+
+// Import key from URL-safe string
+export async function importKey(keyString: string): Promise<CryptoKey> {
+  const keyData = Uint8Array.from(atob(keyString), c => c.charCodeAt(0))
+  return crypto.subtle.importKey('raw', keyData, { name: 'AES-GCM' }, true, ['encrypt', 'decrypt'])
+}
+
+// Encrypt data
+export async function encrypt(data: object, key: CryptoKey): Promise<string> {
+  const iv = crypto.getRandomValues(new Uint8Array(12))
+  const encoded = new TextEncoder().encode(JSON.stringify(data))
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded)
+
+  // Combine IV + encrypted data
+  const combined = new Uint8Array(iv.length + encrypted.byteLength)
+  combined.set(iv)
+  combined.set(new Uint8Array(encrypted), iv.length)
+
+  return btoa(String.fromCharCode(...combined))
+}
+
+// Decrypt data
+export async function decrypt(encryptedString: string, key: CryptoKey): Promise<object> {
+  const combined = Uint8Array.from(atob(encryptedString), c => c.charCodeAt(0))
+  const iv = combined.slice(0, 12)
+  const encrypted = combined.slice(12)
+
+  const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, encrypted)
+  return JSON.parse(new TextDecoder().decode(decrypted))
+}
+```
+
+**Usage with encrypted sharing:**
+
+```typescript
+// Create encrypted share link
+export async function createEncryptedShare(tournament: Tournament): Promise<string> {
+  const key = await generateEncryptionKey()
+  const keyString = await exportKey(key)
+  const encryptedData = await encrypt(tournament, key)
+
+  // Store encrypted data in cloud
+  const shareId = await uploadEncryptedData(encryptedData)
+
+  // Key is in the URL fragment (never sent to server)
+  return `${window.location.origin}/share/${shareId}#key=${keyString}`
+}
+
+// Load encrypted share
+export async function loadEncryptedShare(shareId: string, keyString: string): Promise<Tournament> {
+  const encryptedData = await downloadEncryptedData(shareId)
+  const key = await importKey(keyString)
+  return (await decrypt(encryptedData, key)) as Tournament
+}
+```
+
+**Security benefits:**
+
+- Data is encrypted before leaving the browser
+- Key is in URL fragment (never sent to server)
+- Even if storage is compromised, data is unreadable
+- No backend needed for encryption
+
+**Cost:** $0 - Uses Web Crypto API (built into browsers)
+
+---
+
+### 5.5 Comparison: Sharing Without Backend
+
+| Method                  | Auth Required | Security  | Setup Complexity | Cost     |
+| ----------------------- | ------------- | --------- | ---------------- | -------- |
+| Firebase Direct         | No            | Medium    | Low              | $0       |
+| Supabase Direct         | No            | Medium    | Low              | $0       |
+| Azure Blob (Public SAS) | No            | Low       | Medium           | $0-2     |
+| Azure Blob + Function   | No            | Medium    | Medium           | $0-5     |
+| Any + Client Encryption | No            | High      | Medium           | $0       |
+
+**Recommendation:**
+
+1. For simplest setup: Use Firebase or Supabase with security rules
+2. For maximum security: Add client-side encryption with key in URL fragment
+3. For Azure ecosystem: Use Azure Blob with a minimal Function for upload URLs
+
+---
+
+## 6. Implementation Priorities
 
 ### Phase 1: Frontend-Only (No Additional Cost)
 
@@ -824,7 +1399,23 @@ Recommended order based on impact vs. effort:
 | 6        | Team Groups/Pools                | Medium | Medium |
 | 7        | Knockout Rounds                  | High   | Medium |
 
-### Phase 2: Add Backend (Minimal Cost: $0-5/month)
+### Phase 2: Secure Sharing Without Backend ($0)
+
+| Priority | Feature                        | Effort | Impact |
+| -------- | ------------------------------ | ------ | ------ |
+| 1        | Firebase/Supabase Direct Share | Low    | High   |
+| 2        | Client-Side Encryption         | Medium | Medium |
+| 3        | Anonymous Device Identity      | Low    | Medium |
+
+### Phase 3: Add User Identity ($0)
+
+| Priority | Feature                      | Effort | Impact |
+| -------- | ---------------------------- | ------ | ------ |
+| 1        | Azure SWA Built-in Auth      | Low    | High   |
+| 2        | Social Login (Google/GitHub) | Low    | High   |
+| 3        | Anonymous + Upgrade Path     | Medium | Medium |
+
+### Phase 4: Add Backend (Minimal Cost: $0-5/month)
 
 | Priority | Feature             | Effort | Impact |
 | -------- | ------------------- | ------ | ------ |
@@ -832,7 +1423,7 @@ Recommended order based on impact vs. effort:
 | 2        | Anonymous Analytics | Low    | Low    |
 | 3        | Email Notifications | Medium | Medium |
 
-### Phase 3: Add Remote Storage ($0-2/month)
+### Phase 5: Add Remote Storage ($0-2/month)
 
 | Priority | Feature                   | Effort | Impact |
 | -------- | ------------------------- | ------ | ------ |
@@ -844,11 +1435,19 @@ Recommended order based on impact vs. effort:
 
 ## Cost Summary
 
-| Configuration         | Monthly Cost | Features Enabled             |
-| --------------------- | ------------ | ---------------------------- |
-| Current (Static Only) | $0           | All frontend features        |
-| + Azure Functions     | $0-5         | Short URLs, analytics, email |
-| + Azure Blob Storage  | $0-2         | Cloud backup, sharing        |
-| + Full Backend        | $5-15        | All features                 |
+| Configuration              | Monthly Cost | Features Enabled                        |
+| -------------------------- | ------------ | --------------------------------------- |
+| Current (Static Only)      | $0           | All frontend features                   |
+| + Direct Cloud Sharing     | $0           | Firebase/Supabase sharing               |
+| + Social Login             | $0           | User identity via OAuth                 |
+| + Azure Functions          | $0-5         | Short URLs, analytics, email            |
+| + Azure Blob Storage       | $0-2         | Cloud backup, cross-device sync         |
+| + Full Backend + Auth      | $5-15        | All features with complete user system  |
 
-**Recommendation:** Start with Phase 1 (frontend-only) features as they provide significant value at zero cost. Add Azure Functions for short URLs when URL length becomes a user pain point. Add cloud storage only if cross-device sync is requested.
+**Recommendation:** 
+
+1. Start with Phase 1 (frontend-only) features as they provide significant value at zero cost
+2. Add Phase 2 (secure sharing) using Firebase or Supabase for free cloud sharing without needing a backend
+3. Add Phase 3 (user identity) using Azure SWA built-in auth or social login when users want cross-device access
+4. Add Phase 4 (backend) for short URLs only when URL length becomes a user pain point
+5. Add Phase 5 (remote storage) when cross-device sync is explicitly requested
