@@ -1,0 +1,8 @@
+# Robots.txt for Fodboldturnering
+# https://fodbold.kscloud.io
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://fodbold.kscloud.io/sitemap.xml

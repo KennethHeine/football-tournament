@@ -15,9 +15,10 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['icon-192.svg', 'icon-512.svg', 'icon-maskable.svg', 'apple-touch-icon.svg'],
       manifest: {
-        name: 'Fodboldturnering',
+        name: 'Fodboldturnering - Gratis Kampskema Generator',
         short_name: 'Fodboldturnering',
-        description: 'Opret kampskemaer til fodboldturneringer',
+        description:
+          'Gratis online værktøj til at oprette kampskemaer til fodboldturneringer. Lavet til frivillige fodboldtrænere.',
         theme_color: '#16a34a',
         background_color: '#ffffff',
         display: 'standalone',
