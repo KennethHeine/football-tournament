@@ -164,6 +164,14 @@ Want to replicate this setup for another project? See [AUTOMATION-GUIDE.md](./AU
 - No backend API calls
 - Static site deployment
 
+## 🚀 Future Development
+
+Looking to expand the app? See our [Expansion Roadmap](./EXPANSION-ROADMAP.md) for detailed guides on:
+
+- Frontend-only enhancements (match results, knockout rounds, dark mode)
+- Low-cost backend options (Azure Functions, Cloudflare Workers)
+- Remote storage solutions (Azure Blob, Firebase, Supabase)
+
 ## 📄 License
 
 MIT License - see [LICENSE](./LICENSE) for details
