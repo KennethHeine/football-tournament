@@ -51,7 +51,7 @@ export interface GeneratedSchedule {
   matches: Match[]
   conflicts: ScheduleConflict[]
   warnings: string[]
-  byes: ByeInfo[]
+  byes?: ByeInfo[]
 }
 
 export interface Tournament {

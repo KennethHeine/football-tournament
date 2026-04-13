@@ -109,14 +109,17 @@ export function generateSchedule(
       }
       byesByTeam.get(bye.team.id)!.push(bye.round)
     }
+    let hasConsecutiveByes = false
     for (const [, rounds] of byesByTeam) {
       rounds.sort((a, b) => a - b)
       for (let i = 1; i < rounds.length; i++) {
         if (rounds[i] - rounds[i - 1] === 1) {
           warnings.push('Advarsel: Et hold sidder over to runder i træk')
+          hasConsecutiveByes = true
           break
         }
       }
+      if (hasConsecutiveByes) break
     }
   }
 
@@ -421,7 +424,7 @@ export function exportToText(
   const byeByTimeKey = new Map<string, string>()
   for (const bye of byes) {
     if (bye.startTime) {
-      byeByTimeKey.set(formatTime(bye.startTime), bye.team.name)
+      byeByTimeKey.set(formatTime(new Date(bye.startTime)), bye.team.name)
     }
   }
 

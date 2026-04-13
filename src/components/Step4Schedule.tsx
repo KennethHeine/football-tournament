@@ -91,7 +91,8 @@ export function Step4Schedule({
     const map = new Map<string, ByeInfo>()
     for (const bye of schedule.byes || []) {
       if (bye.startTime) {
-        map.set(bye.startTime.toISOString(), bye)
+        const date = new Date(bye.startTime)
+        map.set(date.toISOString(), bye)
       }
     }
     return map
