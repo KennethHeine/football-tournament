@@ -5,6 +5,7 @@ import type {
   SchedulingConfig,
   GeneratedSchedule,
   ScheduleConflict,
+  ByeInfo,
 } from './types'
 
 const BYE_TEAM: Team = { id: 'BYE', name: 'BYE' }
@@ -66,16 +67,19 @@ export function generateSchedule(
 ): GeneratedSchedule {
   const warnings: string[] = []
   let matches: Match[] = []
+  let byes: ByeInfo[] = []
 
   const workingTeams = [...teams]
 
   if (config.mode === 'round-robin' && teams.length % 2 !== 0) {
     workingTeams.push(BYE_TEAM)
-    warnings.push('Odd number of teams: BYE team added for round-robin pairing')
+    warnings.push('Ulige antal hold: Et hold sidder over i hver runde')
   }
 
   if (config.mode === 'round-robin') {
-    matches = generateRoundRobinMatches(workingTeams, settings)
+    const result = generateRoundRobinMatches(workingTeams, settings)
+    matches = result.matches
+    byes = result.byes
   } else {
     const result = generateLimitedMatches(workingTeams, settings, config, warnings)
     matches = result.matches
@@ -96,14 +100,41 @@ export function generateSchedule(
     )
   }
 
-  return { matches, conflicts, warnings }
+  // Check for consecutive byes
+  if (byes.length > 1) {
+    const byesByTeam = new Map<string, number[]>()
+    for (const bye of byes) {
+      if (!byesByTeam.has(bye.team.id)) {
+        byesByTeam.set(bye.team.id, [])
+      }
+      byesByTeam.get(bye.team.id)!.push(bye.round)
+    }
+    let hasConsecutiveByes = false
+    for (const [, rounds] of byesByTeam) {
+      rounds.sort((a, b) => a - b)
+      for (let i = 1; i < rounds.length; i++) {
+        if (rounds[i] - rounds[i - 1] === 1) {
+          warnings.push('Advarsel: Et hold sidder over to runder i træk')
+          hasConsecutiveByes = true
+          break
+        }
+      }
+      if (hasConsecutiveByes) break
+    }
+  }
+
+  return { matches, conflicts, warnings, byes }
 }
 
-function generateRoundRobinMatches(teams: Team[], settings: TournamentSettings): Match[] {
+function generateRoundRobinMatches(
+  teams: Team[],
+  settings: TournamentSettings
+): { matches: Match[]; byes: ByeInfo[] } {
   const matches: Match[] = []
+  const byes: ByeInfo[] = []
   const n = teams.length
 
-  if (n < 2) return matches
+  if (n < 2) return { matches, byes }
 
   const rounds = n - 1
   const matchesPerRound = n / 2
@@ -125,7 +156,10 @@ function generateRoundRobinMatches(teams: Team[], settings: TournamentSettings):
       const homeTeam = teams[home]
       const awayTeam = teams[away]
 
-      if (homeTeam.id !== 'BYE' && awayTeam.id !== 'BYE') {
+      if (homeTeam.id === 'BYE' || awayTeam.id === 'BYE') {
+        const byeTeam = homeTeam.id === 'BYE' ? awayTeam : homeTeam
+        byes.push({ team: byeTeam, round })
+      } else {
         matches.push({
           id: `match-${matches.length}`,
           homeTeam,
@@ -133,6 +167,7 @@ function generateRoundRobinMatches(teams: Team[], settings: TournamentSettings):
           startTime: new Date(),
           endTime: new Date(),
           pitch: 0,
+          round,
         })
       }
     }
@@ -141,7 +176,17 @@ function generateRoundRobinMatches(teams: Team[], settings: TournamentSettings):
     teamIndexes.splice(1, 0, last)
   }
 
-  return assignTimeSlots(matches, settings)
+  const assignedMatches = assignTimeSlots(matches, settings)
+
+  // Assign start times to byes based on their round's matches
+  for (const bye of byes) {
+    const roundMatch = assignedMatches.find(m => m.round === bye.round)
+    if (roundMatch) {
+      bye.startTime = roundMatch.startTime
+    }
+  }
+
+  return { matches: assignedMatches, byes }
 }
 
 function generateLimitedMatches(
@@ -357,7 +402,11 @@ export function exportToCSV(matches: Match[], settings: TournamentSettings): str
   return [headers, ...rows].map(row => row.join(',')).join('\n')
 }
 
-export function exportToText(matches: Match[], settings: TournamentSettings): string {
+export function exportToText(
+  matches: Match[],
+  settings: TournamentSettings,
+  byes: ByeInfo[] = []
+): string {
   let text = 'FOOTBALL TOURNAMENT SCHEDULE\n'
   text += '='.repeat(60) + '\n\n'
 
@@ -371,11 +420,23 @@ export function exportToText(matches: Match[], settings: TournamentSettings): st
     matchesByTime.get(timeKey)!.push(match)
   })
 
+  // Build a map from time key to bye team name
+  const byeByTimeKey = new Map<string, string>()
+  for (const bye of byes) {
+    if (bye.startTime) {
+      byeByTimeKey.set(formatTime(new Date(bye.startTime)), bye.team.name)
+    }
+  }
+
   for (const [time, matchesAtTime] of matchesByTime) {
     text += `${time}\n`
     matchesAtTime.forEach(match => {
       text += `  ${getPitchName(match.pitch, settings)}: ${match.homeTeam.name} vs ${match.awayTeam.name}\n`
     })
+    const byeTeamName = byeByTimeKey.get(time)
+    if (byeTeamName) {
+      text += `  Oversidder: ${byeTeamName}\n`
+    }
     text += '\n'
   }
 

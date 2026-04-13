@@ -119,6 +119,10 @@ function App() {
                   endTime: new Date(match.endTime),
                 })),
               })),
+              byes: (tournament.schedule.byes || []).map(bye => ({
+                ...bye,
+                startTime: bye.startTime ? new Date(bye.startTime) : undefined,
+              })),
             }
             setSchedule(rehydratedSchedule)
           } else {
@@ -173,6 +177,10 @@ function App() {
                 startTime: new Date(match.startTime),
                 endTime: new Date(match.endTime),
               })),
+            })),
+            byes: (tournament.schedule.byes || []).map(bye => ({
+              ...bye,
+              startTime: bye.startTime ? new Date(bye.startTime) : undefined,
             })),
           }
           setSchedule(rehydratedSchedule)
@@ -273,6 +281,10 @@ function App() {
             startTime: new Date(match.startTime),
             endTime: new Date(match.endTime),
           })),
+        })),
+        byes: (tournament.schedule.byes || []).map(bye => ({
+          ...bye,
+          startTime: bye.startTime ? new Date(bye.startTime) : undefined,
         })),
       }
       setSchedule(rehydratedSchedule)

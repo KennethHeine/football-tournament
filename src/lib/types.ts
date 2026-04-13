@@ -33,6 +33,13 @@ export interface Match {
   startTime: Date
   endTime: Date
   pitch: number
+  round?: number
+}
+
+export interface ByeInfo {
+  team: Team
+  round: number
+  startTime?: Date
 }
 
 export interface ScheduleConflict {
@@ -44,6 +51,7 @@ export interface GeneratedSchedule {
   matches: Match[]
   conflicts: ScheduleConflict[]
   warnings: string[]
+  byes?: ByeInfo[]
 }
 
 export interface Tournament {

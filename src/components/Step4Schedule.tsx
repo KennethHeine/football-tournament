@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { GeneratedSchedule, Match, Team, TournamentSettings } from '@/lib/types'
+import type { GeneratedSchedule, Match, Team, TournamentSettings, ByeInfo } from '@/lib/types'
 import {
   ArrowLeft,
   Printer,
@@ -87,12 +87,28 @@ export function Step4Schedule({
     )
   }, [filteredMatches])
 
+  const byeByTimeKey = useMemo(() => {
+    const map = new Map<string, ByeInfo>()
+    for (const bye of schedule.byes || []) {
+      if (bye.startTime) {
+        const date = new Date(bye.startTime)
+        map.set(date.toISOString(), bye)
+      }
+    }
+    return map
+  }, [schedule.byes])
+
   const teamMatches = useMemo(() => {
     if (selectedTeam === 'all') return []
     return schedule.matches
       .filter(m => m.homeTeam.id === selectedTeam || m.awayTeam.id === selectedTeam)
       .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
   }, [schedule.matches, selectedTeam])
+
+  const teamByes = useMemo(() => {
+    if (selectedTeam === 'all') return []
+    return (schedule.byes || []).filter(b => b.team.id === selectedTeam)
+  }, [schedule.byes, selectedTeam])
 
   const isConflict = (match: Match) => {
     return schedule.conflicts.some(conflict => conflict.matches.some(m => m.id === match.id))
@@ -115,7 +131,7 @@ export function Step4Schedule({
   }
 
   const handleCopyText = async () => {
-    const text = exportToText(schedule.matches, settings)
+    const text = exportToText(schedule.matches, settings, schedule.byes || [])
     await navigator.clipboard.writeText(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -138,8 +154,10 @@ export function Step4Schedule({
       const headingFont = "'Outfit', system-ui, sans-serif"
 
       const tableRows = matchesByTime
-        .map(([_timeKey, matches]) =>
-          matches
+        .map(([timeKey, matches]) => {
+          const bye = byeByTimeKey.get(timeKey)
+          const rowCount = matches.length + (bye ? 1 : 0)
+          const matchRows = matches
             .map((match, idx) => {
               const conflict = isConflict(match)
               const rowBg = conflict
@@ -151,7 +169,7 @@ export function Step4Schedule({
               const timeCell =
                 idx === 0
                   ? `
-            <td rowspan="${matches.length}" style="padding: 12px 16px; font-weight: 600; vertical-align: top; border-right: 1px solid ${SAFE_COLORS.border}; color: ${SAFE_COLORS.text};">
+            <td rowspan="${rowCount}" style="padding: 12px 16px; font-weight: 600; vertical-align: top; border-right: 1px solid ${SAFE_COLORS.border}; color: ${SAFE_COLORS.text};">
               ${formatTime(match.startTime)}
             </td>
           `
@@ -173,7 +191,19 @@ export function Step4Schedule({
           `
             })
             .join('')
-        )
+
+          const byeRow = bye
+            ? `
+            <tr style="background-color: ${SAFE_COLORS.tableAlt};">
+              <td colspan="5" style="padding: 8px 16px; font-size: 13px; font-style: italic; color: ${SAFE_COLORS.mutedForeground};">
+                Oversidder: ${escapeHtml(bye.team.name)}
+              </td>
+            </tr>
+          `
+            : ''
+
+          return matchRows + byeRow
+        })
         .join('')
 
       // Create an iframe to isolate from page CSS (avoids oklch color parsing issues in html2canvas)
@@ -469,36 +499,55 @@ export function Step4Schedule({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {matchesByTime.map(([_timeKey, matches]) =>
-                        matches.map((match, idx) => (
-                          <tr
-                            key={match.id}
-                            className={`transition-colors ${
-                              isConflict(match)
-                                ? 'bg-destructive/10 hover:bg-destructive/20'
-                                : 'hover:bg-muted/50'
-                            }`}
-                          >
-                            {idx === 0 ? (
-                              <td
-                                rowSpan={matches.length}
-                                className="px-4 py-3 font-semibold align-top border-r"
-                              >
-                                {formatTime(match.startTime)}
+                      {matchesByTime.map(([timeKey, matches]) => {
+                        const bye = byeByTimeKey.get(timeKey)
+                        const rowCount = matches.length + (bye ? 1 : 0)
+                        return matches
+                          .map((match, idx) => (
+                            <tr
+                              key={match.id}
+                              className={`transition-colors ${
+                                isConflict(match)
+                                  ? 'bg-destructive/10 hover:bg-destructive/20'
+                                  : 'hover:bg-muted/50'
+                              }`}
+                            >
+                              {idx === 0 ? (
+                                <td
+                                  rowSpan={rowCount}
+                                  className="px-4 py-3 font-semibold align-top border-r"
+                                >
+                                  {formatTime(match.startTime)}
+                                </td>
+                              ) : null}
+                              <td className="px-4 py-3">
+                                <Badge variant="outline">
+                                  {getPitchName(match.pitch, settings)}
+                                </Badge>
                               </td>
-                            ) : null}
-                            <td className="px-4 py-3">
-                              <Badge variant="outline">{getPitchName(match.pitch, settings)}</Badge>
-                            </td>
-                            <td className="px-4 py-3 font-medium">{match.homeTeam.name}</td>
-                            <td className="px-4 py-3 text-center text-muted-foreground">mod</td>
-                            <td className="px-4 py-3 font-medium">{match.awayTeam.name}</td>
-                            <td className="px-4 py-3 text-muted-foreground">
-                              {formatTime(match.endTime)}
-                            </td>
-                          </tr>
-                        ))
-                      )}
+                              <td className="px-4 py-3 font-medium">{match.homeTeam.name}</td>
+                              <td className="px-4 py-3 text-center text-muted-foreground">mod</td>
+                              <td className="px-4 py-3 font-medium">{match.awayTeam.name}</td>
+                              <td className="px-4 py-3 text-muted-foreground">
+                                {formatTime(match.endTime)}
+                              </td>
+                            </tr>
+                          ))
+                          .concat(
+                            bye
+                              ? [
+                                  <tr key={`bye-${timeKey}`} className="bg-muted/30">
+                                    <td
+                                      colSpan={5}
+                                      className="px-4 py-2 text-sm text-muted-foreground italic"
+                                    >
+                                      Oversidder: {bye.team.name}
+                                    </td>
+                                  </tr>,
+                                ]
+                              : []
+                          )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -541,6 +590,8 @@ export function Step4Schedule({
                     </h3>
                     <p className="text-sm opacity-90 mt-1">
                       {teamMatches.length} kamp{teamMatches.length !== 1 ? 'e' : ''} planlagt
+                      {teamByes.length > 0 &&
+                        ` • ${teamByes.length} runde${teamByes.length !== 1 ? 'r' : ''} som oversidder`}
                     </p>
                   </div>
                   <div className="divide-y divide-border">
