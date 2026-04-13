@@ -45,8 +45,7 @@ export function Step3SchedulingMode({ initialConfig, teamCount, onNext, onBack }
   }
 
   const maxPossibleOpponents = teamCount - 1
-  const roundRobinMatches =
-    teamCount % 2 === 0 ? (teamCount * (teamCount - 1)) / 2 : ((teamCount + 1) * teamCount) / 2
+  const roundRobinMatches = (teamCount * (teamCount - 1)) / 2
 
   return (
     <Card>
@@ -85,7 +84,7 @@ export function Step3SchedulingMode({ initialConfig, teamCount, onNext, onBack }
                       <p className="text-xs text-muted-foreground mt-1">
                         Hvert hold spiller {maxPossibleOpponents} kamp
                         {maxPossibleOpponents !== 1 ? 'e' : ''}
-                        {teamCount % 2 !== 0 && ' (BYE hold vil blive tilføjet)'}
+                        {teamCount % 2 !== 0 && ' (1 hold sidder over i hver runde)'}
                       </p>
                     </div>
                   </div>

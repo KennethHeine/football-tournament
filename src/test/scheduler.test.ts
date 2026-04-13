@@ -73,8 +73,8 @@ describe('Scheduler', () => {
       const oddTeams = teams.slice(0, 3)
       const schedule = generateSchedule(defaultSettings, oddTeams, roundRobinConfig)
 
-      // Should warn about BYE team being added
-      expect(schedule.warnings.some(w => w.includes('BYE'))).toBe(true)
+      // Should warn about odd number of teams
+      expect(schedule.warnings.some(w => w.includes('Ulige antal hold'))).toBe(true)
       // BYE matches are filtered out, so all matches should be between real teams
       // For 3 teams, we should get 3 matches total (each team plays each other once)
       expect(schedule.matches.length).toBe(3)
@@ -96,6 +96,94 @@ describe('Scheduler', () => {
       schedule.matches.forEach(match => {
         expect(match.pitch).toBeGreaterThanOrEqual(1)
         expect(match.pitch).toBeLessThanOrEqual(defaultSettings.numPitches)
+      })
+    })
+  })
+
+  describe('generateSchedule - Round Robin with Byes (5 teams)', () => {
+    const fiveTeams: Team[] = [
+      { id: '1', name: 'Team A' },
+      { id: '2', name: 'Team B' },
+      { id: '3', name: 'Team C' },
+      { id: '4', name: 'Team D' },
+      { id: '5', name: 'Team E' },
+    ]
+
+    const roundRobinConfig: SchedulingConfig = {
+      mode: 'round-robin',
+    }
+
+    it('should generate 10 matches for 5 teams (each plays 4)', () => {
+      const schedule = generateSchedule(defaultSettings, fiveTeams, roundRobinConfig)
+      expect(schedule.matches.length).toBe(10)
+    })
+
+    it('should track byes for each round', () => {
+      const schedule = generateSchedule(defaultSettings, fiveTeams, roundRobinConfig)
+      // 5 teams + BYE = 6 → 5 rounds, 1 bye per round
+      expect(schedule.byes.length).toBe(5)
+    })
+
+    it('should ensure each team plays exactly 4 matches', () => {
+      const schedule = generateSchedule(defaultSettings, fiveTeams, roundRobinConfig)
+      const teamMatchCounts = new Map<string, number>()
+
+      fiveTeams.forEach(team => teamMatchCounts.set(team.id, 0))
+
+      schedule.matches.forEach(match => {
+        teamMatchCounts.set(match.homeTeam.id, (teamMatchCounts.get(match.homeTeam.id) || 0) + 1)
+        teamMatchCounts.set(match.awayTeam.id, (teamMatchCounts.get(match.awayTeam.id) || 0) + 1)
+      })
+
+      fiveTeams.forEach(team => {
+        expect(teamMatchCounts.get(team.id)).toBe(4)
+      })
+    })
+
+    it('should ensure each team sits out exactly once', () => {
+      const schedule = generateSchedule(defaultSettings, fiveTeams, roundRobinConfig)
+      const byeCounts = new Map<string, number>()
+
+      schedule.byes.forEach(bye => {
+        byeCounts.set(bye.team.id, (byeCounts.get(bye.team.id) || 0) + 1)
+      })
+
+      fiveTeams.forEach(team => {
+        expect(byeCounts.get(team.id)).toBe(1)
+      })
+    })
+
+    it('should not have any team sitting out two consecutive rounds', () => {
+      const schedule = generateSchedule(defaultSettings, fiveTeams, roundRobinConfig)
+
+      // Sort byes by round
+      const sortedByes = [...schedule.byes].sort((a, b) => a.round - b.round)
+
+      for (let i = 1; i < sortedByes.length; i++) {
+        // No team should have byes in consecutive rounds
+        if (sortedByes[i].round - sortedByes[i - 1].round === 1) {
+          expect(sortedByes[i].team.id).not.toBe(sortedByes[i - 1].team.id)
+        }
+      }
+
+      // Also verify no consecutive-bye warning was generated
+      expect(schedule.warnings.some(w => w.includes('to runder i træk'))).toBe(false)
+    })
+
+    it('should assign start times to byes', () => {
+      const schedule = generateSchedule(defaultSettings, fiveTeams, roundRobinConfig)
+
+      schedule.byes.forEach(bye => {
+        expect(bye.startTime).toBeInstanceOf(Date)
+      })
+    })
+
+    it('should assign round numbers to matches', () => {
+      const schedule = generateSchedule(defaultSettings, fiveTeams, roundRobinConfig)
+
+      schedule.matches.forEach(match => {
+        expect(match.round).toBeDefined()
+        expect(match.round).toBeGreaterThanOrEqual(0)
       })
     })
   })
@@ -271,7 +359,7 @@ describe('Scheduler', () => {
       const schedule = generateSchedule(defaultSettings, threeTeams, { mode: 'round-robin' })
       // 3 teams = 3 matches (A vs B, A vs C, B vs C)
       expect(schedule.matches.length).toBe(3)
-      expect(schedule.warnings.some(w => w.includes('BYE'))).toBe(true)
+      expect(schedule.warnings.some(w => w.includes('Ulige antal hold'))).toBe(true)
     })
 
     it('should generate warning for large tournaments', () => {
