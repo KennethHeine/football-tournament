@@ -337,6 +337,147 @@ describe('Scheduler', () => {
       expect(schedule.warnings.some(w => w.includes('udelukket'))).toBe(true)
     })
 
+    it('should give all teams equal matches even with excluded matchups', () => {
+      const sixTeams: Team[] = [
+        { id: '1', name: 'Team A' },
+        { id: '2', name: 'Team B' },
+        { id: '3', name: 'Team C' },
+        { id: '4', name: 'Team D' },
+        { id: '5', name: 'Team E' },
+        { id: '6', name: 'Team F' },
+      ]
+
+      // Test various exclusion configurations
+      const exclusionSets: [string, string][][] = [
+        [['1', '3']],
+        [['1', '5']],
+        [['2', '5']],
+        [
+          ['1', '2'],
+          ['3', '4'],
+        ],
+      ]
+
+      for (const exclusions of exclusionSets) {
+        const config: SchedulingConfig = {
+          mode: 'limited-matches',
+          maxMatchesPerTeam: 4,
+          excludedMatchups: exclusions,
+        }
+        const schedule = generateSchedule(defaultSettings, sixTeams, config)
+
+        // Every team should still play exactly 4 matches
+        const teamMatchCounts = new Map<string, number>()
+        sixTeams.forEach(t => teamMatchCounts.set(t.id, 0))
+        schedule.matches.forEach(match => {
+          teamMatchCounts.set(match.homeTeam.id, (teamMatchCounts.get(match.homeTeam.id) || 0) + 1)
+          teamMatchCounts.set(match.awayTeam.id, (teamMatchCounts.get(match.awayTeam.id) || 0) + 1)
+        })
+        const excStr = exclusions.map(([a, b]) => `${a}-${b}`).join(', ')
+        sixTeams.forEach(t => {
+          expect(
+            teamMatchCounts.get(t.id),
+            `Team ${t.name} should have 4 matches with exclusions [${excStr}]`
+          ).toBe(4)
+        })
+
+        // Excluded matchups should not appear
+        const excludedPairKeys = new Set(exclusions.map(([a, b]) => [a, b].sort().join('-')))
+        for (const match of schedule.matches) {
+          const key = [match.homeTeam.id, match.awayTeam.id].sort().join('-')
+          expect(excludedPairKeys.has(key)).toBe(false)
+        }
+      }
+    })
+
+    it('should not have any team sitting out two consecutive time slots', () => {
+      const sixTeams: Team[] = [
+        { id: '1', name: 'Team A' },
+        { id: '2', name: 'Team B' },
+        { id: '3', name: 'Team C' },
+        { id: '4', name: 'Team D' },
+        { id: '5', name: 'Team E' },
+        { id: '6', name: 'Team F' },
+      ]
+
+      // Test both with and without exclusions
+      const configs: SchedulingConfig[] = [
+        { mode: 'limited-matches', maxMatchesPerTeam: 4 },
+        { mode: 'limited-matches', maxMatchesPerTeam: 4, excludedMatchups: [['1', '3']] },
+        {
+          mode: 'limited-matches',
+          maxMatchesPerTeam: 4,
+          excludedMatchups: [
+            ['1', '2'],
+            ['3', '4'],
+          ],
+        },
+      ]
+
+      for (const config of configs) {
+        const schedule = generateSchedule(defaultSettings, sixTeams, config)
+
+        // Group byes by team
+        const byesByTeam = new Map<string, number[]>()
+        for (const bye of schedule.byes!) {
+          if (!byesByTeam.has(bye.team.id)) {
+            byesByTeam.set(bye.team.id, [])
+          }
+          byesByTeam.get(bye.team.id)!.push(bye.round)
+        }
+
+        // No team should have consecutive rounds as byes
+        for (const [teamId, rounds] of byesByTeam) {
+          rounds.sort((a, b) => a - b)
+          for (let i = 1; i < rounds.length; i++) {
+            const team = sixTeams.find(t => t.id === teamId)!
+            expect(
+              rounds[i] - rounds[i - 1],
+              `${team.name} should not have consecutive byes (rounds ${rounds[i - 1]} and ${rounds[i]})`
+            ).toBeGreaterThan(1)
+          }
+        }
+      }
+    })
+
+    it('should not have consecutive byes even with excluded matchups', () => {
+      const sixTeams: Team[] = [
+        { id: '1', name: 'Team A' },
+        { id: '2', name: 'Team B' },
+        { id: '3', name: 'Team C' },
+        { id: '4', name: 'Team D' },
+        { id: '5', name: 'Team E' },
+        { id: '6', name: 'Team F' },
+      ]
+      const config: SchedulingConfig = {
+        mode: 'limited-matches',
+        maxMatchesPerTeam: 4,
+        excludedMatchups: [['1', '2']],
+      }
+      const schedule = generateSchedule(defaultSettings, sixTeams, config)
+
+      // Group byes by team
+      const byesByTeam = new Map<string, number[]>()
+      for (const bye of schedule.byes!) {
+        if (!byesByTeam.has(bye.team.id)) {
+          byesByTeam.set(bye.team.id, [])
+        }
+        byesByTeam.get(bye.team.id)!.push(bye.round)
+      }
+
+      // No team should have consecutive rounds as byes
+      for (const [teamId, rounds] of byesByTeam) {
+        rounds.sort((a, b) => a - b)
+        for (let i = 1; i < rounds.length; i++) {
+          const team = sixTeams.find(t => t.id === teamId)!
+          expect(
+            rounds[i] - rounds[i - 1],
+            `${team.name} should not have consecutive byes (rounds ${rounds[i - 1]} and ${rounds[i]})`
+          ).toBeGreaterThan(1)
+        }
+      }
+    })
+
     it('should assign round numbers to limited-matches', () => {
       const config: SchedulingConfig = {
         mode: 'limited-matches',
