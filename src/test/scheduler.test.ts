@@ -215,6 +215,140 @@ describe('Scheduler', () => {
         expect(count).toBeLessThanOrEqual(limitedConfig.maxMatchesPerTeam!)
       })
     })
+
+    it('should not produce duplicate matchups with 6 teams and 4 matches per team', () => {
+      const sixTeams: Team[] = [
+        { id: '1', name: 'Team A' },
+        { id: '2', name: 'Team B' },
+        { id: '3', name: 'Team C' },
+        { id: '4', name: 'Team D' },
+        { id: '5', name: 'Team E' },
+        { id: '6', name: 'Team F' },
+      ]
+      const config: SchedulingConfig = {
+        mode: 'limited-matches',
+        maxMatchesPerTeam: 4,
+      }
+      const schedule = generateSchedule(defaultSettings, sixTeams, config)
+
+      // Check no duplicate matchups
+      const pairings = new Set<string>()
+      for (const match of schedule.matches) {
+        const key = [match.homeTeam.id, match.awayTeam.id].sort().join('-')
+        expect(pairings.has(key)).toBe(false)
+        pairings.add(key)
+      }
+
+      // Each team should play exactly 4 matches
+      const teamMatchCounts = new Map<string, number>()
+      sixTeams.forEach(t => teamMatchCounts.set(t.id, 0))
+      schedule.matches.forEach(match => {
+        teamMatchCounts.set(match.homeTeam.id, (teamMatchCounts.get(match.homeTeam.id) || 0) + 1)
+        teamMatchCounts.set(match.awayTeam.id, (teamMatchCounts.get(match.awayTeam.id) || 0) + 1)
+      })
+      sixTeams.forEach(t => {
+        expect(teamMatchCounts.get(t.id)).toBe(4)
+      })
+
+      // Should have 12 matches total (6 teams * 4 matches / 2)
+      expect(schedule.matches.length).toBe(12)
+    })
+
+    it('should use both pitches in time slots with 6 teams and 2 pitches', () => {
+      const sixTeams: Team[] = [
+        { id: '1', name: 'Team A' },
+        { id: '2', name: 'Team B' },
+        { id: '3', name: 'Team C' },
+        { id: '4', name: 'Team D' },
+        { id: '5', name: 'Team E' },
+        { id: '6', name: 'Team F' },
+      ]
+      const config: SchedulingConfig = {
+        mode: 'limited-matches',
+        maxMatchesPerTeam: 4,
+      }
+      const schedule = generateSchedule(defaultSettings, sixTeams, config)
+
+      // Group matches by start time
+      const matchesByTime = new Map<string, number>()
+      for (const match of schedule.matches) {
+        const key = match.startTime.toISOString()
+        matchesByTime.set(key, (matchesByTime.get(key) || 0) + 1)
+      }
+
+      // Every time slot should have 2 matches (using both pitches)
+      for (const [, count] of matchesByTime) {
+        expect(count).toBe(2)
+      }
+    })
+
+    it('should track idle teams (byes) in limited-matches mode', () => {
+      const sixTeams: Team[] = [
+        { id: '1', name: 'Team A' },
+        { id: '2', name: 'Team B' },
+        { id: '3', name: 'Team C' },
+        { id: '4', name: 'Team D' },
+        { id: '5', name: 'Team E' },
+        { id: '6', name: 'Team F' },
+      ]
+      const config: SchedulingConfig = {
+        mode: 'limited-matches',
+        maxMatchesPerTeam: 4,
+      }
+      const schedule = generateSchedule(defaultSettings, sixTeams, config)
+
+      // With 6 teams, 2 pitches, 4 per round play → 2 idle per round
+      expect(schedule.byes).toBeDefined()
+      expect(schedule.byes!.length).toBeGreaterThan(0)
+
+      // Each bye should have a start time
+      for (const bye of schedule.byes!) {
+        expect(bye.startTime).toBeInstanceOf(Date)
+      }
+    })
+
+    it('should respect excluded matchups', () => {
+      const sixTeams: Team[] = [
+        { id: '1', name: 'Team A' },
+        { id: '2', name: 'Team B' },
+        { id: '3', name: 'Team C' },
+        { id: '4', name: 'Team D' },
+        { id: '5', name: 'Team E' },
+        { id: '6', name: 'Team F' },
+      ]
+      const config: SchedulingConfig = {
+        mode: 'limited-matches',
+        maxMatchesPerTeam: 4,
+        excludedMatchups: [
+          ['1', '2'],
+          ['3', '4'],
+        ],
+      }
+      const schedule = generateSchedule(defaultSettings, sixTeams, config)
+
+      // Verify excluded matchups don't appear
+      for (const match of schedule.matches) {
+        const key = [match.homeTeam.id, match.awayTeam.id].sort().join('-')
+        expect(key).not.toBe('1-2')
+        expect(key).not.toBe('3-4')
+      }
+
+      // Should have warning about excluded matchups
+      expect(schedule.warnings.some(w => w.includes('udelukket'))).toBe(true)
+    })
+
+    it('should assign round numbers to limited-matches', () => {
+      const config: SchedulingConfig = {
+        mode: 'limited-matches',
+        maxMatchesPerTeam: 2,
+      }
+      const schedule = generateSchedule(defaultSettings, teams, config)
+
+      schedule.matches.forEach(match => {
+        expect(match.round).toBeDefined()
+        expect(match.round).toBeGreaterThanOrEqual(0)
+      })
+    })
   })
 
   describe('Conflict Detection', () => {

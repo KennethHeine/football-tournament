@@ -83,6 +83,7 @@ export function generateSchedule(
   } else {
     const result = generateLimitedMatches(workingTeams, settings, config, warnings)
     matches = result.matches
+    byes = result.byes
     warnings.push(...result.warnings)
   }
 
@@ -194,18 +195,13 @@ function generateLimitedMatches(
   settings: TournamentSettings,
   config: SchedulingConfig,
   warnings: string[]
-): { matches: Match[]; warnings: string[] } {
-  const matches: Match[] = []
-  const teamMatchCounts = new Map<string, number>()
-  const pairings = new Set<string>()
-
-  teams.forEach(team => teamMatchCounts.set(team.id, 0))
-
+): { matches: Match[]; byes: ByeInfo[]; warnings: string[] } {
   const maxPerTeam = config.maxMatchesPerTeam || 3
   const maxTotal = config.maxTotalMatches || Infinity
 
-  const maxPossibleMatches = (teams.length * maxPerTeam) / 2
-  const targetMatches = Math.min(maxTotal, maxPossibleMatches)
+  const excludedPairings = new Set(
+    (config.excludedMatchups || []).map(([a, b]) => [a, b].sort().join('-'))
+  )
 
   const maxUniqueOpponents = teams.length - 1
   if (maxPerTeam > maxUniqueOpponents) {
@@ -214,62 +210,180 @@ function generateLimitedMatches(
     )
   }
 
-  let attempts = 0
-  const maxAttempts = targetMatches * 10
+  // Use round-robin circle method to generate balanced candidate pairings
+  // This guarantees no duplicates and natural balance across rounds
+  const n = teams.length
+  const isEven = n % 2 === 0
+  const workingTeams = isEven ? [...teams] : [...teams, BYE_TEAM]
+  const N = workingTeams.length
 
-  while (matches.length < targetMatches && attempts < maxAttempts) {
-    attempts++
-
-    const availableTeams = teams.filter(team => (teamMatchCounts.get(team.id) || 0) < maxPerTeam)
-
-    if (availableTeams.length < 2) break
-
-    availableTeams.sort((a, b) => {
-      const countA = teamMatchCounts.get(a.id) || 0
-      const countB = teamMatchCounts.get(b.id) || 0
-      return countA - countB
-    })
-
-    let homeTeam: Team | null = null
-    let awayTeam: Team | null = null
-
-    for (let i = 0; i < availableTeams.length - 1; i++) {
-      for (let j = i + 1; j < availableTeams.length; j++) {
-        const t1 = availableTeams[i]
-        const t2 = availableTeams[j]
-        const pairKey = [t1.id, t2.id].sort().join('-')
-
-        if (!pairings.has(pairKey)) {
-          homeTeam = t1
-          awayTeam = t2
-          pairings.add(pairKey)
-          break
-        }
-      }
-      if (homeTeam && awayTeam) break
-    }
-
-    if (!homeTeam || !awayTeam) {
-      const t1 = availableTeams[0]
-      const t2 = availableTeams[1]
-      homeTeam = t1
-      awayTeam = t2
-    }
-
-    matches.push({
-      id: `match-${matches.length}`,
-      homeTeam,
-      awayTeam,
-      startTime: new Date(),
-      endTime: new Date(),
-      pitch: 0,
-    })
-
-    teamMatchCounts.set(homeTeam.id, (teamMatchCounts.get(homeTeam.id) || 0) + 1)
-    teamMatchCounts.set(awayTeam.id, (teamMatchCounts.get(awayTeam.id) || 0) + 1)
+  interface CandidateMatch {
+    home: Team
+    away: Team
+    rrRound: number
+    selected: boolean
   }
 
-  return { matches: assignTimeSlots(matches, settings), warnings }
+  const candidates: CandidateMatch[] = []
+  const teamIndexes = workingTeams.map((_, i) => i)
+
+  for (let round = 0; round < N - 1; round++) {
+    for (let match = 0; match < N / 2; match++) {
+      const homeIdx = match === 0 ? teamIndexes[0] : teamIndexes[match]
+      const awayIdx = match === 0 ? teamIndexes[N - 1] : teamIndexes[N - 1 - match]
+      const homeTeam = workingTeams[homeIdx]
+      const awayTeam = workingTeams[awayIdx]
+
+      // Skip BYE matches and excluded matchups
+      if (homeTeam.id === 'BYE' || awayTeam.id === 'BYE') continue
+      const key = [homeTeam.id, awayTeam.id].sort().join('-')
+      if (excludedPairings.has(key)) continue
+
+      candidates.push({ home: homeTeam, away: awayTeam, rrRound: round, selected: false })
+    }
+
+    const last = teamIndexes.pop()!
+    teamIndexes.splice(1, 0, last)
+  }
+
+  // Greedily select matches, prioritizing teams with fewer matches for balance
+  const teamCounts = new Map(teams.map(t => [t.id, 0]))
+  const selectedMatches: CandidateMatch[] = []
+
+  let madeProgress = true
+  while (madeProgress && selectedMatches.length < maxTotal) {
+    madeProgress = false
+
+    // Find best unselected match (lowest combined team count)
+    let bestMatch: CandidateMatch | null = null
+    let bestScore = Infinity
+
+    for (const c of candidates) {
+      if (c.selected) continue
+      const homeCount = teamCounts.get(c.home.id) || 0
+      const awayCount = teamCounts.get(c.away.id) || 0
+      if (homeCount >= maxPerTeam || awayCount >= maxPerTeam) continue
+
+      const score = homeCount + awayCount
+      if (
+        score < bestScore ||
+        (score === bestScore && c.rrRound < (bestMatch?.rrRound ?? Infinity))
+      ) {
+        bestScore = score
+        bestMatch = c
+      }
+    }
+
+    if (bestMatch) {
+      bestMatch.selected = true
+      selectedMatches.push(bestMatch)
+      teamCounts.set(bestMatch.home.id, (teamCounts.get(bestMatch.home.id) || 0) + 1)
+      teamCounts.set(bestMatch.away.id, (teamCounts.get(bestMatch.away.id) || 0) + 1)
+      madeProgress = true
+    }
+  }
+
+  // Organize selected matches into scheduling rounds
+  // Matches from the same round-robin round can be concurrent (no shared teams)
+  // Sort by round-robin round to maintain natural grouping
+  selectedMatches.sort((a, b) => a.rrRound - b.rrRound)
+
+  // Group into scheduling rounds where no team plays twice per round
+  const matches: Match[] = []
+  let scheduleRound = 0
+  let i = 0
+
+  while (i < selectedMatches.length) {
+    const roundTeams = new Set<string>()
+    const roundStart = i
+
+    // Fill the round with matches where no team appears twice
+    const roundCandidates: CandidateMatch[] = []
+    const skipped: CandidateMatch[] = []
+
+    for (let j = i; j < selectedMatches.length; j++) {
+      const c = selectedMatches[j]
+      if (roundTeams.has(c.home.id) || roundTeams.has(c.away.id)) {
+        skipped.push(c)
+      } else {
+        roundTeams.add(c.home.id)
+        roundTeams.add(c.away.id)
+        roundCandidates.push(c)
+      }
+    }
+
+    // Add round matches
+    for (const c of roundCandidates) {
+      matches.push({
+        id: `match-${matches.length}`,
+        homeTeam: c.home,
+        awayTeam: c.away,
+        startTime: new Date(),
+        endTime: new Date(),
+        pitch: 0,
+        round: scheduleRound,
+      })
+    }
+
+    // Reconstruct remaining matches: skipped ones go next
+    selectedMatches.splice(roundStart, selectedMatches.length - roundStart, ...skipped)
+    i = roundStart
+
+    if (roundCandidates.length === 0) break
+    scheduleRound++
+  }
+
+  if (excludedPairings.size > 0) {
+    warnings.push(`${excludedPairings.size} holdpar er udelukket fra at spille mod hinanden`)
+  }
+
+  const assignedMatches = assignTimeSlots(matches, settings)
+
+  // Compute idle teams per time slot (after time assignment)
+  const byes = computeIdleTeams(assignedMatches, teams)
+
+  return { matches: assignedMatches, byes, warnings }
+}
+
+function computeIdleTeams(matches: Match[], teams: Team[]): ByeInfo[] {
+  const byes: ByeInfo[] = []
+
+  // Group matches by start time
+  const matchesByTime = new Map<string, Match[]>()
+  for (const match of matches) {
+    const key = match.startTime.toISOString()
+    if (!matchesByTime.has(key)) {
+      matchesByTime.set(key, [])
+    }
+    matchesByTime.get(key)!.push(match)
+  }
+
+  // Sort time slots chronologically
+  const timeSlots = Array.from(matchesByTime.entries()).sort(
+    (a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime()
+  )
+
+  // For each time slot, find teams not playing
+  for (let round = 0; round < timeSlots.length; round++) {
+    const [, slotMatches] = timeSlots[round]
+    const playingTeams = new Set<string>()
+    for (const match of slotMatches) {
+      playingTeams.add(match.homeTeam.id)
+      playingTeams.add(match.awayTeam.id)
+    }
+
+    for (const team of teams) {
+      if (!playingTeams.has(team.id)) {
+        byes.push({
+          team,
+          round,
+          startTime: slotMatches[0].startTime,
+        })
+      }
+    }
+  }
+
+  return byes
 }
 
 function assignTimeSlots(matches: Match[], settings: TournamentSettings): Match[] {
@@ -420,11 +534,15 @@ export function exportToText(
     matchesByTime.get(timeKey)!.push(match)
   })
 
-  // Build a map from time key to bye team name
-  const byeByTimeKey = new Map<string, string>()
+  // Build a map from time key to bye team names
+  const byesByTimeKey = new Map<string, string[]>()
   for (const bye of byes) {
     if (bye.startTime) {
-      byeByTimeKey.set(formatTime(new Date(bye.startTime)), bye.team.name)
+      const key = formatTime(new Date(bye.startTime))
+      if (!byesByTimeKey.has(key)) {
+        byesByTimeKey.set(key, [])
+      }
+      byesByTimeKey.get(key)!.push(bye.team.name)
     }
   }
 
@@ -433,9 +551,9 @@ export function exportToText(
     matchesAtTime.forEach(match => {
       text += `  ${getPitchName(match.pitch, settings)}: ${match.homeTeam.name} vs ${match.awayTeam.name}\n`
     })
-    const byeTeamName = byeByTimeKey.get(time)
-    if (byeTeamName) {
-      text += `  Oversidder: ${byeTeamName}\n`
+    const byeTeamNames = byesByTimeKey.get(time)
+    if (byeTeamNames && byeTeamNames.length > 0) {
+      text += `  Oversidder: ${byeTeamNames.join(', ')}\n`
     }
     text += '\n'
   }
