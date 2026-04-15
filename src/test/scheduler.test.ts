@@ -466,10 +466,14 @@ describe('Scheduler', () => {
       }
 
       // No team should have consecutive rounds as byes
-      for (const [, rounds] of byesByTeam) {
+      for (const [teamId, rounds] of byesByTeam) {
         rounds.sort((a, b) => a - b)
         for (let i = 1; i < rounds.length; i++) {
-          expect(rounds[i] - rounds[i - 1]).toBeGreaterThan(1)
+          const team = sixTeams.find(t => t.id === teamId)!
+          expect(
+            rounds[i] - rounds[i - 1],
+            `${team.name} should not have consecutive byes (rounds ${rounds[i - 1]} and ${rounds[i]})`
+          ).toBeGreaterThan(1)
         }
       }
     })

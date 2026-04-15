@@ -259,8 +259,10 @@ function generateLimitedMatches(
   while (madeProgress && selectedMatches.length < maxTotal) {
     madeProgress = false
 
-    // Calculate remaining available candidates per team
+    // Single pass: compute remaining candidates and find best match simultaneously
     const remainingCandidates = new Map(teams.map(t => [t.id, 0]))
+    const eligibleCandidates: CandidateMatch[] = []
+
     for (const c of candidates) {
       if (c.selected) continue
       const hc = teamCounts.get(c.home.id) || 0
@@ -268,18 +270,16 @@ function generateLimitedMatches(
       if (hc >= maxPerTeam || ac >= maxPerTeam) continue
       remainingCandidates.set(c.home.id, (remainingCandidates.get(c.home.id) || 0) + 1)
       remainingCandidates.set(c.away.id, (remainingCandidates.get(c.away.id) || 0) + 1)
+      eligibleCandidates.push(c)
     }
 
     // Find best match: prioritize constrained teams (low slack = remaining - needed)
     let bestMatch: CandidateMatch | null = null
     let bestPriority = -Infinity
 
-    for (const c of candidates) {
-      if (c.selected) continue
+    for (const c of eligibleCandidates) {
       const homeCount = teamCounts.get(c.home.id) || 0
       const awayCount = teamCounts.get(c.away.id) || 0
-      if (homeCount >= maxPerTeam || awayCount >= maxPerTeam) continue
-
       const homeNeeded = maxPerTeam - homeCount
       const awayNeeded = maxPerTeam - awayCount
       const homeRemaining = remainingCandidates.get(c.home.id) || 0
@@ -288,7 +288,8 @@ function generateLimitedMatches(
       const awaySlack = awayRemaining - awayNeeded
       const minSlack = Math.min(homeSlack, awaySlack)
 
-      // Higher priority for lower slack (more constrained), then lower combined count
+      // Slack weight (1000) ensures constrained teams (slack≈0) are prioritized over
+      // balance-based tiebreaking. The count tiebreaker is always < 2*maxPerTeam.
       const priority = -minSlack * 1000 + (maxPerTeam * 2 - homeCount - awayCount)
 
       if (
