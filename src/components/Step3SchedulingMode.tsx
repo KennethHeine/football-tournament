@@ -4,20 +4,39 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import type { SchedulingConfig, SchedulingMode } from '@/lib/types'
-import { ArrowRight, ArrowLeft } from '@phosphor-icons/react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import type { SchedulingConfig, SchedulingMode, Team } from '@/lib/types'
+import { ArrowRight, ArrowLeft, Plus, Trash } from '@phosphor-icons/react'
 
 interface Step3Props {
   initialConfig: SchedulingConfig
   teamCount: number
+  teams: Team[]
   onNext: (config: SchedulingConfig) => void
   onBack: () => void
 }
 
-export function Step3SchedulingMode({ initialConfig, teamCount, onNext, onBack }: Step3Props) {
+export function Step3SchedulingMode({
+  initialConfig,
+  teamCount,
+  teams,
+  onNext,
+  onBack,
+}: Step3Props) {
   const [mode, setMode] = useState<SchedulingMode>(initialConfig.mode)
   const [maxMatchesPerTeam, setMaxMatchesPerTeam] = useState(initialConfig.maxMatchesPerTeam || 3)
   const [maxTotalMatches, setMaxTotalMatches] = useState(initialConfig.maxTotalMatches || undefined)
+  const [excludedMatchups, setExcludedMatchups] = useState<[string, string][]>(
+    initialConfig.excludedMatchups || []
+  )
+  const [excludeTeam1, setExcludeTeam1] = useState<string>('')
+  const [excludeTeam2, setExcludeTeam2] = useState<string>('')
   const [error, setError] = useState('')
 
   const handleNext = () => {
@@ -38,10 +57,40 @@ export function Step3SchedulingMode({ initialConfig, teamCount, onNext, onBack }
       ...(mode === 'limited-matches' && {
         maxMatchesPerTeam,
         maxTotalMatches: maxTotalMatches || undefined,
+        excludedMatchups: excludedMatchups.length > 0 ? excludedMatchups : undefined,
       }),
     }
 
     onNext(config)
+  }
+
+  const addExcludedMatchup = () => {
+    if (!excludeTeam1 || !excludeTeam2) return
+    if (excludeTeam1 === excludeTeam2) {
+      setError('Vælg to forskellige hold')
+      return
+    }
+
+    const pairKey = [excludeTeam1, excludeTeam2].sort().join('-')
+    const alreadyExcluded = excludedMatchups.some(([a, b]) => [a, b].sort().join('-') === pairKey)
+
+    if (alreadyExcluded) {
+      setError('Denne parring er allerede udelukket')
+      return
+    }
+
+    setExcludedMatchups([...excludedMatchups, [excludeTeam1, excludeTeam2]])
+    setExcludeTeam1('')
+    setExcludeTeam2('')
+    setError('')
+  }
+
+  const removeExcludedMatchup = (index: number) => {
+    setExcludedMatchups(excludedMatchups.filter((_, i) => i !== index))
+  }
+
+  const getTeamName = (id: string) => {
+    return teams.find(t => t.id === id)?.name || id
   }
 
   const maxPossibleOpponents = teamCount - 1
@@ -159,6 +208,77 @@ export function Step3SchedulingMode({ initialConfig, teamCount, onNext, onBack }
                             </p>
                           </div>
                         )}
+
+                        <div className="space-y-3 border-t pt-4">
+                          <Label className="text-base font-medium">Udeluk holdpar (valgfri)</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Vælg hold der ikke skal spille mod hinanden
+                          </p>
+
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <Select value={excludeTeam1} onValueChange={setExcludeTeam1}>
+                              <SelectTrigger className="min-h-11 flex-1">
+                                <SelectValue placeholder="Vælg hold 1" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {teams.map(team => (
+                                  <SelectItem key={team.id} value={team.id}>
+                                    {team.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+
+                            <Select value={excludeTeam2} onValueChange={setExcludeTeam2}>
+                              <SelectTrigger className="min-h-11 flex-1">
+                                <SelectValue placeholder="Vælg hold 2" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {teams
+                                  .filter(t => t.id !== excludeTeam1)
+                                  .map(team => (
+                                    <SelectItem key={team.id} value={team.id}>
+                                      {team.name}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+
+                            <Button
+                              onClick={addExcludedMatchup}
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              className="gap-1 min-h-11"
+                              disabled={!excludeTeam1 || !excludeTeam2}
+                            >
+                              <Plus size={16} /> Tilføj
+                            </Button>
+                          </div>
+
+                          {excludedMatchups.length > 0 && (
+                            <div className="space-y-2">
+                              {excludedMatchups.map(([a, b], idx) => (
+                                <div
+                                  key={`${a}-${b}`}
+                                  className="flex items-center justify-between p-2 bg-muted rounded-md"
+                                >
+                                  <span className="text-sm font-medium">
+                                    {getTeamName(a)} ↔ {getTeamName(b)}
+                                  </span>
+                                  <Button
+                                    onClick={() => removeExcludedMatchup(idx)}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+                                  >
+                                    <Trash size={16} />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>

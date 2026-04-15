@@ -87,12 +87,16 @@ export function Step4Schedule({
     )
   }, [filteredMatches])
 
-  const byeByTimeKey = useMemo(() => {
-    const map = new Map<string, ByeInfo>()
+  const byesByTimeKey = useMemo(() => {
+    const map = new Map<string, ByeInfo[]>()
     for (const bye of schedule.byes || []) {
       if (bye.startTime) {
         const date = new Date(bye.startTime)
-        map.set(date.toISOString(), bye)
+        const key = date.toISOString()
+        if (!map.has(key)) {
+          map.set(key, [])
+        }
+        map.get(key)!.push(bye)
       }
     }
     return map
@@ -155,8 +159,8 @@ export function Step4Schedule({
 
       const tableRows = matchesByTime
         .map(([timeKey, matches]) => {
-          const bye = byeByTimeKey.get(timeKey)
-          const rowCount = matches.length + (bye ? 1 : 0)
+          const byesAtTime = byesByTimeKey.get(timeKey) || []
+          const rowCount = matches.length + (byesAtTime.length > 0 ? 1 : 0)
           const matchRows = matches
             .map((match, idx) => {
               const conflict = isConflict(match)
@@ -192,15 +196,16 @@ export function Step4Schedule({
             })
             .join('')
 
-          const byeRow = bye
-            ? `
+          const byeRow =
+            byesAtTime.length > 0
+              ? `
             <tr style="background-color: ${SAFE_COLORS.tableAlt};">
               <td colspan="5" style="padding: 8px 16px; font-size: 13px; font-style: italic; color: ${SAFE_COLORS.mutedForeground};">
-                Oversidder: ${escapeHtml(bye.team.name)}
+                Oversidder: ${byesAtTime.map(b => escapeHtml(b.team.name)).join(', ')}
               </td>
             </tr>
           `
-            : ''
+              : ''
 
           return matchRows + byeRow
         })
@@ -500,8 +505,8 @@ export function Step4Schedule({
                     </thead>
                     <tbody className="divide-y divide-border">
                       {matchesByTime.map(([timeKey, matches]) => {
-                        const bye = byeByTimeKey.get(timeKey)
-                        const rowCount = matches.length + (bye ? 1 : 0)
+                        const byesAtTime = byesByTimeKey.get(timeKey) || []
+                        const rowCount = matches.length + (byesAtTime.length > 0 ? 1 : 0)
                         return matches
                           .map((match, idx) => (
                             <tr
@@ -534,14 +539,14 @@ export function Step4Schedule({
                             </tr>
                           ))
                           .concat(
-                            bye
+                            byesAtTime.length > 0
                               ? [
                                   <tr key={`bye-${timeKey}`} className="bg-muted/30">
                                     <td
                                       colSpan={5}
                                       className="px-4 py-2 text-sm text-muted-foreground italic"
                                     >
-                                      Oversidder: {bye.team.name}
+                                      Oversidder: {byesAtTime.map(b => b.team.name).join(', ')}
                                     </td>
                                   </tr>,
                                 ]

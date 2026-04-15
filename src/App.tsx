@@ -591,6 +591,7 @@ function App() {
           <Step3SchedulingMode
             initialConfig={schedulingConfig}
             teamCount={teams.length}
+            teams={teams}
             onNext={handleStep3Complete}
             onBack={() => {
               setCurrentStep(2)

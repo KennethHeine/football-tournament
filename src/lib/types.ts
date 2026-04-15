@@ -24,6 +24,7 @@ export interface SchedulingConfig {
   mode: SchedulingMode
   maxMatchesPerTeam?: number
   maxTotalMatches?: number
+  excludedMatchups?: [string, string][]
 }
 
 export interface Match {
