@@ -370,14 +370,8 @@ describe('Scheduler', () => {
         const teamMatchCounts = new Map<string, number>()
         sixTeams.forEach(t => teamMatchCounts.set(t.id, 0))
         schedule.matches.forEach(match => {
-          teamMatchCounts.set(
-            match.homeTeam.id,
-            (teamMatchCounts.get(match.homeTeam.id) || 0) + 1
-          )
-          teamMatchCounts.set(
-            match.awayTeam.id,
-            (teamMatchCounts.get(match.awayTeam.id) || 0) + 1
-          )
+          teamMatchCounts.set(match.homeTeam.id, (teamMatchCounts.get(match.homeTeam.id) || 0) + 1)
+          teamMatchCounts.set(match.awayTeam.id, (teamMatchCounts.get(match.awayTeam.id) || 0) + 1)
         })
         const excStr = exclusions.map(([a, b]) => `${a}-${b}`).join(', ')
         sixTeams.forEach(t => {
@@ -388,9 +382,7 @@ describe('Scheduler', () => {
         })
 
         // Excluded matchups should not appear
-        const excludedPairKeys = new Set(
-          exclusions.map(([a, b]) => [a, b].sort().join('-'))
-        )
+        const excludedPairKeys = new Set(exclusions.map(([a, b]) => [a, b].sort().join('-')))
         for (const match of schedule.matches) {
           const key = [match.homeTeam.id, match.awayTeam.id].sort().join('-')
           expect(excludedPairKeys.has(key)).toBe(false)
