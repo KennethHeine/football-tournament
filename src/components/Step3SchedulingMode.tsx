@@ -94,6 +94,7 @@ export function Step3SchedulingMode({
   }
 
   const maxPossibleOpponents = teamCount - 1
+  const maxMatchesWithRematches = Math.max(1, maxPossibleOpponents * 2)
   const roundRobinMatches = (teamCount * (teamCount - 1)) / 2
 
   return (
@@ -169,12 +170,13 @@ export function Step3SchedulingMode({
                             id="maxMatchesPerTeam"
                             type="number"
                             min="1"
-                            max={maxPossibleOpponents}
+                            max={maxMatchesWithRematches}
                             value={maxMatchesPerTeam}
                             onChange={e => setMaxMatchesPerTeam(Number(e.target.value))}
                           />
                           <p className="text-xs text-muted-foreground">
-                            Maksimum: {maxPossibleOpponents} (unikke modstandere tilgængelige)
+                            Uden genkampe: {maxPossibleOpponents}. Maksimum med genkampe:{' '}
+                            {maxMatchesWithRematches}
                           </p>
                         </div>
 

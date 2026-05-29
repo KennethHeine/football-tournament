@@ -216,6 +216,40 @@ describe('Scheduler', () => {
       })
     })
 
+    it('should allow 4 teams to play 4 matches each using rematches', () => {
+      const fourTeams: Team[] = [
+        { id: '1', name: 'Karlslunde' },
+        { id: '2', name: 'RB' },
+        { id: '3', name: 'Herlufsholm' },
+        { id: '4', name: 'Solrød' },
+      ]
+      const config: SchedulingConfig = {
+        mode: 'limited-matches',
+        maxMatchesPerTeam: 4,
+      }
+      const schedule = generateSchedule(defaultSettings, fourTeams, config)
+
+      expect(schedule.matches.length).toBe(8)
+
+      const teamMatchCounts = new Map<string, number>()
+      fourTeams.forEach(team => teamMatchCounts.set(team.id, 0))
+
+      const pairCounts = new Map<string, number>()
+      for (const match of schedule.matches) {
+        teamMatchCounts.set(match.homeTeam.id, (teamMatchCounts.get(match.homeTeam.id) || 0) + 1)
+        teamMatchCounts.set(match.awayTeam.id, (teamMatchCounts.get(match.awayTeam.id) || 0) + 1)
+
+        const pairKey = [match.homeTeam.id, match.awayTeam.id].sort().join('-')
+        pairCounts.set(pairKey, (pairCounts.get(pairKey) || 0) + 1)
+      }
+
+      fourTeams.forEach(team => {
+        expect(teamMatchCounts.get(team.id)).toBe(4)
+      })
+
+      expect([...pairCounts.values()].filter(count => count === 2).length).toBeGreaterThan(0)
+    })
+
     it('should not produce duplicate matchups with 6 teams and 4 matches per team', () => {
       const sixTeams: Team[] = [
         { id: '1', name: 'Team A' },
