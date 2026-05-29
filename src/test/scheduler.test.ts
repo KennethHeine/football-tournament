@@ -250,6 +250,44 @@ describe('Scheduler', () => {
       expect([...pairCounts.values()].filter(count => count === 2).length).toBeGreaterThan(0)
     })
 
+    it('should avoid scheduling the same 4-team rematch in consecutive time slots', () => {
+      const fourTeams: Team[] = [
+        { id: '1', name: 'Karlslunde' },
+        { id: '2', name: 'RB' },
+        { id: '3', name: 'Herlufsholm' },
+        { id: '4', name: 'Solrød' },
+      ]
+      const config: SchedulingConfig = {
+        mode: 'limited-matches',
+        maxMatchesPerTeam: 4,
+      }
+      const schedule = generateSchedule(defaultSettings, fourTeams, config)
+      const matchesByTime = new Map<string, Set<string>>()
+
+      for (const match of schedule.matches) {
+        const timeKey = match.startTime.toISOString()
+        if (!matchesByTime.has(timeKey)) {
+          matchesByTime.set(timeKey, new Set())
+        }
+        matchesByTime
+          .get(timeKey)!
+          .add([match.homeTeam.id, match.awayTeam.id].sort().join('-'))
+      }
+
+      const slots = [...matchesByTime.entries()].sort(
+        ([timeA], [timeB]) => new Date(timeA).getTime() - new Date(timeB).getTime()
+      )
+
+      for (let i = 1; i < slots.length; i++) {
+        for (const pairKey of slots[i][1]) {
+          expect(
+            slots[i - 1][1].has(pairKey),
+            `Pair ${pairKey} should not play in consecutive time slots`
+          ).toBe(false)
+        }
+      }
+    })
+
     it('should not produce duplicate matchups with 6 teams and 4 matches per team', () => {
       const sixTeams: Team[] = [
         { id: '1', name: 'Team A' },

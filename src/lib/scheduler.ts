@@ -434,7 +434,7 @@ function generateLimitedMatches(
 }
 
 /**
- * Reorders scheduling rounds to minimize consecutive byes.
+ * Reorders scheduling rounds to minimize consecutive byes and immediate rematches.
  * Uses backtracking to find an ordering where no team sits out
  * two consecutive time slots. Falls back to greedy if no perfect
  * ordering exists.
@@ -458,6 +458,9 @@ function reorderRoundsToMinimizeConsecutiveByes(
     }
     return idle
   })
+  const pairingSets: Set<string>[] = roundGroups.map(round => {
+    return new Set(round.map(match => getPairingKey(match)))
+  })
 
   function hasOverlap(set1: Set<string>, set2: Set<string>): boolean {
     for (const id of set2) {
@@ -471,10 +474,12 @@ function reorderRoundsToMinimizeConsecutiveByes(
     if (ordering.length === roundGroups.length) return [...ordering]
 
     const prevIdle = ordering.length > 0 ? idleSets[ordering[ordering.length - 1]] : null
+    const prevPairings = ordering.length > 0 ? pairingSets[ordering[ordering.length - 1]] : null
 
     for (let i = 0; i < roundGroups.length; i++) {
       if (used.has(i)) continue
       if (prevIdle && hasOverlap(prevIdle, idleSets[i])) continue
+      if (prevPairings && hasOverlap(prevPairings, pairingSets[i])) continue
 
       ordering.push(i)
       used.add(i)
@@ -491,11 +496,18 @@ function reorderRoundsToMinimizeConsecutiveByes(
     return result.map(i => roundGroups[i])
   }
 
-  // Fallback: greedy ordering (minimize consecutive byes when perfect ordering impossible)
+  // Fallback: greedy ordering (minimize consecutive byes/rematches when perfect ordering impossible)
   function consecutiveByeCount(idle1: Set<string>, idle2: Set<string>): number {
     let count = 0
     for (const id of idle2) {
       if (idle1.has(id)) count++
+    }
+    return count
+  }
+  function consecutivePairingCount(pairings1: Set<string>, pairings2: Set<string>): number {
+    let count = 0
+    for (const id of pairings2) {
+      if (pairings1.has(id)) count++
     }
     return count
   }
@@ -505,11 +517,14 @@ function reorderRoundsToMinimizeConsecutiveByes(
 
   while (available.length > 0) {
     const prevIdle = idleSets[ordered[ordered.length - 1]]
+    const prevPairings = pairingSets[ordered[ordered.length - 1]]
     let bestIdx = 0
     let bestConsecutive = Infinity
 
     for (let i = 0; i < available.length; i++) {
-      const consecutive = consecutiveByeCount(prevIdle, idleSets[available[i]])
+      const consecutive =
+        consecutiveByeCount(prevIdle, idleSets[available[i]]) * 100 +
+        consecutivePairingCount(prevPairings, pairingSets[available[i]])
       if (consecutive < bestConsecutive) {
         bestConsecutive = consecutive
         bestIdx = i
@@ -521,6 +536,10 @@ function reorderRoundsToMinimizeConsecutiveByes(
   }
 
   return ordered.map(i => roundGroups[i])
+}
+
+function getPairingKey(match: RoundCandidate): string {
+  return [match.home.id, match.away.id].sort().join('-')
 }
 
 function computeIdleTeams(matches: Match[], teams: Team[]): ByeInfo[] {
