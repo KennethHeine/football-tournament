@@ -24,6 +24,11 @@ import type {
   GeneratedSchedule,
 } from '@/lib/types'
 import { generateSchedule } from '@/lib/scheduler'
+import {
+  createTournamentShareUrl,
+  parseTournamentShareParams,
+  type SharedTournamentData,
+} from '@/lib/share-url'
 import { v4 as uuidv4 } from 'uuid'
 import {
   Plus,
@@ -90,9 +95,37 @@ function App() {
     window.history.pushState({ tournamentId, step }, '', newURL)
   }, [])
 
+  const loadSharedTournament = useCallback((sharedTournament: SharedTournamentData) => {
+    const generatedSchedule = generateSchedule(
+      sharedTournament.settings,
+      sharedTournament.teams,
+      sharedTournament.schedulingConfig
+    )
+
+    setSettings(sharedTournament.settings)
+    setTeams(sharedTournament.teams)
+    setSchedulingConfig(sharedTournament.schedulingConfig)
+    setSchedule(generatedSchedule)
+    setCurrentTournamentId(null)
+    setCurrentStep(4)
+  }, [])
+
   const handlePopState = useCallback(
     (_event: PopStateEvent) => {
       const params = new URLSearchParams(window.location.search)
+
+      if (params.has('share')) {
+        const sharedTournament = parseTournamentShareParams(params)
+        if (sharedTournament.ok) {
+          loadSharedTournament(sharedTournament.data)
+        } else {
+          toast.error(sharedTournament.error)
+          setCurrentStep(0)
+          setCurrentTournamentId(null)
+        }
+        return
+      }
+
       const tournamentId = params.get('tournament')
       const step = parseInt(params.get('step') || '0')
 
@@ -142,7 +175,7 @@ function App() {
         }
       }
     },
-    [tournaments]
+    [loadSharedTournament, tournaments]
   )
 
   useEffect(() => {
@@ -152,6 +185,18 @@ function App() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+
+    if (params.has('share')) {
+      const sharedTournament = parseTournamentShareParams(params)
+      if (sharedTournament.ok) {
+        loadSharedTournament(sharedTournament.data)
+        toast.success('Delt turnering indlæst')
+      } else {
+        toast.error(sharedTournament.error)
+      }
+      return
+    }
+
     const tournamentId = params.get('tournament')
     const step = parseInt(params.get('step') || '0')
 
@@ -196,7 +241,7 @@ function App() {
     }
     // Run once on initial mount to restore state from URL - intentionally no dependencies
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [loadSharedTournament])
 
   const handleStartNew = () => {
     setCurrentStep(1)
@@ -259,6 +304,39 @@ function App() {
     toast.success('Turnering gemt!')
     setCurrentStep(0)
     updateURL(null, 0)
+  }
+
+  const handleShareTournament = async () => {
+    const shareUrl = createTournamentShareUrl(
+      settings,
+      teams,
+      schedulingConfig,
+      window.location.href
+    )
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl)
+      } else {
+        const textarea = document.createElement('textarea')
+        textarea.value = shareUrl
+        textarea.style.position = 'fixed'
+        textarea.style.left = '-9999px'
+        document.body.appendChild(textarea)
+        textarea.focus()
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+      }
+
+      if (shareUrl.length > 2000) {
+        toast.warning('Delingslinket er langt og virker muligvis ikke i alle apps')
+      }
+      toast.success('Delingslink kopieret')
+    } catch (error) {
+      console.error('Failed to copy share URL:', error)
+      toast.error('Kunne ikke kopiere delingslink')
+    }
   }
 
   const handleLoadTournament = (tournament: Tournament, shouldUpdateURL = true) => {
@@ -611,6 +689,7 @@ function App() {
               updateURL(currentTournamentId, 3)
             }}
             onSave={handleSaveTournament}
+            onShare={handleShareTournament}
           />
         )}
       </div>

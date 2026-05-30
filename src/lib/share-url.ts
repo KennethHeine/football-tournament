@@ -1,0 +1,215 @@
+import type { SchedulingConfig, Team, TournamentSettings } from '@/lib/types'
+
+export interface SharedTournamentData {
+  settings: TournamentSettings
+  teams: Team[]
+  schedulingConfig: SchedulingConfig
+}
+
+type ParseResult =
+  | {
+      ok: true
+      data: SharedTournamentData
+    }
+  | {
+      ok: false
+      error: string
+    }
+
+const SHARE_VERSION = '1'
+
+const isPositiveInteger = (value: number) => Number.isInteger(value) && value > 0
+
+const getRequiredString = (params: URLSearchParams, key: string) => {
+  const value = params.get(key)?.trim()
+  return value ? value : null
+}
+
+const getPositiveInteger = (params: URLSearchParams, key: string) => {
+  const value = params.get(key)
+  if (!value) return null
+
+  const parsed = Number(value)
+  return isPositiveInteger(parsed) ? parsed : null
+}
+
+export const createTournamentShareParams = (
+  settings: TournamentSettings,
+  teams: Team[],
+  schedulingConfig: SchedulingConfig
+) => {
+  const params = new URLSearchParams()
+  params.set('share', SHARE_VERSION)
+  params.set('name', settings.name)
+  params.set('startDate', settings.startDate)
+  params.set('startTime', settings.startTime)
+  params.set('numPitches', settings.numPitches.toString())
+  params.set('matchMode', settings.matchMode)
+  params.set('breakBetweenMatches', settings.breakBetweenMatches.toString())
+  params.set('mode', schedulingConfig.mode)
+
+  for (const pitchName of settings.pitchNames || []) {
+    params.append('pitchName', pitchName)
+  }
+
+  if (settings.matchMode === 'full-time' && settings.matchDurationMinutes) {
+    params.set('matchDurationMinutes', settings.matchDurationMinutes.toString())
+  }
+
+  if (settings.matchMode === 'two-halves') {
+    if (settings.halfDurationMinutes) {
+      params.set('halfDurationMinutes', settings.halfDurationMinutes.toString())
+    }
+    if (settings.halftimeBreakMinutes) {
+      params.set('halftimeBreakMinutes', settings.halftimeBreakMinutes.toString())
+    }
+  }
+
+  const teamsToShare = teams.filter(team => team.id !== 'BYE' && team.name.trim())
+  for (const team of teamsToShare) {
+    params.append('team', team.name)
+  }
+
+  if (schedulingConfig.mode === 'limited-matches') {
+    if (schedulingConfig.maxMatchesPerTeam) {
+      params.set('maxMatchesPerTeam', schedulingConfig.maxMatchesPerTeam.toString())
+    }
+    if (schedulingConfig.maxTotalMatches) {
+      params.set('maxTotalMatches', schedulingConfig.maxTotalMatches.toString())
+    }
+
+    for (const [teamA, teamB] of schedulingConfig.excludedMatchups || []) {
+      const teamAIndex = teamsToShare.findIndex(team => team.id === teamA)
+      const teamBIndex = teamsToShare.findIndex(team => team.id === teamB)
+      if (teamAIndex >= 0 && teamBIndex >= 0 && teamAIndex !== teamBIndex) {
+        params.append('exclude', `${teamAIndex}-${teamBIndex}`)
+      }
+    }
+  }
+
+  return params
+}
+
+export const createTournamentShareUrl = (
+  settings: TournamentSettings,
+  teams: Team[],
+  schedulingConfig: SchedulingConfig,
+  currentUrl: string
+) => {
+  const url = new URL(currentUrl)
+  url.search = createTournamentShareParams(settings, teams, schedulingConfig).toString()
+  url.hash = ''
+  return url.toString()
+}
+
+export const parseTournamentShareParams = (params: URLSearchParams): ParseResult => {
+  if (params.get('share') !== SHARE_VERSION) {
+    return { ok: false, error: 'Ukendt delingslink' }
+  }
+
+  const startDate = getRequiredString(params, 'startDate')
+  const startTime = getRequiredString(params, 'startTime')
+  const numPitches = getPositiveInteger(params, 'numPitches')
+  const breakBetweenMatches = getPositiveInteger(params, 'breakBetweenMatches')
+  const matchMode = params.get('matchMode')
+  const schedulingMode = params.get('mode')
+  const teamNames = params.getAll('team').map(team => team.trim()).filter(Boolean)
+
+  if (!startDate || !startTime || !numPitches || !breakBetweenMatches) {
+    return { ok: false, error: 'Delingslinket mangler turneringsindstillinger' }
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{2}:\d{2}$/.test(startTime)) {
+    return { ok: false, error: 'Delingslinket har ugyldig dato eller starttid' }
+  }
+
+  if (matchMode !== 'full-time' && matchMode !== 'two-halves') {
+    return { ok: false, error: 'Delingslinket har ugyldig kampindstilling' }
+  }
+
+  if (schedulingMode !== 'round-robin' && schedulingMode !== 'limited-matches') {
+    return { ok: false, error: 'Delingslinket har ugyldig planlægningstilstand' }
+  }
+
+  if (teamNames.length < 2) {
+    return { ok: false, error: 'Delingslinket skal indeholde mindst to hold' }
+  }
+
+  const pitchNames = params.getAll('pitchName').map(name => name.trim()).filter(Boolean)
+  const settings: TournamentSettings = {
+    name: params.get('name') || '',
+    startDate,
+    startTime,
+    numPitches,
+    pitchNames:
+      pitchNames.length > 0
+        ? Array.from({ length: numPitches }, (_, index) => pitchNames[index] || `Bane ${index + 1}`)
+        : Array.from({ length: numPitches }, (_, index) => `Bane ${index + 1}`),
+    matchMode,
+    breakBetweenMatches,
+  }
+
+  if (matchMode === 'full-time') {
+    const matchDurationMinutes = getPositiveInteger(params, 'matchDurationMinutes')
+    if (!matchDurationMinutes) {
+      return { ok: false, error: 'Delingslinket mangler kampvarighed' }
+    }
+    settings.matchDurationMinutes = matchDurationMinutes
+  } else {
+    const halfDurationMinutes = getPositiveInteger(params, 'halfDurationMinutes')
+    const halftimeBreakMinutes = getPositiveInteger(params, 'halftimeBreakMinutes')
+    if (!halfDurationMinutes || !halftimeBreakMinutes) {
+      return { ok: false, error: 'Delingslinket mangler halvlegsindstillinger' }
+    }
+    settings.halfDurationMinutes = halfDurationMinutes
+    settings.halftimeBreakMinutes = halftimeBreakMinutes
+  }
+
+  const teams = teamNames.map((name, index) => ({
+    id: `shared-team-${index + 1}`,
+    name,
+  }))
+
+  const schedulingConfig: SchedulingConfig = {
+    mode: schedulingMode,
+  }
+
+  if (schedulingMode === 'limited-matches') {
+    const maxMatchesPerTeam = getPositiveInteger(params, 'maxMatchesPerTeam')
+    if (!maxMatchesPerTeam) {
+      return { ok: false, error: 'Delingslinket mangler maks kampe pr. hold' }
+    }
+
+    const maxTotalMatches = getPositiveInteger(params, 'maxTotalMatches')
+    const excludedMatchups: [string, string][] = []
+
+    for (const excludedMatchup of params.getAll('exclude')) {
+      const [teamAIndex, teamBIndex] = excludedMatchup.split('-').map(Number)
+      if (
+        Number.isInteger(teamAIndex) &&
+        Number.isInteger(teamBIndex) &&
+        teamAIndex >= 0 &&
+        teamBIndex >= 0 &&
+        teamAIndex < teams.length &&
+        teamBIndex < teams.length &&
+        teamAIndex !== teamBIndex
+      ) {
+        excludedMatchups.push([teams[teamAIndex].id, teams[teamBIndex].id])
+      }
+    }
+
+    schedulingConfig.maxMatchesPerTeam = maxMatchesPerTeam
+    schedulingConfig.maxTotalMatches = maxTotalMatches || undefined
+    schedulingConfig.excludedMatchups =
+      excludedMatchups.length > 0 ? excludedMatchups : undefined
+  }
+
+  return {
+    ok: true,
+    data: {
+      settings,
+      teams,
+      schedulingConfig,
+    },
+  }
+}
