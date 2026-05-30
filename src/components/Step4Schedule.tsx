@@ -22,6 +22,7 @@ import {
   WarningCircle,
   Check,
   Image,
+  ShareNetwork,
 } from '@phosphor-icons/react'
 import { exportToCSV, exportToText, getPitchName, escapeHtml } from '@/lib/scheduler'
 import { toast } from 'sonner'
@@ -35,6 +36,7 @@ interface Step4Props {
   settings: TournamentSettings
   onBack: () => void
   onSave: () => void
+  onShare: () => void
 }
 
 export function Step4Schedule({
@@ -44,6 +46,7 @@ export function Step4Schedule({
   settings,
   onBack,
   onSave,
+  onShare,
 }: Step4Props) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPitch, setSelectedPitch] = useState<string>('all')
@@ -379,6 +382,14 @@ export function Step4Schedule({
               className="gap-2 min-h-11 text-xs sm:text-sm"
             >
               <Download size={18} /> CSV
+            </Button>
+            <Button
+              onClick={onShare}
+              variant="outline"
+              size="sm"
+              className="gap-2 min-h-11 text-xs sm:text-sm"
+            >
+              <ShareNetwork size={18} /> Del link
             </Button>
             <Button
               onClick={handleCopyText}
