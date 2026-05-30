@@ -59,6 +59,7 @@ const INITIAL_CONFIG: SchedulingConfig = {
 }
 
 const UNNAMED_TOURNAMENT = 'Unavngivet Turnering'
+// Conservative compatibility threshold for URLs shared through browsers, email, and messaging apps.
 const MAX_SAFE_SHARE_URL_LENGTH = 2000
 
 const steps = [
@@ -321,7 +322,6 @@ function App() {
       } else {
         const textarea = document.createElement('textarea')
         textarea.value = shareUrl
-        textarea.setAttribute('aria-hidden', 'true')
         textarea.style.position = 'fixed'
         textarea.style.left = '-9999px'
         textarea.style.opacity = '0'

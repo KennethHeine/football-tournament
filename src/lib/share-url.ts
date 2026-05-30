@@ -129,8 +129,18 @@ export const parseTournamentShareParams = (params: URLSearchParams): ParseResult
   const schedulingMode = params.get('mode')
   const teamNames = params.getAll('team').map(team => team.trim()).filter(Boolean)
 
-  if (!startDate || !startTime || !numPitches || !breakBetweenMatches) {
-    return { ok: false, error: 'Delingslinket mangler turneringsindstillinger' }
+  const missingSettings = [
+    !startDate ? 'startDate' : null,
+    !startTime ? 'startTime' : null,
+    !numPitches ? 'numPitches' : null,
+    !breakBetweenMatches ? 'breakBetweenMatches' : null,
+  ].filter(Boolean)
+
+  if (missingSettings.length > 0) {
+    return {
+      ok: false,
+      error: `Delingslinket mangler turneringsindstillinger: ${missingSettings.join(', ')}`,
+    }
   }
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{2}:\d{2}$/.test(startTime)) {
