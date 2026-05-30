@@ -30,7 +30,9 @@ export function Step3SchedulingMode({
   onBack,
 }: Step3Props) {
   const [mode, setMode] = useState<SchedulingMode>(initialConfig.mode)
-  const [maxMatchesPerTeam, setMaxMatchesPerTeam] = useState(initialConfig.maxMatchesPerTeam || 3)
+  const [maxMatchesPerTeam, setMaxMatchesPerTeam] = useState<number | ''>(
+    initialConfig.maxMatchesPerTeam || 3
+  )
   const [maxTotalMatches, setMaxTotalMatches] = useState(initialConfig.maxTotalMatches || undefined)
   const [excludedMatchups, setExcludedMatchups] = useState<[string, string][]>(
     initialConfig.excludedMatchups || []
@@ -55,7 +57,7 @@ export function Step3SchedulingMode({
     const config: SchedulingConfig = {
       mode,
       ...(mode === 'limited-matches' && {
-        maxMatchesPerTeam,
+        maxMatchesPerTeam: Number(maxMatchesPerTeam),
         maxTotalMatches: maxTotalMatches || undefined,
         excludedMatchups: excludedMatchups.length > 0 ? excludedMatchups : undefined,
       }),
@@ -94,6 +96,7 @@ export function Step3SchedulingMode({
   }
 
   const maxPossibleOpponents = teamCount - 1
+  const maxMatchesWithRematches = Math.max(1, maxPossibleOpponents * 2)
   const roundRobinMatches = (teamCount * (teamCount - 1)) / 2
 
   return (
@@ -169,12 +172,17 @@ export function Step3SchedulingMode({
                             id="maxMatchesPerTeam"
                             type="number"
                             min="1"
-                            max={maxPossibleOpponents}
+                            max={maxMatchesWithRematches}
                             value={maxMatchesPerTeam}
-                            onChange={e => setMaxMatchesPerTeam(Number(e.target.value))}
+                            onChange={e =>
+                              setMaxMatchesPerTeam(
+                                e.target.value === '' ? '' : Number(e.target.value)
+                              )
+                            }
                           />
                           <p className="text-xs text-muted-foreground">
-                            Maksimum: {maxPossibleOpponents} (unikke modstandere tilgængelige)
+                            Uden genkampe: {maxPossibleOpponents}. Maksimum med genkampe:{' '}
+                            {maxMatchesWithRematches}
                           </p>
                         </div>
 
@@ -197,7 +205,7 @@ export function Step3SchedulingMode({
                           </p>
                         </div>
 
-                        {maxMatchesPerTeam > maxPossibleOpponents && (
+                        {Number(maxMatchesPerTeam) > maxPossibleOpponents && (
                           <div className="p-3 bg-accent/20 border border-accent rounded-md">
                             <p className="text-sm font-medium text-accent-foreground">
                               ⚠️ Maks kampe pr. hold ({maxMatchesPerTeam}) overstiger unikke
