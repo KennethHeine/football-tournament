@@ -68,6 +68,14 @@ const getPositiveInteger = (params: URLSearchParams, key: string) => {
   return isPositiveInteger(parsed) ? parsed : null
 }
 
+const getNonNegativeInteger = (params: URLSearchParams, key: string) => {
+  const value = params.get(key)
+  if (!value) return null
+
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : null
+}
+
 export const createTournamentShareParams = (
   settings: TournamentSettings,
   teams: Team[],
@@ -95,7 +103,7 @@ export const createTournamentShareParams = (
     if (settings.halfDurationMinutes) {
       params.set('halfDurationMinutes', settings.halfDurationMinutes.toString())
     }
-    if (settings.halftimeBreakMinutes) {
+    if (settings.halftimeBreakMinutes !== undefined) {
       params.set('halftimeBreakMinutes', settings.halftimeBreakMinutes.toString())
     }
   }
@@ -146,7 +154,7 @@ export const parseTournamentShareParams = (params: URLSearchParams): ParseResult
   const startDate = getRequiredString(params, 'startDate')
   const startTime = getRequiredString(params, 'startTime')
   const numPitches = getPositiveInteger(params, 'numPitches')
-  const breakBetweenMatches = getPositiveInteger(params, 'breakBetweenMatches')
+  const breakBetweenMatches = getNonNegativeInteger(params, 'breakBetweenMatches')
   const matchMode = params.get('matchMode')
   const schedulingMode = params.get('mode')
   const teamNames = params.getAll('team').map(team => team.trim()).filter(Boolean)
@@ -154,8 +162,8 @@ export const parseTournamentShareParams = (params: URLSearchParams): ParseResult
   const missingSettings = [
     !startDate ? 'startDate' : null,
     !startTime ? 'startTime' : null,
-    !numPitches ? 'numPitches' : null,
-    !breakBetweenMatches ? 'breakBetweenMatches' : null,
+    numPitches === null ? 'numPitches' : null,
+    breakBetweenMatches === null ? 'breakBetweenMatches' : null,
   ].filter(Boolean)
 
   if (missingSettings.length > 0) {
@@ -203,8 +211,8 @@ export const parseTournamentShareParams = (params: URLSearchParams): ParseResult
     settings.matchDurationMinutes = matchDurationMinutes
   } else {
     const halfDurationMinutes = getPositiveInteger(params, 'halfDurationMinutes')
-    const halftimeBreakMinutes = getPositiveInteger(params, 'halftimeBreakMinutes')
-    if (!halfDurationMinutes || !halftimeBreakMinutes) {
+    const halftimeBreakMinutes = getNonNegativeInteger(params, 'halftimeBreakMinutes')
+    if (!halfDurationMinutes || halftimeBreakMinutes === null) {
       return { ok: false, error: 'Delingslinket mangler halvlegsindstillinger' }
     }
     settings.halfDurationMinutes = halfDurationMinutes

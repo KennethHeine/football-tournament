@@ -60,6 +60,26 @@ describe('share-url', () => {
     ])
   })
 
+  it('round-trips two-halves settings with zero-minute breaks', () => {
+    const twoHalvesSettings: TournamentSettings = {
+      ...settings,
+      matchMode: 'two-halves',
+      matchDurationMinutes: undefined,
+      halfDurationMinutes: 12,
+      halftimeBreakMinutes: 0,
+      breakBetweenMatches: 0,
+    }
+    const params = createTournamentShareParams(twoHalvesSettings, teams, { mode: 'round-robin' })
+    const parsed = parseTournamentShareParams(params)
+
+    expect(params.get('halftimeBreakMinutes')).toBe('0')
+    expect(params.get('breakBetweenMatches')).toBe('0')
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) return
+
+    expect(parsed.data.settings).toEqual(twoHalvesSettings)
+  })
+
   it('rejects invalid or incomplete share links', () => {
     expect(parseTournamentShareParams(new URLSearchParams('share=1')).ok).toBe(false)
     expect(
