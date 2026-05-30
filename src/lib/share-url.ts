@@ -28,9 +28,7 @@ const isValidDateString = (value: string) => {
   const date = new Date(Date.UTC(year, month - 1, day))
 
   return (
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day
+    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
   )
 }
 
@@ -42,11 +40,7 @@ const isValidTimeString = (value: string) => {
   return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59
 }
 
-const isValidMatchupIndices = (
-  teamAIndex: number,
-  teamBIndex: number,
-  teamsLength: number
-) =>
+const isValidMatchupIndices = (teamAIndex: number, teamBIndex: number, teamsLength: number) =>
   Number.isInteger(teamAIndex) &&
   Number.isInteger(teamBIndex) &&
   teamAIndex >= 0 &&
@@ -157,7 +151,10 @@ export const parseTournamentShareParams = (params: URLSearchParams): ParseResult
   const breakBetweenMatches = getNonNegativeInteger(params, 'breakBetweenMatches')
   const matchMode = params.get('matchMode')
   const schedulingMode = params.get('mode')
-  const teamNames = params.getAll('team').map(team => team.trim()).filter(Boolean)
+  const teamNames = params
+    .getAll('team')
+    .map(team => team.trim())
+    .filter(Boolean)
 
   const missingSettings = [
     !startDate ? 'startDate' : null,
@@ -189,7 +186,10 @@ export const parseTournamentShareParams = (params: URLSearchParams): ParseResult
     return { ok: false, error: 'Delingslinket skal indeholde mindst to hold' }
   }
 
-  const pitchNames = params.getAll('pitchName').map(name => name.trim()).filter(Boolean)
+  const pitchNames = params
+    .getAll('pitchName')
+    .map(name => name.trim())
+    .filter(Boolean)
   const settings: TournamentSettings = {
     name: params.get('name') || '',
     startDate,
@@ -246,8 +246,7 @@ export const parseTournamentShareParams = (params: URLSearchParams): ParseResult
 
     schedulingConfig.maxMatchesPerTeam = maxMatchesPerTeam
     schedulingConfig.maxTotalMatches = maxTotalMatches || undefined
-    schedulingConfig.excludedMatchups =
-      excludedMatchups.length > 0 ? excludedMatchups : undefined
+    schedulingConfig.excludedMatchups = excludedMatchups.length > 0 ? excludedMatchups : undefined
   }
 
   return {
