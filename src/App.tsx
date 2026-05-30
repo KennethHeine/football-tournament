@@ -315,16 +315,19 @@ function App() {
       schedulingConfig,
       window.location.href
     )
+    const isLongShareUrl = shareUrl.length > MAX_SAFE_SHARE_URL_LENGTH
 
     try {
+      if (isLongShareUrl) {
+        toast.warning('Delingslinket er langt og virker muligvis ikke i alle apps')
+      }
+
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(shareUrl)
       } else {
         const textarea = document.createElement('textarea')
         textarea.value = shareUrl
-        textarea.style.position = 'fixed'
-        textarea.style.left = '-9999px'
-        textarea.style.opacity = '0'
+        textarea.style.cssText = 'position: absolute; top: -9999px; opacity: 0;'
         document.body.appendChild(textarea)
         try {
           textarea.focus()
@@ -337,9 +340,7 @@ function App() {
         }
       }
 
-      if (shareUrl.length > MAX_SAFE_SHARE_URL_LENGTH) {
-        toast.warning('Delingslink kopieret, men det er langt og virker muligvis ikke i alle apps')
-      } else {
+      if (!isLongShareUrl) {
         toast.success('Delingslink kopieret')
       }
     } catch (error) {

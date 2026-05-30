@@ -69,6 +69,13 @@ describe('share-url', () => {
         )
       ).ok
     ).toBe(false)
+    expect(
+      parseTournamentShareParams(
+        new URLSearchParams(
+          'share=1&startDate=2026-13-45&startTime=99:99&numPitches=2&breakBetweenMatches=5&matchMode=full-time&matchDurationMinutes=20&mode=round-robin&team=Team+A&team=Team+B'
+        )
+      ).ok
+    ).toBe(false)
   })
 
   it('creates a share URL on the current path', () => {
