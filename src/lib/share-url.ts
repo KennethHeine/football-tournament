@@ -20,6 +20,19 @@ const SHARE_VERSION = '1'
 
 const isPositiveInteger = (value: number) => Number.isInteger(value) && value > 0
 
+const isValidMatchupIndices = (
+  teamAIndex: number,
+  teamBIndex: number,
+  teamsLength: number
+) =>
+  Number.isInteger(teamAIndex) &&
+  Number.isInteger(teamBIndex) &&
+  teamAIndex >= 0 &&
+  teamBIndex >= 0 &&
+  teamAIndex < teamsLength &&
+  teamBIndex < teamsLength &&
+  teamAIndex !== teamBIndex
+
 const getRequiredString = (params: URLSearchParams, key: string) => {
   const value = params.get(key)?.trim()
   return value ? value : null
@@ -65,8 +78,8 @@ export const createTournamentShareParams = (
     }
   }
 
-  const teamsToShare = teams.filter(team => team.id !== 'BYE' && team.name.trim())
-  for (const team of teamsToShare) {
+  const nonByeTeams = teams.filter(team => team.id !== 'BYE' && team.name.trim())
+  for (const team of nonByeTeams) {
     params.append('team', team.name)
   }
 
@@ -78,9 +91,10 @@ export const createTournamentShareParams = (
       params.set('maxTotalMatches', schedulingConfig.maxTotalMatches.toString())
     }
 
+    const teamIdToIndex = new Map(nonByeTeams.map((team, index) => [team.id, index]))
     for (const [teamA, teamB] of schedulingConfig.excludedMatchups || []) {
-      const teamAIndex = teamsToShare.findIndex(team => team.id === teamA)
-      const teamBIndex = teamsToShare.findIndex(team => team.id === teamB)
+      const teamAIndex = teamIdToIndex.get(teamA) ?? -1
+      const teamBIndex = teamIdToIndex.get(teamB) ?? -1
       if (teamAIndex >= 0 && teamBIndex >= 0 && teamAIndex !== teamBIndex) {
         params.append('exclude', `${teamAIndex}-${teamBIndex}`)
       }
@@ -185,15 +199,7 @@ export const parseTournamentShareParams = (params: URLSearchParams): ParseResult
 
     for (const excludedMatchup of params.getAll('exclude')) {
       const [teamAIndex, teamBIndex] = excludedMatchup.split('-').map(Number)
-      if (
-        Number.isInteger(teamAIndex) &&
-        Number.isInteger(teamBIndex) &&
-        teamAIndex >= 0 &&
-        teamBIndex >= 0 &&
-        teamAIndex < teams.length &&
-        teamBIndex < teams.length &&
-        teamAIndex !== teamBIndex
-      ) {
+      if (isValidMatchupIndices(teamAIndex, teamBIndex, teams.length)) {
         excludedMatchups.push([teams[teamAIndex].id, teams[teamBIndex].id])
       }
     }

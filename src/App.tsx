@@ -59,6 +59,7 @@ const INITIAL_CONFIG: SchedulingConfig = {
 }
 
 const UNNAMED_TOURNAMENT = 'Unavngivet Turnering'
+const MAX_SAFE_SHARE_URL_LENGTH = 2000
 
 const steps = [
   { number: 1, title: 'Turnerings Opsætning' },
@@ -323,13 +324,18 @@ function App() {
         textarea.style.position = 'fixed'
         textarea.style.left = '-9999px'
         document.body.appendChild(textarea)
-        textarea.focus()
-        textarea.select()
-        document.execCommand('copy')
-        document.body.removeChild(textarea)
+        try {
+          textarea.focus()
+          textarea.select()
+          if (!document.execCommand('copy')) {
+            throw new Error('Copy command failed')
+          }
+        } finally {
+          document.body.removeChild(textarea)
+        }
       }
 
-      if (shareUrl.length > 2000) {
+      if (shareUrl.length > MAX_SAFE_SHARE_URL_LENGTH) {
         toast.warning('Delingslinket er langt og virker muligvis ikke i alle apps')
       }
       toast.success('Delingslink kopieret')
