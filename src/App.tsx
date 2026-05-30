@@ -321,8 +321,10 @@ function App() {
       } else {
         const textarea = document.createElement('textarea')
         textarea.value = shareUrl
+        textarea.setAttribute('aria-hidden', 'true')
         textarea.style.position = 'fixed'
         textarea.style.left = '-9999px'
+        textarea.style.opacity = '0'
         document.body.appendChild(textarea)
         try {
           textarea.focus()
@@ -336,9 +338,10 @@ function App() {
       }
 
       if (shareUrl.length > MAX_SAFE_SHARE_URL_LENGTH) {
-        toast.warning('Delingslinket er langt og virker muligvis ikke i alle apps')
+        toast.warning('Delingslink kopieret, men det er langt og virker muligvis ikke i alle apps')
+      } else {
+        toast.success('Delingslink kopieret')
       }
-      toast.success('Delingslink kopieret')
     } catch (error) {
       console.error('Failed to copy share URL:', error)
       toast.error('Kunne ikke kopiere delingslink')
