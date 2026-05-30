@@ -269,9 +269,7 @@ describe('Scheduler', () => {
         if (!matchesByTime.has(timeKey)) {
           matchesByTime.set(timeKey, new Set())
         }
-        matchesByTime
-          .get(timeKey)!
-          .add([match.homeTeam.id, match.awayTeam.id].sort().join('-'))
+        matchesByTime.get(timeKey)!.add([match.homeTeam.id, match.awayTeam.id].sort().join('-'))
       }
 
       const slots = [...matchesByTime.entries()].sort(
