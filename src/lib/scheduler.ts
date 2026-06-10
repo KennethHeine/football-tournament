@@ -81,7 +81,7 @@ export function generateSchedule(
     matches = result.matches
     byes = result.byes
   } else {
-    const result = generateLimitedMatches(workingTeams, settings, config, warnings)
+    const result = generateLimitedMatches(workingTeams, settings, config)
     matches = result.matches
     byes = result.byes
     warnings.push(...result.warnings)
@@ -131,15 +131,14 @@ function generateRoundRobinMatches(
   teams: Team[],
   settings: TournamentSettings
 ): { matches: Match[]; byes: ByeInfo[] } {
-  const matches: Match[] = []
-  const byes: ByeInfo[] = []
   const n = teams.length
 
-  if (n < 2) return { matches, byes }
+  if (n < 2) return { matches: [], byes: [] }
 
   const rounds = n - 1
   const matchesPerRound = n / 2
 
+  const candidates: ScheduledCandidate[] = []
   const teamIndexes = teams.map((_, i) => i)
 
   for (let round = 0; round < rounds; round++) {
@@ -157,19 +156,8 @@ function generateRoundRobinMatches(
       const homeTeam = teams[home]
       const awayTeam = teams[away]
 
-      if (homeTeam.id === 'BYE' || awayTeam.id === 'BYE') {
-        const byeTeam = homeTeam.id === 'BYE' ? awayTeam : homeTeam
-        byes.push({ team: byeTeam, round })
-      } else {
-        matches.push({
-          id: `match-${matches.length}`,
-          homeTeam,
-          awayTeam,
-          startTime: new Date(),
-          endTime: new Date(),
-          pitch: 0,
-          round,
-        })
+      if (homeTeam.id !== 'BYE' && awayTeam.id !== 'BYE') {
+        candidates.push({ home: homeTeam, away: awayTeam, rrRound: round })
       }
     }
 
@@ -177,17 +165,8 @@ function generateRoundRobinMatches(
     teamIndexes.splice(1, 0, last)
   }
 
-  const assignedMatches = assignTimeSlots(matches, settings)
-
-  // Assign start times to byes based on their round's matches
-  for (const bye of byes) {
-    const roundMatch = assignedMatches.find(m => m.round === bye.round)
-    if (roundMatch) {
-      bye.startTime = roundMatch.startTime
-    }
-  }
-
-  return { matches: assignedMatches, byes }
+  const realTeams = teams.filter(t => t.id !== 'BYE')
+  return buildScheduleFromCandidates(candidates, realTeams, settings)
 }
 
 interface RoundCandidate {
@@ -195,12 +174,89 @@ interface RoundCandidate {
   away: Team
 }
 
+interface ScheduledCandidate extends RoundCandidate {
+  rrRound: number
+}
+
+/**
+ * Packs candidate matches into time slots. Each slot holds at most numPitches
+ * matches and no team plays twice in the same slot. First-fit over the
+ * candidate order, so earlier rounds fill up first and gaps are backfilled
+ * with compatible matches from later rounds.
+ */
+function packIntoTimeSlots(candidates: RoundCandidate[], numPitches: number): RoundCandidate[][] {
+  const timeSlotGroups: RoundCandidate[][] = []
+  const remaining = [...candidates]
+
+  while (remaining.length > 0) {
+    const slotTeams = new Set<string>()
+    const slotMatches: RoundCandidate[] = []
+    const skipped: RoundCandidate[] = []
+
+    for (const c of remaining) {
+      if (
+        slotMatches.length >= numPitches ||
+        slotTeams.has(c.home.id) ||
+        slotTeams.has(c.away.id)
+      ) {
+        skipped.push(c)
+      } else {
+        slotTeams.add(c.home.id)
+        slotTeams.add(c.away.id)
+        slotMatches.push(c)
+      }
+    }
+
+    if (slotMatches.length === 0) break
+    timeSlotGroups.push(slotMatches)
+    remaining.length = 0
+    remaining.push(...skipped)
+  }
+
+  return timeSlotGroups
+}
+
+/**
+ * Shared scheduling tail: pack candidates into pitch-sized time slots,
+ * reorder slots to minimize consecutive byes (with under-filled slots pushed
+ * toward the end), assign synchronized slot times, and compute idle teams.
+ */
+function buildScheduleFromCandidates(
+  candidates: ScheduledCandidate[],
+  teams: Team[],
+  settings: TournamentSettings
+): { matches: Match[]; byes: ByeInfo[] } {
+  const sorted = [...candidates].sort((a, b) => a.rrRound - b.rrRound)
+  const timeSlotGroups = packIntoTimeSlots(sorted, settings.numPitches)
+  const orderedSlots = reorderRoundsToMinimizeConsecutiveByes(timeSlotGroups, teams)
+
+  const matches: Match[] = []
+  for (let r = 0; r < orderedSlots.length; r++) {
+    for (const c of orderedSlots[r]) {
+      matches.push({
+        id: `match-${matches.length}`,
+        homeTeam: c.home,
+        awayTeam: c.away,
+        startTime: new Date(),
+        endTime: new Date(),
+        pitch: 0,
+        round: r,
+      })
+    }
+  }
+
+  const assignedMatches = assignTimeSlots(matches, settings)
+  const byes = computeIdleTeams(assignedMatches, teams)
+
+  return { matches: assignedMatches, byes }
+}
+
 function generateLimitedMatches(
   teams: Team[],
   settings: TournamentSettings,
-  config: SchedulingConfig,
-  warnings: string[]
+  config: SchedulingConfig
 ): { matches: Match[]; byes: ByeInfo[]; warnings: string[] } {
+  const warnings: string[] = []
   const maxPerTeam = config.maxMatchesPerTeam || 3
   const maxTotal = config.maxTotalMatches || Infinity
 
@@ -371,73 +427,37 @@ function generateLimitedMatches(
     }
   }
 
-  // Organize selected matches into time slots
-  // Each slot has at most numPitches matches with no team playing twice
-  selectedMatches.sort((a, b) => a.rrRound - b.rrRound)
-
-  const timeSlotGroups: CandidateMatch[][] = []
-  const remaining = [...selectedMatches]
-
-  while (remaining.length > 0) {
-    const slotTeams = new Set<string>()
-    const slotMatches: CandidateMatch[] = []
-    const skipped: CandidateMatch[] = []
-
-    for (const c of remaining) {
-      if (
-        slotMatches.length >= settings.numPitches ||
-        slotTeams.has(c.home.id) ||
-        slotTeams.has(c.away.id)
-      ) {
-        skipped.push(c)
-      } else {
-        slotTeams.add(c.home.id)
-        slotTeams.add(c.away.id)
-        slotMatches.push(c)
-      }
-    }
-
-    if (slotMatches.length === 0) break
-    timeSlotGroups.push(slotMatches)
-    remaining.length = 0
-    remaining.push(...skipped)
-  }
-
-  // Reorder time slots to minimize consecutive byes
-  const orderedSlots = reorderRoundsToMinimizeConsecutiveByes(timeSlotGroups, teams)
-
-  const matches: Match[] = []
-  for (let r = 0; r < orderedSlots.length; r++) {
-    for (const c of orderedSlots[r]) {
-      matches.push({
-        id: `match-${matches.length}`,
-        homeTeam: c.home,
-        awayTeam: c.away,
-        startTime: new Date(),
-        endTime: new Date(),
-        pitch: 0,
-        round: r,
-      })
-    }
-  }
-
   if (excludedPairings.size > 0) {
     warnings.push(`${excludedPairings.size} holdpar er udelukket fra at spille mod hinanden`)
   }
 
-  const assignedMatches = assignTimeSlots(matches, settings)
+  if (selectedMatches.length === 0) {
+    warnings.push('Ingen kampe kunne planlægges med de valgte begrænsninger')
+    return { matches: [], byes: [], warnings }
+  }
 
-  // Compute idle teams per time slot (after time assignment)
-  const byes = computeIdleTeams(assignedMatches, teams)
+  // Warn when constraints leave some teams with fewer matches than others
+  const finalCounts = teams.map(t => teamCounts.get(t.id) || 0)
+  const maxAchieved = Math.max(...finalCounts)
+  const shortedTeams = teams.filter(t => (teamCounts.get(t.id) || 0) < maxAchieved)
+  if (shortedTeams.length > 0) {
+    const details = shortedTeams
+      .map(t => `${t.name} (${teamCounts.get(t.id) || 0} af ${maxAchieved})`)
+      .join(', ')
+    warnings.push(`Følgende hold spiller færre kampe end de andre pga. begrænsninger: ${details}`)
+  }
 
-  return { matches: assignedMatches, byes, warnings }
+  const { matches, byes } = buildScheduleFromCandidates(selectedMatches, teams, settings)
+
+  return { matches, byes, warnings }
 }
 
 /**
  * Reorders scheduling rounds to minimize consecutive byes and immediate rematches.
- * Uses backtracking to find an ordering where no team sits out
- * two consecutive time slots. Falls back to greedy if no perfect
- * ordering exists.
+ * Uses backtracking to find an ordering where no team sits out two consecutive
+ * time slots. Prefers orderings where under-filled slots come last, so all
+ * pitches stay busy until the schedule winds down. Falls back to greedy if no
+ * perfect ordering exists.
  */
 function reorderRoundsToMinimizeConsecutiveByes(
   roundGroups: RoundCandidate[][],
@@ -469,29 +489,58 @@ function reorderRoundsToMinimizeConsecutiveByes(
     return false
   }
 
-  // Backtracking: find an ordering with no consecutive byes
-  function backtrack(ordering: number[], used: Set<number>): number[] | null {
-    if (ordering.length === roundGroups.length) return [...ordering]
+  // Try larger slots first at every depth, so under-filled slots gravitate
+  // toward the end of the schedule
+  const candidateOrder = roundGroups
+    .map((_, i) => i)
+    .sort((a, b) => roundGroups[b].length - roundGroups[a].length)
 
-    const prevIdle = ordering.length > 0 ? idleSets[ordering[ordering.length - 1]] : null
-    const prevPairings = ordering.length > 0 ? pairingSets[ordering[ordering.length - 1]] : null
+  // Cap the search so large tournaments cannot hang the UI; greedy handles the rest
+  const NODE_BUDGET = 20000
 
-    for (let i = 0; i < roundGroups.length; i++) {
-      if (used.has(i)) continue
-      if (prevIdle && hasOverlap(prevIdle, idleSets[i])) continue
-      if (prevPairings && hasOverlap(prevPairings, pairingSets[i])) continue
+  // Backtracking: find an ordering with no consecutive byes or immediate
+  // rematches. Pass 1 (requireNonIncreasingSizes) also demands slot sizes
+  // never grow along the schedule, forcing under-filled slots to the end.
+  function search(requireNonIncreasingSizes: boolean): number[] | null {
+    let nodes = 0
+    let aborted = false
+    const ordering: number[] = []
+    const used = new Set<number>()
 
-      ordering.push(i)
-      used.add(i)
-      const result = backtrack(ordering, used)
-      if (result) return result
-      ordering.pop()
-      used.delete(i)
+    function backtrack(): number[] | null {
+      if (ordering.length === roundGroups.length) return [...ordering]
+      if (aborted || ++nodes > NODE_BUDGET) {
+        aborted = true
+        return null
+      }
+
+      const prev = ordering.length > 0 ? ordering[ordering.length - 1] : -1
+
+      for (const i of candidateOrder) {
+        if (used.has(i)) continue
+        if (prev >= 0) {
+          if (requireNonIncreasingSizes && roundGroups[i].length > roundGroups[prev].length) {
+            continue
+          }
+          if (hasOverlap(idleSets[prev], idleSets[i])) continue
+          if (hasOverlap(pairingSets[prev], pairingSets[i])) continue
+        }
+
+        ordering.push(i)
+        used.add(i)
+        const result = backtrack()
+        if (result) return result
+        ordering.pop()
+        used.delete(i)
+        if (aborted) return null
+      }
+      return null
     }
-    return null
+
+    return backtrack()
   }
 
-  const result = backtrack([], new Set())
+  const result = search(true) ?? search(false)
   if (result) {
     return result.map(i => roundGroups[i])
   }
@@ -512,21 +561,23 @@ function reorderRoundsToMinimizeConsecutiveByes(
     return count
   }
 
-  const available = roundGroups.map((r, i) => i)
+  const maxSlotSize = Math.max(...roundGroups.map(r => r.length))
+  const available = [...candidateOrder]
   const ordered: number[] = [available.shift()!]
 
   while (available.length > 0) {
     const prevIdle = idleSets[ordered[ordered.length - 1]]
     const prevPairings = pairingSets[ordered[ordered.length - 1]]
     let bestIdx = 0
-    let bestConsecutive = Infinity
+    let bestScore = Infinity
 
     for (let i = 0; i < available.length; i++) {
-      const consecutive =
-        consecutiveByeCount(prevIdle, idleSets[available[i]]) * 100 +
-        consecutivePairingCount(prevPairings, pairingSets[available[i]])
-      if (consecutive < bestConsecutive) {
-        bestConsecutive = consecutive
+      const score =
+        consecutiveByeCount(prevIdle, idleSets[available[i]]) * 10000 +
+        consecutivePairingCount(prevPairings, pairingSets[available[i]]) * 100 +
+        (maxSlotSize - roundGroups[available[i]].length)
+      if (score < bestScore) {
+        bestScore = score
         bestIdx = i
       }
     }
@@ -583,6 +634,13 @@ function computeIdleTeams(matches: Match[], teams: Team[]): ByeInfo[] {
   return byes
 }
 
+/**
+ * Assigns start times and pitches slot by slot. All matches sharing a round
+ * start simultaneously, the next slot begins after the previous one plus the
+ * configured break — so pitches stay in sync, teams always get at least the
+ * break between matches, and the schedule never has overlapping odd start
+ * times across pitches.
+ */
 function assignTimeSlots(matches: Match[], settings: TournamentSettings): Match[] {
   const matchDuration = calculateMatchDuration(settings)
 
@@ -595,51 +653,32 @@ function assignTimeSlots(matches: Match[], settings: TournamentSettings): Match[
     )
   }
 
-  const pitchSchedules: Match[][] = Array.from({ length: settings.numPitches }, () => [])
-  const teamLastEndTime = new Map<string, Date>()
-  const pitchNextAvailable: Date[] = Array.from(
-    { length: settings.numPitches },
-    () => new Date(startDateTime)
-  )
-
+  // Group matches into their scheduling slots (round = slot index)
+  const slotMap = new Map<number, Match[]>()
   for (const match of matches) {
-    let bestPitch = -1
-    let bestStartTime: Date | null = null
-    let earliestPossibleStart = new Date(startDateTime)
+    const key = match.round ?? 0
+    if (!slotMap.has(key)) slotMap.set(key, [])
+    slotMap.get(key)!.push(match)
+  }
+  const slots = Array.from(slotMap.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([, slotMatches]) => slotMatches)
 
-    const homeLastEnd = teamLastEndTime.get(match.homeTeam.id)
-    const awayLastEnd = teamLastEndTime.get(match.awayTeam.id)
+  let slotStart = new Date(startDateTime)
+  for (const slot of slots) {
+    // Slots are packed to numPitches upstream; chunk defensively in case a
+    // slot ever holds more matches than pitches
+    for (let offset = 0; offset < slot.length; offset += settings.numPitches) {
+      const chunk = slot.slice(offset, offset + settings.numPitches)
+      const slotEnd = new Date(slotStart.getTime() + matchDuration * 60000)
 
-    if (homeLastEnd && homeLastEnd > earliestPossibleStart) {
-      earliestPossibleStart = new Date(homeLastEnd)
-    }
-    if (awayLastEnd && awayLastEnd > earliestPossibleStart) {
-      earliestPossibleStart = new Date(awayLastEnd)
-    }
+      chunk.forEach((match, i) => {
+        match.pitch = i + 1
+        match.startTime = new Date(slotStart)
+        match.endTime = new Date(slotEnd)
+      })
 
-    for (let pitch = 0; pitch < settings.numPitches; pitch++) {
-      const pitchAvailableAt = pitchNextAvailable[pitch]
-      const possibleStartTime = new Date(
-        Math.max(earliestPossibleStart.getTime(), pitchAvailableAt.getTime())
-      )
-
-      if (bestStartTime === null || possibleStartTime < bestStartTime) {
-        bestStartTime = possibleStartTime
-        bestPitch = pitch
-      }
-    }
-
-    if (bestPitch >= 0 && bestStartTime) {
-      match.pitch = bestPitch + 1
-      match.startTime = new Date(bestStartTime)
-      match.endTime = new Date(bestStartTime.getTime() + matchDuration * 60000)
-
-      pitchSchedules[bestPitch].push(match)
-      pitchNextAvailable[bestPitch] = new Date(
-        match.endTime.getTime() + settings.breakBetweenMatches * 60000
-      )
-      teamLastEndTime.set(match.homeTeam.id, match.endTime)
-      teamLastEndTime.set(match.awayTeam.id, match.endTime)
+      slotStart = new Date(slotEnd.getTime() + settings.breakBetweenMatches * 60000)
     }
   }
 

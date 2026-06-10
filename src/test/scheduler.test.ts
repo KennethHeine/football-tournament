@@ -562,6 +562,171 @@ describe('Scheduler', () => {
     })
   })
 
+  describe('Time slot integrity (regression: staggered/under-filled slots)', () => {
+    // Exact scenario from the shared "RB hjemmebane - A - 14/6" tournament where
+    // the tail of the schedule had single-pitch slots at 11:15/11:35 and an
+    // overlapping 11:40 start
+    const rbSettings: TournamentSettings = {
+      name: 'RB hjemmebane - A - 14/6',
+      startDate: '2026-06-14',
+      startTime: '10:00',
+      numPitches: 2,
+      pitchNames: ['Bane 1', 'Bane 2'],
+      matchMode: 'two-halves',
+      halfDurationMinutes: 9,
+      halftimeBreakMinutes: 2,
+      breakBetweenMatches: 5,
+    }
+    const rbTeams: Team[] = [
+      { id: '1', name: 'Solrød' },
+      { id: '2', name: 'RB 2' },
+      { id: '3', name: 'Karlslunde' },
+      { id: '4', name: 'RB 1' },
+      { id: '5', name: 'Herlufsholm' },
+    ]
+    const rbConfig: SchedulingConfig = {
+      mode: 'limited-matches',
+      maxMatchesPerTeam: 4,
+      excludedMatchups: [['2', '4']],
+    }
+
+    const getSlots = (schedule: ReturnType<typeof generateSchedule>) => {
+      const byTime = new Map<number, typeof schedule.matches>()
+      for (const match of schedule.matches) {
+        const key = match.startTime.getTime()
+        if (!byTime.has(key)) byTime.set(key, [])
+        byTime.get(key)!.push(match)
+      }
+      return [...byTime.entries()].sort((a, b) => a[0] - b[0]).map(([, slot]) => slot)
+    }
+
+    it('should fill all pitches in every time slot except possibly the last', () => {
+      const schedule = generateSchedule(rbSettings, rbTeams, rbConfig)
+      const slots = getSlots(schedule)
+
+      expect(schedule.matches.length).toBe(9)
+      expect(slots.length).toBe(5)
+      for (const slot of slots.slice(0, -1)) {
+        expect(slot.length).toBe(rbSettings.numPitches)
+      }
+    })
+
+    it('should start all matches in a slot simultaneously with unique pitches', () => {
+      const schedule = generateSchedule(rbSettings, rbTeams, rbConfig)
+
+      for (const slot of getSlots(schedule)) {
+        const endTimes = new Set(slot.map(m => m.endTime.getTime()))
+        expect(endTimes.size).toBe(1)
+
+        const pitches = slot.map(m => m.pitch)
+        expect(new Set(pitches).size).toBe(slot.length)
+        for (const pitch of pitches) {
+          expect(pitch).toBeGreaterThanOrEqual(1)
+          expect(pitch).toBeLessThanOrEqual(rbSettings.numPitches)
+        }
+      }
+    })
+
+    it('should give every team at least the configured break between matches', () => {
+      const schedule = generateSchedule(rbSettings, rbTeams, rbConfig)
+
+      const matchesByTeam = new Map<string, { start: number; end: number }[]>()
+      for (const match of schedule.matches) {
+        for (const team of [match.homeTeam, match.awayTeam]) {
+          if (!matchesByTeam.has(team.id)) matchesByTeam.set(team.id, [])
+          matchesByTeam.get(team.id)!.push({
+            start: match.startTime.getTime(),
+            end: match.endTime.getTime(),
+          })
+        }
+      }
+
+      for (const [, teamMatches] of matchesByTeam) {
+        teamMatches.sort((a, b) => a.start - b.start)
+        for (let i = 1; i < teamMatches.length; i++) {
+          const restMinutes = (teamMatches[i].start - teamMatches[i - 1].end) / 60000
+          expect(restMinutes).toBeGreaterThanOrEqual(rbSettings.breakBetweenMatches)
+        }
+      }
+    })
+
+    it('should not extend the total duration (ends by 12:00)', () => {
+      const schedule = generateSchedule(rbSettings, rbTeams, rbConfig)
+      const lastEnd = Math.max(...schedule.matches.map(m => m.endTime.getTime()))
+      expect(lastEnd).toBeLessThanOrEqual(new Date('2026-06-14T12:00').getTime())
+    })
+
+    it('should not emit duplicate warnings', () => {
+      const schedule = generateSchedule(rbSettings, rbTeams, rbConfig)
+      expect(new Set(schedule.warnings).size).toBe(schedule.warnings.length)
+    })
+
+    it('should warn which teams play fewer matches due to constraints', () => {
+      const schedule = generateSchedule(rbSettings, rbTeams, rbConfig)
+      expect(schedule.warnings.some(w => w.includes('færre kampe'))).toBe(true)
+    })
+
+    it('should pack round-robin rounds larger than pitch count into full slots', () => {
+      // 6 teams on 2 pitches: rounds of 3 matches must split, but the schedule
+      // should still fill both pitches in every slot except possibly the last
+      const sixTeams: Team[] = Array.from({ length: 6 }, (_, i) => ({
+        id: `${i + 1}`,
+        name: `Team ${i + 1}`,
+      }))
+      const schedule = generateSchedule(defaultSettings, sixTeams, { mode: 'round-robin' })
+      const slots = getSlots(schedule)
+
+      expect(schedule.matches.length).toBe(15)
+      expect(slots.length).toBe(8)
+      for (const slot of slots.slice(0, -1)) {
+        expect(slot.length).toBe(2)
+      }
+      expect(schedule.conflicts.length).toBe(0)
+    })
+
+    it('should handle a large round-robin tournament quickly and without conflicts', () => {
+      const manyTeams: Team[] = Array.from({ length: 15 }, (_, i) => ({
+        id: `team-${i}`,
+        name: `Team ${i + 1}`,
+      }))
+      const start = performance.now()
+      const schedule = generateSchedule(defaultSettings, manyTeams, { mode: 'round-robin' })
+      const elapsed = performance.now() - start
+
+      expect(schedule.matches.length).toBe(105)
+      expect(schedule.conflicts.length).toBe(0)
+      expect(elapsed).toBeLessThan(2000)
+    })
+
+    it('should return an empty schedule with a warning when all matchups are excluded', () => {
+      const twoTeams: Team[] = [
+        { id: '1', name: 'Team A' },
+        { id: '2', name: 'Team B' },
+      ]
+      const schedule = generateSchedule(defaultSettings, twoTeams, {
+        mode: 'limited-matches',
+        maxMatchesPerTeam: 2,
+        excludedMatchups: [['1', '2']],
+      })
+
+      expect(schedule.matches.length).toBe(0)
+      expect(schedule.warnings.some(w => w.includes('Ingen kampe'))).toBe(true)
+    })
+
+    it('should respect maxTotalMatches', () => {
+      const sixTeams: Team[] = Array.from({ length: 6 }, (_, i) => ({
+        id: `${i + 1}`,
+        name: `Team ${i + 1}`,
+      }))
+      const schedule = generateSchedule(defaultSettings, sixTeams, {
+        mode: 'limited-matches',
+        maxMatchesPerTeam: 4,
+        maxTotalMatches: 5,
+      })
+      expect(schedule.matches.length).toBeLessThanOrEqual(5)
+    })
+  })
+
   describe('Conflict Detection', () => {
     it('should detect no conflicts when schedule is valid', () => {
       const config: SchedulingConfig = { mode: 'round-robin' }
