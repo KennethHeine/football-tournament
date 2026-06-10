@@ -416,15 +416,93 @@ function generateLimitedMatches(
         rematchProgress = true
       }
     }
+  }
 
-    if (selectedMatches.length > 0) {
-      const hasRematches = rematchCandidates.some(c => c.selected)
-      if (hasRematches) {
-        warnings.push(
-          'Udelukkede holdpar kræver genkampe for at sikre alle hold spiller lige mange kampe'
-        )
+  // Equalization: teams can still be stuck below maxPerTeam when all their
+  // allowed opponents are at the cap (e.g. two teams excluded from playing
+  // each other share the same remaining opponents). Free up capacity by
+  // replacing one selected match (x, y) with two matches (x, u) and (y, v):
+  // x and y keep their counts while the under-scheduled u and v gain one each.
+  const pairUsage = new Map<string, number>()
+  for (const m of selectedMatches) {
+    pairUsage.set(getPairingKey(m), (pairUsage.get(getPairingKey(m)) || 0) + 1)
+  }
+  const allowedPair = (a: Team, b: Team) =>
+    a.id !== b.id && !excludedPairings.has([a.id, b.id].sort().join('-'))
+
+  const droppedPairings: [Team, Team][] = []
+  let augmentGuard = teams.length * maxPerTeam
+  while (augmentGuard-- > 0 && selectedMatches.length < maxTotal) {
+    const under = teams.filter(t => (teamCounts.get(t.id) || 0) < maxPerTeam)
+    if (under.length === 0) break
+
+    // Candidate (u, v) pairs of under-scheduled teams; u === v is allowed when
+    // a single team is two or more matches short
+    const underPairs: [Team, Team][] = []
+    for (const u of under) {
+      for (const v of under) {
+        if (u.id === v.id && maxPerTeam - (teamCounts.get(u.id) || 0) < 2) continue
+        underPairs.push([u, v])
       }
     }
+
+    interface Augmentation {
+      removed: CandidateMatch
+      added: [Team, Team][]
+      score: number
+    }
+    let best: Augmentation | null = null
+
+    for (const m of selectedMatches) {
+      for (const [u, v] of underPairs) {
+        const inMatch = (t: Team) => t.id === m.home.id || t.id === m.away.id
+        if (inMatch(u) || inMatch(v)) continue
+        if (!allowedPair(m.home, u) || !allowedPair(m.away, v)) continue
+
+        const newKeys = [[m.home.id, u.id].sort().join('-'), [m.away.id, v.id].sort().join('-')]
+        // Prefer swaps that create few duplicate pairings and that remove a
+        // pairing which still meets in another match
+        const score =
+          newKeys.filter(k => (pairUsage.get(k) || 0) > 0).length +
+          ((pairUsage.get(getPairingKey(m)) || 0) === 1 ? 1 : 0)
+
+        if (!best || score < best.score) {
+          best = {
+            removed: m,
+            added: [
+              [m.home, u],
+              [m.away, v],
+            ],
+            score,
+          }
+        }
+      }
+    }
+    if (!best) break
+
+    const removedKey = getPairingKey(best.removed)
+    selectedMatches.splice(selectedMatches.indexOf(best.removed), 1)
+    pairUsage.set(removedKey, (pairUsage.get(removedKey) || 0) - 1)
+    if (pairUsage.get(removedKey) === 0) {
+      droppedPairings.push([best.removed.home, best.removed.away])
+    }
+    // The removed match's teams keep their totals (they reappear in the new
+    // matches), so only the under-scheduled away-side teams are incremented
+    for (const [home, away] of best.added) {
+      selectedMatches.push({ home, away, rrRound: N + 1, selected: true })
+      const key = [home.id, away.id].sort().join('-')
+      pairUsage.set(key, (pairUsage.get(key) || 0) + 1)
+      teamCounts.set(away.id, (teamCounts.get(away.id) || 0) + 1)
+    }
+  }
+
+  if ([...pairUsage.values()].some(c => c > 1)) {
+    warnings.push(
+      'Nogle holdpar mødes mere end én gang, så alle hold kan spille det ønskede antal kampe'
+    )
+  }
+  for (const [a, b] of droppedPairings) {
+    warnings.push(`For at alle hold kan spille lige mange kampe mødes ${a.name} og ${b.name} ikke`)
   }
 
   if (excludedPairings.size > 0) {

@@ -604,11 +604,34 @@ describe('Scheduler', () => {
       const schedule = generateSchedule(rbSettings, rbTeams, rbConfig)
       const slots = getSlots(schedule)
 
-      expect(schedule.matches.length).toBe(9)
+      expect(schedule.matches.length).toBe(10)
       expect(slots.length).toBe(5)
       for (const slot of slots.slice(0, -1)) {
         expect(slot.length).toBe(rbSettings.numPitches)
       }
+    })
+
+    it('should give every team exactly maxMatchesPerTeam despite the excluded pair', () => {
+      const schedule = generateSchedule(rbSettings, rbTeams, rbConfig)
+
+      const counts = new Map<string, number>()
+      for (const match of schedule.matches) {
+        counts.set(match.homeTeam.id, (counts.get(match.homeTeam.id) || 0) + 1)
+        counts.set(match.awayTeam.id, (counts.get(match.awayTeam.id) || 0) + 1)
+      }
+      for (const team of rbTeams) {
+        expect(counts.get(team.id), `${team.name} should play 4 matches`).toBe(4)
+      }
+
+      // The excluded pair must still never meet
+      for (const match of schedule.matches) {
+        const ids = new Set([match.homeTeam.id, match.awayTeam.id])
+        expect(ids.has('2') && ids.has('4')).toBe(false)
+      }
+
+      // The trade-off is disclosed: some pair meets twice and one pair is dropped
+      expect(schedule.warnings.some(w => w.includes('mere end én gang'))).toBe(true)
+      expect(schedule.warnings.some(w => w.includes('mødes') && w.includes('ikke'))).toBe(true)
     })
 
     it('should start all matches in a slot simultaneously with unique pitches', () => {
@@ -661,8 +684,19 @@ describe('Scheduler', () => {
       expect(new Set(schedule.warnings).size).toBe(schedule.warnings.length)
     })
 
-    it('should warn which teams play fewer matches due to constraints', () => {
-      const schedule = generateSchedule(rbSettings, rbTeams, rbConfig)
+    it('should warn which teams play fewer matches when equalization is impossible', () => {
+      // 3 teams where the only pair not involving team 1 is excluded: teams 2
+      // and 3 can only play team 1, so they cannot reach 2 matches each
+      const threeTeams: Team[] = [
+        { id: '1', name: 'Team A' },
+        { id: '2', name: 'Team B' },
+        { id: '3', name: 'Team C' },
+      ]
+      const schedule = generateSchedule(defaultSettings, threeTeams, {
+        mode: 'limited-matches',
+        maxMatchesPerTeam: 2,
+        excludedMatchups: [['2', '3']],
+      })
       expect(schedule.warnings.some(w => w.includes('færre kampe'))).toBe(true)
     })
 
