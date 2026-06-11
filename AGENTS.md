@@ -67,6 +67,12 @@ Playwright browsers: `PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/ms-playwright npx pl
   Infra changes go through Bicep only.
 - **`release.yml`** — on `v*` tags: git-cliff changelog (conventional
   commits — keep using them) + GitHub release.
+- **Design changes require Kenneth's manual review.** Any frontend/visual
+  design change (layout, styling, typography, theme) must go through a PR
+  and wait for Kenneth to review and merge it — never push design changes
+  to `main` and never self-merge such a PR. The PR's preview environment is
+  the place to show the change. All other changes (fixes, dependencies,
+  tests, CI, infra, non-visual refactors) may ship to `main` autonomously.
 
 ## Gotchas — read before touching related code
 
