@@ -1,0 +1,57 @@
+name: Repair Custom Domain (one-off)
+
+# One-off operational repair: some SWA front-end nodes lost the
+# fodbold.kscloud.io hostname binding (intermittent 404s on the custom domain
+# while the default hostname is healthy). Deleting and re-adding the hostname
+# forces a clean re-registration. CNAME validation — the DNS record is already
+# in place, so revalidation is quick.
+#
+# Lives only on the ops/rebind-custom-domain branch; dispatch with:
+#   gh workflow run repair-custom-domain.yml --ref ops/rebind-custom-domain
+# Delete the branch when done.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  rebind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Re-bind fodbold.kscloud.io
+        shell: bash
+        run: |
+          set -euo pipefail
+          RG='${{ vars.RESOURCE_GROUP }}'
+          [ -z "$RG" ] && RG="rg-${{ github.event.repository.name }}"
+          name=$(az staticwebapp list --resource-group "$RG" --query "[0].name" -o tsv)
+          echo "SWA: $name in $RG"
+
+          echo "Deleting hostname binding..."
+          az staticwebapp hostname delete --name "$name" --resource-group "$RG" \
+            --hostname fodbold.kscloud.io --yes
+
+          echo "Re-adding hostname binding (cname-delegation)..."
+          az staticwebapp hostname set --name "$name" --resource-group "$RG" \
+            --hostname fodbold.kscloud.io --validation-method cname-delegation
+
+          echo "Waiting for binding to be Ready..."
+          for i in $(seq 1 60); do
+            status=$(az staticwebapp hostname show --name "$name" --resource-group "$RG" \
+              --hostname fodbold.kscloud.io --query status -o tsv 2>/dev/null || echo pending)
+            echo "  $status"
+            [ "$status" = "Ready" ] && exit 0
+            sleep 10
+          done
+          echo "::error::Hostname did not reach Ready within 10 minutes"
+          exit 1
