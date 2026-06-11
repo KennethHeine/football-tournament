@@ -1,42 +1,54 @@
+/*
+ * Single CSS entry point (imported from src/main.tsx).
+ *
+ * Fonts are self-hosted via @fontsource-variable packages — the strict CSP in
+ * public/staticwebapp.config.json (style-src/font-src 'self') blocks Google
+ * Fonts, so never add external font <link>s.
+ */
+@import '@fontsource-variable/bricolage-grotesque';
+@import '@fontsource-variable/outfit';
+
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-}
-
+/*
+ * Theme: "match day" — deep pitch green, chalk-white surfaces, and a sharp
+ * line-marking yellow accent. All colors are OKLCH; if you change them, keep
+ * src/lib/color-utils.ts SAFE_COLORS in sync (html2canvas PNG export cannot
+ * parse OKLCH, so the export palette is precomputed hex).
+ */
 :root {
-  --background: oklch(0.98 0 0);
-  --foreground: oklch(0.25 0.05 250);
+  --background: oklch(0.985 0.005 130);
+  --foreground: oklch(0.23 0.035 155);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.25 0.05 250);
+  --card-foreground: oklch(0.23 0.035 155);
 
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.25 0.05 250);
+  --popover-foreground: oklch(0.23 0.035 155);
 
-  --primary: oklch(0.55 0.15 145);
-  --primary-foreground: oklch(1 0 0);
+  /* Pitch green — dark enough for WCAG AA with white text */
+  --primary: oklch(0.47 0.12 152);
+  --primary-foreground: oklch(0.99 0.005 130);
 
-  --secondary: oklch(0.65 0.02 240);
-  --secondary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.94 0.03 150);
+  --secondary-foreground: oklch(0.32 0.06 152);
 
-  --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(0.45 0.02 240);
+  --muted: oklch(0.955 0.012 140);
+  --muted-foreground: oklch(0.46 0.025 150);
 
-  --accent: oklch(0.85 0.18 95);
-  --accent-foreground: oklch(0.25 0.05 250);
+  /* Chalk-line yellow */
+  --accent: oklch(0.89 0.17 100);
+  --accent-foreground: oklch(0.3 0.06 110);
 
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(1 0 0);
 
-  --border: oklch(0.9 0 0);
-  --input: oklch(0.9 0 0);
-  --ring: oklch(0.55 0.15 145);
+  --border: oklch(0.9 0.015 140);
+  --input: oklch(0.9 0.015 140);
+  --ring: oklch(0.47 0.12 152);
 
-  --radius: 0.5rem;
+  --radius: 0.625rem;
 }
 
 @theme {
@@ -67,11 +79,17 @@
   --radius-2xl: calc(var(--radius) * 3);
   --radius-full: 9999px;
 
-  --font-heading: 'Outfit', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Bricolage Grotesque Variable', system-ui, sans-serif;
+  --font-body: 'Outfit Variable', system-ui, sans-serif;
+  --font-display: var(--font-heading);
+  --font-sans: var(--font-body);
 }
 
 @layer base {
+  * {
+    @apply border-border;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
@@ -87,11 +105,69 @@
   }
 }
 
-/* Custom animations */
+/* ---------- Atmosphere utilities (landing + wizard backdrop) ---------- */
+
+/* Subtle mowing stripes + soft top glow, like a freshly cut pitch. */
+.pitch-backdrop {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(120% 60% at 50% 0%, oklch(0.47 0.12 152 / 0.1), transparent 60%),
+    repeating-linear-gradient(
+      180deg,
+      oklch(0.47 0.12 152 / 0.035) 0,
+      oklch(0.47 0.12 152 / 0.035) 72px,
+      transparent 72px,
+      transparent 144px
+    );
+}
+
+/* Chalk center circle + halfway line, drawn with plain gradients. */
+.pitch-lines {
+  position: relative;
+  isolation: isolate;
+}
+
+.pitch-lines::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(
+      circle at 50% 38%,
+      transparent 118px,
+      oklch(0.47 0.12 152 / 0.14) 119px,
+      oklch(0.47 0.12 152 / 0.14) 122px,
+      transparent 123px
+    ),
+    linear-gradient(
+      180deg,
+      transparent calc(38% - 1px),
+      oklch(0.47 0.12 152 / 0.12) calc(38% - 1px),
+      oklch(0.47 0.12 152 / 0.12) calc(38% + 1px),
+      transparent calc(38% + 1px)
+    );
+  mask-image: radial-gradient(90% 70% at 50% 35%, black 30%, transparent 75%);
+}
+
+/* ---------- Animations ---------- */
+
 @keyframes fadeIn {
   from {
     opacity: 0;
     transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
   }
   to {
     opacity: 1;
@@ -119,16 +195,6 @@
   }
 }
 
-@keyframes pulse-subtle {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out forwards;
 }
@@ -137,9 +203,39 @@
   animation: shake 0.4s ease-in-out;
 }
 
-.animate-pulse-subtle {
-  animation: pulse-subtle 2s ease-in-out infinite;
+/* Orchestrated landing reveal: tag siblings with .reveal .reveal-N */
+.reveal {
+  opacity: 0;
+  animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
+
+.reveal-1 {
+  animation-delay: 0.05s;
+}
+.reveal-2 {
+  animation-delay: 0.15s;
+}
+.reveal-3 {
+  animation-delay: 0.25s;
+}
+.reveal-4 {
+  animation-delay: 0.35s;
+}
+.reveal-5 {
+  animation-delay: 0.45s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .animate-fadeIn,
+  .animate-shake {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- Print ---------- */
 
 .print-only {
   display: none;

@@ -75,25 +75,27 @@ function convertOklch(l: number, c: number, h: number): string {
   return rgbToHex(rgb.r, rgb.g, rgb.b)
 }
 
+// Precomputed hex palette for the html2canvas PNG export (it cannot parse
+// OKLCH). Keep these in sync with the theme variables in src/index.css.
 export const SAFE_COLORS = {
-  background: convertOklch(0.98, 0, 0),
-  foreground: convertOklch(0.25, 0.05, 250),
+  background: convertOklch(0.985, 0.005, 130),
+  foreground: convertOklch(0.23, 0.035, 155),
   card: convertOklch(1, 0, 0),
-  cardForeground: convertOklch(0.25, 0.05, 250),
-  border: convertOklch(0.9, 0, 0),
-  muted: convertOklch(0.96, 0, 0),
-  mutedForeground: convertOklch(0.45, 0.02, 240),
-  primary: convertOklch(0.55, 0.15, 145),
-  primaryForeground: convertOklch(1, 0, 0),
-  secondary: convertOklch(0.65, 0.02, 240),
+  cardForeground: convertOklch(0.23, 0.035, 155),
+  border: convertOklch(0.9, 0.015, 140),
+  muted: convertOklch(0.955, 0.012, 140),
+  mutedForeground: convertOklch(0.46, 0.025, 150),
+  primary: convertOklch(0.47, 0.12, 152),
+  primaryForeground: convertOklch(0.99, 0.005, 130),
+  secondary: convertOklch(0.94, 0.03, 150),
   destructive: convertOklch(0.55, 0.22, 25),
   destructiveForeground: convertOklch(1, 0, 0),
-  accent: convertOklch(0.85, 0.18, 95),
-  accentForeground: convertOklch(0.25, 0.05, 250),
-  tableBg: convertOklch(0.98, 0, 0),
+  accent: convertOklch(0.89, 0.17, 100),
+  accentForeground: convertOklch(0.3, 0.06, 110),
+  tableBg: convertOklch(0.985, 0.005, 130),
   tableAlt: convertOklch(1, 0, 0),
   tableConflict: convertOklch(0.95, 0.05, 25),
-  headerBg: convertOklch(0.96, 0, 0),
-  headerText: convertOklch(0.45, 0.02, 240),
-  text: convertOklch(0.25, 0.05, 250),
+  headerBg: convertOklch(0.955, 0.012, 140),
+  headerText: convertOklch(0.46, 0.025, 150),
+  text: convertOklch(0.23, 0.035, 155),
 }

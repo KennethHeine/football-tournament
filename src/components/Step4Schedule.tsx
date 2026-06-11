@@ -158,7 +158,11 @@ export function Step4Schedule({
     const toastId = toast.loading('Genererer billede...')
 
     try {
-      const headingFont = "'Outfit', system-ui, sans-serif"
+      // Deliberately a system font stack: the iframe inherits the page CSP
+      // (no external fonts), and self-hosted hashed font assets are not
+      // addressable from generated markup. System fonts render instantly and
+      // keep the exported PNG deterministic.
+      const headingFont = "system-ui, 'Segoe UI', sans-serif"
 
       const tableRows = matchesByTime
         .map(([timeKey, matches]) => {
@@ -230,11 +234,10 @@ export function Step4Schedule({
         <!DOCTYPE html>
         <html>
         <head>
-          <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { 
-              font-family: 'Inter', system-ui, sans-serif;
+            body {
+              font-family: system-ui, 'Segoe UI', sans-serif;
               background-color: ${SAFE_COLORS.card};
               color: ${SAFE_COLORS.text};
             }
