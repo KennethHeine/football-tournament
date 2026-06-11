@@ -10,7 +10,7 @@ param sku = 'Free'
 //   Phase 1 — keep this EMPTY so the SWA is created first.
 //   Phase 2 — after the fodbold CNAME points at this SWA, set it to
 //             'fodbold.kscloud.io' and re-deploy to bind the managed cert.
-param customDomainName = ''
+param customDomainName = 'fodbold.kscloud.io'
 
 param tags = {
   managedBy: 'bicep'
