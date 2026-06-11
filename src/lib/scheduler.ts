@@ -66,8 +66,8 @@ export function generateSchedule(
   config: SchedulingConfig
 ): GeneratedSchedule {
   const warnings: string[] = []
-  let matches: Match[] = []
-  let byes: ByeInfo[] = []
+  let matches: Match[]
+  let byes: ByeInfo[]
 
   const workingTeams = [...teams]
 
