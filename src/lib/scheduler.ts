@@ -11,6 +11,34 @@ import type {
 const BYE_TEAM: Team = { id: 'BYE', name: 'BYE' }
 
 /**
+ * Rebuilds Date objects on a schedule that has been round-tripped through
+ * JSON (localStorage / history state), where startTime/endTime arrive as ISO
+ * strings. Safe to call on an already-hydrated schedule.
+ */
+export function rehydrateSchedule(schedule: GeneratedSchedule): GeneratedSchedule {
+  return {
+    ...schedule,
+    matches: schedule.matches.map(match => ({
+      ...match,
+      startTime: new Date(match.startTime),
+      endTime: new Date(match.endTime),
+    })),
+    conflicts: schedule.conflicts.map(conflict => ({
+      ...conflict,
+      matches: conflict.matches.map(match => ({
+        ...match,
+        startTime: new Date(match.startTime),
+        endTime: new Date(match.endTime),
+      })),
+    })),
+    byes: (schedule.byes || []).map(bye => ({
+      ...bye,
+      startTime: bye.startTime ? new Date(bye.startTime) : undefined,
+    })),
+  }
+}
+
+/**
  * Escapes HTML entities in a string to prevent XSS attacks.
  * Used when generating HTML strings for image export.
  */

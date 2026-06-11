@@ -23,7 +23,7 @@ import type {
   SchedulingConfig,
   GeneratedSchedule,
 } from '@/lib/types'
-import { generateSchedule } from '@/lib/scheduler'
+import { generateSchedule, rehydrateSchedule } from '@/lib/scheduler'
 import {
   createTournamentShareUrl,
   parseTournamentShareParams,
@@ -112,14 +112,24 @@ function App() {
     setCurrentStep(4)
   }, [])
 
-  const handlePopState = useCallback(
-    (_event: PopStateEvent) => {
-      const params = new URLSearchParams(window.location.search)
+  /** Loads a saved tournament into wizard state (rehydrating JSON dates). */
+  const applyTournament = useCallback((tournament: Tournament, step?: number) => {
+    setSettings(tournament.settings)
+    setTeams(tournament.teams)
+    setSchedulingConfig(tournament.schedulingConfig)
+    setSchedule(tournament.schedule ? rehydrateSchedule(tournament.schedule) : null)
+    setCurrentTournamentId(tournament.id)
+    setCurrentStep(step || (tournament.schedule ? 4 : 1))
+  }, [])
 
+  /** Restores app state from URL params (initial load and popstate). */
+  const restoreFromParams = useCallback(
+    (params: URLSearchParams, isInitialLoad: boolean) => {
       if (params.has('share')) {
         const sharedTournament = parseTournamentShareParams(params)
         if (sharedTournament.ok) {
           loadSharedTournament(sharedTournament.data)
+          if (isInitialLoad) toast.success('Delt turnering indlæst')
         } else {
           toast.error(sharedTournament.error)
           setCurrentStep(0)
@@ -131,41 +141,10 @@ function App() {
       const tournamentId = params.get('tournament')
       const step = parseInt(params.get('step') || '0')
 
-      if (tournamentId && (tournaments || []).length > 0) {
+      if (tournamentId) {
         const tournament = (tournaments || []).find(t => t.id === tournamentId)
         if (tournament) {
-          setSettings(tournament.settings)
-          setTeams(tournament.teams)
-          setSchedulingConfig(tournament.schedulingConfig)
-
-          if (tournament.schedule) {
-            const rehydratedSchedule: GeneratedSchedule = {
-              ...tournament.schedule,
-              matches: tournament.schedule.matches.map(match => ({
-                ...match,
-                startTime: new Date(match.startTime),
-                endTime: new Date(match.endTime),
-              })),
-              conflicts: tournament.schedule.conflicts.map(conflict => ({
-                ...conflict,
-                matches: conflict.matches.map(match => ({
-                  ...match,
-                  startTime: new Date(match.startTime),
-                  endTime: new Date(match.endTime),
-                })),
-              })),
-              byes: (tournament.schedule.byes || []).map(bye => ({
-                ...bye,
-                startTime: bye.startTime ? new Date(bye.startTime) : undefined,
-              })),
-            }
-            setSchedule(rehydratedSchedule)
-          } else {
-            setSchedule(null)
-          }
-
-          setCurrentTournamentId(tournament.id)
-          setCurrentStep(step || (tournament.schedule ? 4 : 1))
+          applyTournament(tournament, step || undefined)
         } else {
           setCurrentStep(0)
           setCurrentTournamentId(null)
@@ -177,73 +156,21 @@ function App() {
         }
       }
     },
-    [loadSharedTournament, tournaments]
+    [applyTournament, loadSharedTournament, tournaments]
   )
 
   useEffect(() => {
+    const handlePopState = () =>
+      restoreFromParams(new URLSearchParams(window.location.search), false)
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
-  }, [handlePopState])
+  }, [restoreFromParams])
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-
-    if (params.has('share')) {
-      const sharedTournament = parseTournamentShareParams(params)
-      if (sharedTournament.ok) {
-        loadSharedTournament(sharedTournament.data)
-        toast.success('Delt turnering indlæst')
-      } else {
-        toast.error(sharedTournament.error)
-      }
-      return
-    }
-
-    const tournamentId = params.get('tournament')
-    const step = parseInt(params.get('step') || '0')
-
-    if (tournamentId && (tournaments || []).length > 0) {
-      const tournament = (tournaments || []).find(t => t.id === tournamentId)
-      if (tournament) {
-        setSettings(tournament.settings)
-        setTeams(tournament.teams)
-        setSchedulingConfig(tournament.schedulingConfig)
-
-        if (tournament.schedule) {
-          const rehydratedSchedule: GeneratedSchedule = {
-            ...tournament.schedule,
-            matches: tournament.schedule.matches.map(match => ({
-              ...match,
-              startTime: new Date(match.startTime),
-              endTime: new Date(match.endTime),
-            })),
-            conflicts: tournament.schedule.conflicts.map(conflict => ({
-              ...conflict,
-              matches: conflict.matches.map(match => ({
-                ...match,
-                startTime: new Date(match.startTime),
-                endTime: new Date(match.endTime),
-              })),
-            })),
-            byes: (tournament.schedule.byes || []).map(bye => ({
-              ...bye,
-              startTime: bye.startTime ? new Date(bye.startTime) : undefined,
-            })),
-          }
-          setSchedule(rehydratedSchedule)
-        } else {
-          setSchedule(null)
-        }
-
-        setCurrentTournamentId(tournament.id)
-        setCurrentStep(step || (tournament.schedule ? 4 : 1))
-      }
-    } else if (step > 0) {
-      setCurrentStep(step)
-    }
-    // Run on initial mount to restore state from the URL; tournaments remains intentionally omitted.
+    restoreFromParams(new URLSearchParams(window.location.search), true)
+    // Run once on mount to restore state from the URL.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadSharedTournament])
+  }, [])
 
   const handleStartNew = () => {
     setCurrentStep(1)
@@ -350,42 +277,10 @@ function App() {
   }
 
   const handleLoadTournament = (tournament: Tournament, shouldUpdateURL = true) => {
-    setSettings(tournament.settings)
-    setTeams(tournament.teams)
-    setSchedulingConfig(tournament.schedulingConfig)
-
-    if (tournament.schedule) {
-      const rehydratedSchedule: GeneratedSchedule = {
-        ...tournament.schedule,
-        matches: tournament.schedule.matches.map(match => ({
-          ...match,
-          startTime: new Date(match.startTime),
-          endTime: new Date(match.endTime),
-        })),
-        conflicts: tournament.schedule.conflicts.map(conflict => ({
-          ...conflict,
-          matches: conflict.matches.map(match => ({
-            ...match,
-            startTime: new Date(match.startTime),
-            endTime: new Date(match.endTime),
-          })),
-        })),
-        byes: (tournament.schedule.byes || []).map(bye => ({
-          ...bye,
-          startTime: bye.startTime ? new Date(bye.startTime) : undefined,
-        })),
-      }
-      setSchedule(rehydratedSchedule)
-    } else {
-      setSchedule(null)
-    }
-
-    setCurrentTournamentId(tournament.id)
-    const step = tournament.schedule ? 4 : 1
-    setCurrentStep(step)
+    applyTournament(tournament)
 
     if (shouldUpdateURL) {
-      updateURL(tournament.id, step)
+      updateURL(tournament.id, tournament.schedule ? 4 : 1)
     }
   }
 
