@@ -121,34 +121,36 @@
     );
 }
 
-/* Chalk center circle + halfway line, drawn with plain gradients. */
+/* Chalk center circle + halfway line behind the hero headline (>= sm only). */
 .pitch-lines {
   position: relative;
   isolation: isolate;
 }
 
-.pitch-lines::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    radial-gradient(
-      circle at 50% 38%,
-      transparent 118px,
-      oklch(0.47 0.12 152 / 0.14) 119px,
-      oklch(0.47 0.12 152 / 0.14) 122px,
-      transparent 123px
-    ),
-    linear-gradient(
-      180deg,
-      transparent calc(38% - 1px),
-      oklch(0.47 0.12 152 / 0.12) calc(38% - 1px),
-      oklch(0.47 0.12 152 / 0.12) calc(38% + 1px),
-      transparent calc(38% + 1px)
-    );
-  mask-image: radial-gradient(90% 70% at 50% 35%, black 30%, transparent 75%);
+@media (min-width: 640px) {
+  .pitch-lines::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      radial-gradient(
+        circle at 50% 34%,
+        transparent 150px,
+        oklch(0.47 0.12 152 / 0.16) 151px,
+        oklch(0.47 0.12 152 / 0.16) 154px,
+        transparent 155px
+      ),
+      linear-gradient(
+        180deg,
+        transparent calc(34% - 1px),
+        oklch(0.47 0.12 152 / 0.13) calc(34% - 1px),
+        oklch(0.47 0.12 152 / 0.13) calc(34% + 1px),
+        transparent calc(34% + 1px)
+      );
+    mask-image: radial-gradient(75% 85% at 50% 38%, black 35%, transparent 78%);
+  }
 }
 
 /* ---------- Animations ---------- */

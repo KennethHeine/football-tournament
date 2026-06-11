@@ -326,40 +326,47 @@ function App() {
     const tournamentList = tournaments || []
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <div className="min-h-screen flex flex-col pitch-backdrop">
         <Toaster />
         <PWAUpdatePrompt />
-        <div className="container mx-auto px-4 py-12 max-w-5xl">
+        <div className="container mx-auto px-4 pt-14 pb-12 max-w-5xl flex-1">
           {/* Hero Section */}
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
-              <SoccerBall size={48} weight="duotone" className="text-primary" />
+          <div className="text-center mb-16 pt-4 pitch-lines">
+            <div className="reveal reveal-1 inline-flex items-center gap-2 rounded-full bg-accent text-accent-foreground px-4 py-1.5 text-sm font-semibold mb-8 shadow-sm">
+              <SoccerBall size={18} weight="duotone" />
+              Gratis værktøj til frivillige trænere
             </div>
             <h1
-              className="text-5xl md:text-6xl font-bold tracking-tight mb-4"
+              className="reveal reveal-2 text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight mb-5 text-balance"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
-              Fodboldturnering
+              Fodbold<span className="text-primary">turnering</span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-              Opret kampskemaer til din næste turnering på få minutter
+            <p className="reveal reveal-3 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-9 text-balance">
+              Fra holdliste til færdigt kampskema på under 2 minutter — klar til print, deling og
+              banen.
             </p>
-            <Button
-              onClick={handleStartNew}
-              size="lg"
-              className="gap-2 text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-all hover:scale-105"
-            >
-              <Plus size={24} weight="bold" />
-              Opret Ny Turnering
-            </Button>
+            <div className="reveal reveal-4">
+              <Button
+                onClick={handleStartNew}
+                size="lg"
+                className="gap-2 text-lg px-9 py-7 rounded-full shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all hover:-translate-y-0.5"
+              >
+                <Plus size={24} weight="bold" />
+                Opret Ny Turnering
+              </Button>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Ingen login · Gemmes i din browser · Virker offline
+              </p>
+            </div>
           </div>
 
           {/* Feature Highlights */}
           {tournamentList.length === 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <div className="p-6 rounded-xl bg-card border shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <Timer size={24} className="text-primary" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-12">
+              <div className="reveal reveal-3 p-6 rounded-2xl bg-card/90 backdrop-blur-sm border shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
+                <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center mb-4 shadow-sm">
+                  <Timer size={24} weight="duotone" />
                 </div>
                 <h3
                   className="font-semibold text-lg mb-2"
@@ -367,13 +374,13 @@ function App() {
                 >
                   Hurtig Opsætning
                 </h3>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   Fra start til færdigt kampskema på under 2 minutter med vores intuitive guide.
                 </p>
               </div>
-              <div className="p-6 rounded-xl bg-card border shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <ListChecks size={24} className="text-primary" />
+              <div className="reveal reveal-4 p-6 rounded-2xl bg-card/90 backdrop-blur-sm border shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
+                <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center mb-4 shadow-sm">
+                  <ListChecks size={24} weight="duotone" />
                 </div>
                 <h3
                   className="font-semibold text-lg mb-2"
@@ -381,13 +388,13 @@ function App() {
                 >
                   Smart Planlægning
                 </h3>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   Automatisk fordeling af kampe på tværs af baner med optimeret hviletid.
                 </p>
               </div>
-              <div className="p-6 rounded-xl bg-card border shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <Export size={24} className="text-primary" />
+              <div className="reveal reveal-5 p-6 rounded-2xl bg-card/90 backdrop-blur-sm border shadow-sm hover:shadow-md hover:border-primary/40 transition-all">
+                <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center mb-4 shadow-sm">
+                  <Export size={24} weight="duotone" />
                 </div>
                 <h3
                   className="font-semibold text-lg mb-2"
@@ -395,7 +402,7 @@ function App() {
                 >
                   Nem Eksport
                 </h3>
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   Eksporter til print, CSV eller billede. Del nemt med alle deltagere.
                 </p>
               </div>
@@ -480,7 +487,7 @@ function App() {
         </div>
 
         {/* Footer */}
-        <footer className="mt-auto py-8 text-center text-sm text-muted-foreground border-t border-muted/20">
+        <footer className="mt-auto py-8 text-center text-sm text-muted-foreground border-t border-border/60 bg-card/60">
           <div className="container mx-auto px-4 max-w-4xl">
             <div className="flex items-center justify-center gap-2 mb-3">
               <SoccerBall size={16} weight="duotone" className="text-primary" />
@@ -531,15 +538,15 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen pitch-backdrop">
       <Toaster />
       <PWAUpdatePrompt />
       <div className="container mx-auto px-4 py-8 max-w-5xl">
-        <div className="mb-8">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <SoccerBall size={32} weight="duotone" className="text-primary" />
+        <div className="mb-6">
+          <div className="flex items-center justify-center gap-2.5 mb-1">
+            <SoccerBall size={28} weight="duotone" className="text-primary" />
             <h1
-              className="text-3xl font-bold text-center"
+              className="text-2xl sm:text-3xl font-bold tracking-tight text-center"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               Fodboldturnering
