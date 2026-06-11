@@ -1,173 +1,44 @@
-# Football Tournament Program Builder
+# Fodboldturnering — Gratis Kampskema Generator
 
-**🌐 Live App: [https://fodbold.kscloud.io](https://fodbold.kscloud.io)**
+**Live: [https://fodbold.kscloud.io](https://fodbold.kscloud.io)**
 
-A professional tournament scheduling application that helps organizers create detailed match schedules across multiple pitches with automatic time allocation and conflict detection.
+A free, Danish-language tournament-schedule generator for volunteer football
+coaches. Set up a tournament, add teams, pick a scheduling mode, and get a
+print-ready match schedule across multiple pitches — in under two minutes,
+entirely in the browser.
 
-## 🚀 Deployment
+## Features
 
-Deploy to Azure Static Web Apps - see [DEPLOYMENT.md](./DEPLOYMENT.md) for instructions.
+- **4-step wizard** — settings → teams → scheduling mode → finished schedule
+- **Smart scheduling** — round-robin or limited matches, fair distribution
+  across pitches, conflict detection, optimized rest time
+- **Export anywhere** — print, CSV, PNG image, or a shareable URL that encodes
+  the whole tournament
+- **Offline-capable PWA** — installable, works pitch-side without coverage
+- **No accounts, no backend** — everything lives in browser localStorage
 
-## ✨ Features
+## Tech Stack
 
-- **Efficient Tournament Setup** - Quick setup wizard that guides users from tournament setup to printed schedule in under 2 minutes
-- **Intelligent Scheduling** - Smart scheduling algorithm that distributes matches fairly, prevents conflicts, and optimizes rest time
-- **Professional Output** - Print-ready outputs with clean typography and structured data exports (CSV, PNG)
-- **Browser-based Storage** - All data stored in browser localStorage (no backend required)
-- **No Authentication** - Public access, no login required
-- **Responsive Design** - Mobile-first design with touch-friendly controls and larger touch targets (44-48px minimum)
+React 19 · TypeScript (strict) · Vite 7 · Tailwind CSS 4 · shadcn/ui (Radix)
+· Vitest · Playwright · Azure Static Web Apps (Free SKU)
 
-## 🛠️ Technology Stack
-
-- **Frontend**: React 19 + TypeScript
-- **Build Tool**: Vite 7
-- **Styling**: Tailwind CSS 4
-- **UI Components**: Radix UI + Shadcn
-- **State Management**: React Hooks + localStorage
-- **Testing**: Vitest (unit tests) + Playwright (E2E tests)
-- **Deployment**: Azure Static Web Apps
-
-## 📦 Installation
-
-\`\`\`bash
-
-# Clone the repository
-
-git clone https://github.com/KennethHeine/football-tournament.git
-cd football-tournament
-
-# Install dependencies
-
-npm install
-\`\`\`
-
-## 🏃 Development
-
-\`\`\`bash
-
-# Start development server
-
-npm run dev
-
-# Run linter
-
-npm run lint
-
-# Run unit tests
-
-npm test
-
-# Run unit tests with UI
-
-npm run test:ui
-
-# Run E2E tests
-
-npm run test:e2e
-
-# Run E2E tests in UI mode
-
-npm run test:e2e:ui
-
-# Build for production
-
-npm run build
-
-# Preview production build
-
-npm run preview
-\`\`\`
-
-## 🧪 Testing
-
-### Unit Tests
-
-We use Vitest for unit testing. Current coverage: **53 tests passing**
-
-- Scheduler logic tests
-- Color utility tests
-- localStorage hook tests
-
-### E2E Tests
-
-We use Playwright for end-to-end testing with 5 test scenarios:
-
-- Tournament creation workflow
-- Data persistence
-- Tournament deletion
-- URL sharing
-
-## 🚀 Deployment
-
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions to Azure Static Web Apps.
-
-### GitHub Actions Workflow
-
-The repository uses automated CI/CD workflows. See [WORKFLOW-GUIDE.md](./WORKFLOW-GUIDE.md) for details on:
-
-- Automatic production deployment on push to main
-- PR preview environments for testing before merge
-- Test-only execution for Dependabot PRs
-- Automatic cleanup of temporary environments
-
-### 🤖 Full Automation Guide
-
-Want to replicate this setup for another project? See [AUTOMATION-GUIDE.md](./AUTOMATION-GUIDE.md) for a complete guide covering:
-
-- Testing setup (Vitest + Playwright)
-- CI/CD workflows with Azure Static Web Apps
-- Dependabot with auto-merge
-- GitHub Copilot configuration
-- Code quality tools (ESLint + Prettier)
-
-### Quick Deploy Options
-
-**Option 1: OIDC (Recommended - Most Secure)**
-
-```powershell
-# 1. Provision resources
-.\scripts\provision-azure.ps1
-
-# 2. Setup service principal with federated credentials
-.\scripts\setup-service-principal.ps1 -GitHubOrg "YourUsername" -GitHubRepo "football-tournament"
-
-# 3. Add the 5 secrets to GitHub (shown in script output)
-# 4. Push to main - automatic deployment with OIDC!
-```
-
-**Option 2: Static Token (Quick Start)**
+## Development
 
 ```bash
-# 1. Run provisioning script
-./scripts/provision-azure.sh  # or .\scripts\provision-azure.ps1
-
-# 2. Add AZURE_STATIC_WEB_APPS_API_TOKEN to GitHub Secrets
-# 3. Push to main - automatic deployment!
+npm ci              # install (Node version: see .nvmrc)
+npm run dev         # dev server on :5173
+npm test            # unit tests (Vitest)
+npm run test:e2e    # E2E tests (Playwright)
+npm run lint        # ESLint
+npm run build       # production build -> out/
 ```
 
-📖 **See [DEPLOYMENT-QUICK-REFERENCE.md](./DEPLOYMENT-QUICK-REFERENCE.md) for details**
+## Deployment
 
-## 📝 Usage
+Fully automated: push to `main` and GitHub Actions builds, tests, and deploys
+to Azure Static Web Apps via OIDC (no stored secrets). Pull requests get
+preview environments. See [AGENTS.md](./AGENTS.md) for the full picture.
 
-1. **Create Tournament**: Click "Opret Ny Turnering" on the home page
-2. **Tournament Settings**: Enter tournament name, date, time, number of pitches, match duration
-3. **Add Teams**: Add teams individually or bulk paste
-4. **Scheduling Mode**: Choose round-robin or limited matches per team
-5. **Generate Schedule**: View and review the generated schedule
-6. **Save & Export**: Save to localStorage, export to CSV/PNG, or print
+## License
 
-## 🔐 Security
-
-- No sensitive data storage
-- All data stored in browser localStorage
-- No authentication or user management
-- No backend API calls
-- Static site deployment
-
-## 📄 License
-
-MIT License - see [LICENSE](./LICENSE) for details
-
----
-
-Built with ❤️ for football tournament organizers
+MIT — see [LICENSE](./LICENSE).

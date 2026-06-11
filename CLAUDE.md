@@ -1,8 +1,4 @@
 # football-tournament
 
-See **[AGENTS.md](./AGENTS.md)** for the full agent guide.
-
-It documents this repository's Azure infrastructure (resource group
-`rg-football-tournament`, the OIDC service principal `sp-football-tournament-github`, and
-the configured `AZURE_*` secrets) and the convention to build Azure resources
-as **Bicep** and deploy them via **GitHub Actions workflows**.
+See **[AGENTS.md](./AGENTS.md)** for the full agent guide
+(commands, structure, CI/CD, and the gotchas that will bite you).
