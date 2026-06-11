@@ -1,0 +1,22 @@
+name: Deploy Infrastructure
+
+# Thin caller: the real logic lives in the reusable workflow in the control-plane
+# repo, so it's maintained in one place for every static-web repo.
+# See KennethHeine/Azure-infrastructure/.github/workflows/static-web-deploy-infra.yml
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/deploy-infra.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    uses: KennethHeine/Azure-infrastructure/.github/workflows/static-web-deploy-infra.yml@main
+    secrets: inherit

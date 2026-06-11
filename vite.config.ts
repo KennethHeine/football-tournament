@@ -8,6 +8,11 @@ const projectRoot = process.env.PROJECT_ROOT || import.meta.dirname
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Azure Static Web Apps (new static-web convention) deploys `<app_dir>/out`,
+  // so emit the production build into `out` instead of Vite's default `dist`.
+  build: {
+    outDir: 'out',
+  },
   plugins: [
     react(),
     tailwindcss(),

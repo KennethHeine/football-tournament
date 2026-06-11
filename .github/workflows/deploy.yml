@@ -1,0 +1,36 @@
+name: Deploy Web App
+
+# Thin caller: build + deploy logic lives in the reusable workflow in the
+# control-plane repo (fetches the SWA token at deploy time via OIDC — no stored
+# AZURE_STATIC_WEB_APPS_API_TOKEN secret). Production on push to main; per-PR
+# preview environments on pull requests (closed on PR close).
+# See KennethHeine/Azure-infrastructure/.github/workflows/static-web-deploy.yml
+#
+# This is a Vite app at the repo root: `npm run build` emits `out/`, and
+# staticwebapp.config.json lives in `public/` so Vite copies it into `out/`.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'infra/**'
+      - '.github/workflows/deploy-infra.yml'
+      - '**.md'
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  deploy:
+    uses: KennethHeine/Azure-infrastructure/.github/workflows/static-web-deploy.yml@main
+    secrets: inherit
+    with:
+      app_dir: '.'
+      test_command: 'npm run lint && npm run format:check && npm test -- --run'
+      run_e2e: true

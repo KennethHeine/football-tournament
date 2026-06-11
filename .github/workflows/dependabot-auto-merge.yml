@@ -2,7 +2,7 @@ name: Dependabot Auto-Merge
 
 on:
   workflow_run:
-    workflows: ['Deploy PR Preview']
+    workflows: ['Deploy Web App']
     types: [completed]
 
 permissions:
@@ -72,9 +72,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Summary
+        env:
+          PR_TITLE: ${{ steps.pr-info.outputs.pr-title }}
         run: |
           echo "## 🤖 Dependabot Auto-Merge" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**PR:** ${{ steps.pr-info.outputs.pr-title }}" >> $GITHUB_STEP_SUMMARY
+          echo "**PR:** $PR_TITLE" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ Auto-merge enabled with squash strategy." >> $GITHUB_STEP_SUMMARY
