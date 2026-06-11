@@ -13,8 +13,17 @@ targetScope = 'resourceGroup'
 @maxLength(40)
 param appName string = 'football-tournament'
 
-@description('Location for the Static Web App. Static Web Apps are global; this controls the metadata/region.')
-param location string = 'westeurope'
+@description('Base region for the deployment. Defaults to the resource group region so the estate region (swedencentral) drives where resources land.')
+param location string = resourceGroup().location
+
+// Azure Static Web Apps are offered in only a handful of regions worldwide
+// (Central US, East US 2, West US 2, West Europe, East Asia) — none in the
+// Nordics. So the SWA cannot deploy to swedencentral/norwayeast; when the RG
+// region isn't a supported SWA region we fall back to the closest one, West
+// Europe. The SWA serves content from a global edge network, so this carries no
+// latency or cost penalty for Nordic users.
+var swaSupportedRegions = ['centralus', 'eastus2', 'westus2', 'westeurope', 'eastasia']
+var staticWebAppLocation = contains(swaSupportedRegions, location) ? location : 'westeurope'
 
 @description('SKU for the Static Web App.')
 @allowed([
@@ -38,7 +47,7 @@ var staticWebAppName = 'swa-${appName}-${resourceToken}'
 
 resource staticWebApp 'Microsoft.Web/staticSites@2024-04-01' = {
   name: staticWebAppName
-  location: location
+  location: staticWebAppLocation
   tags: tags
   sku: {
     name: sku
