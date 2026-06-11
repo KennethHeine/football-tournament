@@ -855,7 +855,8 @@ export function exportToCSV(matches: Match[], settings: TournamentSettings): str
     escapeCsvField(formatTime(m.endTime)),
   ])
 
-  return [headers, ...rows].map(row => row.join(',')).join('\n')
+  // RFC 4180 prescribes CRLF record separators; Excel is happiest with them.
+  return [headers, ...rows].map(row => row.join(',')).join('\r\n')
 }
 
 export function exportToText(

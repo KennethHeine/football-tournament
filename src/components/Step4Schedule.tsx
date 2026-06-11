@@ -127,7 +127,8 @@ export function Step4Schedule({
 
   const handleDownloadCSV = () => {
     const csv = exportToCSV(schedule.matches, settings)
-    const blob = new Blob([csv], { type: 'text/csv' })
+    // UTF-8 BOM so Excel detects the encoding (Danish team names: æøå).
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
