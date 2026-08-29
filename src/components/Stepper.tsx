@@ -38,18 +38,18 @@ export function Stepper({ steps, currentStep }: StepperProps) {
           const isCurrent = currentStep === step.number
 
           return (
-            <div key={step.number} className="flex flex-col items-center gap-2 px-2">
+            <div key={step.number} className="flex flex-col items-center gap-2 bg-background px-2">
               <div
                 className={cn(
-                  'w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 shadow-sm',
-                  isCompleted && 'bg-primary text-primary-foreground shadow-md',
+                  'w-11 h-11 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-300 shadow-sm',
+                  isCompleted &&
+                    'bg-primary text-primary-foreground shadow-md scale-100 ring-2 ring-primary/20',
                   isCurrent &&
-                    'bg-primary text-primary-foreground ring-4 ring-accent shadow-lg scale-110',
+                    'bg-primary text-primary-foreground ring-4 ring-primary/30 shadow-lg scale-110',
                   !isCompleted &&
                     !isCurrent &&
-                    'bg-card text-muted-foreground border-2 border-border'
+                    'bg-muted text-muted-foreground border-2 border-border'
                 )}
-                style={{ fontFamily: 'var(--font-heading)' }}
               >
                 {isCompleted ? <Check size={22} weight="bold" /> : step.number}
               </div>
